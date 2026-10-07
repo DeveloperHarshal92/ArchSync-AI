@@ -466,20 +466,18 @@ Frontend
 
 ## Checklist
 
-- [ ] AI service.
-- [ ] AI request validator.
-- [ ] Architecture context builder.
-- [ ] AI provider integration.
-- [ ] Conversation model.
-- [ ] Message model.
-- [ ] Chat endpoint.
-- [ ] Analyze endpoint.
-- [ ] Loading state.
-- [ ] Error state.
-- [ ] Empty state.
-- [ ] Server-side API key protection.
-- [ ] AI output sanitization/display handling.
-- [ ] AI cannot mutate architecture silently.
+- [x] AI service.
+- [x] AI request validator.
+- [x] Architecture context builder.
+- [x] AI provider integration.
+- [x] Chat endpoint.
+- [x] Analyze endpoint.
+- [x] Loading state.
+- [x] Error state.
+- [x] Empty state.
+- [x] Server-side API key protection.
+- [x] AI output sanitization/display handling.
+- [x] AI cannot mutate architecture silently.
 
 ---
 
@@ -607,7 +605,7 @@ Prepare the application for deployment.
 ## Milestone 6: Intelligence
 
 - [x] F11 complete
-- [ ] F12 complete
+- [x] F12 complete
 
 ## Milestone 7: Product Completion
 

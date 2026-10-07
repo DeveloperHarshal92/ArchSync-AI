@@ -84,6 +84,7 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
         sidebarOpen: true,
         detailsPanelOpen: true,
         validationPanelOpen: false,
+        aiPanelOpen: false,
         activeModal: null,
         theme: 'dark',
       });
@@ -327,6 +328,7 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
           sidebarOpen: false,
           detailsPanelOpen: true,
           validationPanelOpen: false,
+          aiPanelOpen: false,
           activeModal: 'TEST_MODAL',
           theme: 'dark',
         },

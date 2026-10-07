@@ -34,6 +34,7 @@ import { PersistenceIndicator } from './PersistenceIndicator';
 import { CollaborationIndicator } from './CollaborationIndicator';
 import { RemoteCursorsOverlay } from './RemoteCursorsOverlay';
 import { ValidationPanel } from './ValidationPanel';
+import { AIAssistantPanel } from './AIAssistantPanel';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -50,12 +51,14 @@ import {
   setDetailsPanelOpen,
   selectValidationPanelOpen,
   setValidationPanelOpen,
+  selectAiPanelOpen,
+  setAiPanelOpen,
 } from '../../store/slices/uiSlice';
 import { useArchitectureAutosave } from '../../hooks/useArchitectureAutosave';
 import { useProjectCollaboration } from '../../hooks/useProjectCollaboration';
 import { useValidateArchitectureMutation } from '../../store/api/architectureApi';
 import { ArchitectureValidationResult } from '@archsync/shared';
-import { Sliders, ShieldCheck } from 'lucide-react';
+import { Sliders, ShieldCheck, Sparkles } from 'lucide-react';
 
 interface ArchitectureCanvasProps {
   initialArchitecture: Architecture;
@@ -82,6 +85,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const currentVersion = useAppSelector(selectCurrentVersion);
   const detailsPanelOpen = useAppSelector(selectDetailsPanelOpen);
   const validationPanelOpen = useAppSelector(selectValidationPanelOpen);
+  const aiPanelOpen = useAppSelector(selectAiPanelOpen);
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const isRemoteChangeRef = useRef<boolean>(false);
@@ -507,6 +511,8 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
   // F11: Handle validation invocation
   const handleValidate = useCallback(async () => {
+    dispatch(setDetailsPanelOpen(false));
+    dispatch(setAiPanelOpen(false));
     dispatch(setValidationPanelOpen(true));
     try {
       const draftNodes = nodes.map(appNodeToArchitectureNode);
@@ -576,9 +582,31 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           <PersistenceIndicator onRetry={saveNow} onReload={onReload} />
         </div>
 
-        {/* Top-Right Control Toolbar: Collaboration Indicator + Validate Button + Properties Toggle Button */}
+        {/* Top-Right Control Toolbar: Collaboration Indicator + AI Assistant + Validate Button + Properties Toggle Button */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2 pointer-events-auto">
           <CollaborationIndicator />
+
+          <button
+            onClick={() => {
+              if (aiPanelOpen) {
+                dispatch(setAiPanelOpen(false));
+              } else {
+                dispatch(setValidationPanelOpen(false));
+                dispatch(setDetailsPanelOpen(false));
+                dispatch(setAiPanelOpen(true));
+              }
+            }}
+            data-testid="canvas-ai-assistant-btn"
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-xl backdrop-blur-md transition-colors ${
+              aiPanelOpen
+                ? 'border-indigo-500/60 bg-indigo-950/90 text-indigo-300'
+                : 'border-slate-800 bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white'
+            }`}
+            title="Toggle AI Architecture Assistant"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+            <span>AI Assistant</span>
+          </button>
 
           <button
             onClick={handleValidate}
@@ -615,6 +643,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             <button
               onClick={() => {
                 dispatch(setValidationPanelOpen(false));
+                dispatch(setAiPanelOpen(false));
                 dispatch(setDetailsPanelOpen(true));
               }}
               className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white"
@@ -679,8 +708,16 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         </ReactFlow>
       </div>
 
-      {/* 3. Right Side Panel Area (Validation Panel or Node Details Panel) */}
-      {validationPanelOpen ? (
+      {/* 3. Right Side Panel Area (AI Assistant Panel, Validation Panel, or Node Details Panel) */}
+      {aiPanelOpen ? (
+        <div className="hidden md:block w-96 shrink-0 h-full border-l border-slate-800/80">
+          <AIAssistantPanel
+            projectId={initialArchitecture.projectId}
+            onClose={() => dispatch(setAiPanelOpen(false))}
+            onSelectNode={handleSelectNodeFromValidation}
+          />
+        </div>
+      ) : validationPanelOpen ? (
         <div className="hidden md:block w-84 shrink-0 h-full border-l border-slate-800/80">
           <ValidationPanel
             validationResult={validationResult}

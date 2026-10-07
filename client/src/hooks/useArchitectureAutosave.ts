@@ -23,6 +23,7 @@ export interface UseArchitectureAutosaveProps {
   viewport: Viewport;
   isEditable: boolean;
   debounceMs?: number;
+  isRemoteChangeRef?: React.MutableRefObject<boolean>;
 }
 
 /**
@@ -73,6 +74,7 @@ export function useArchitectureAutosave({
   viewport,
   isEditable,
   debounceMs = 1000,
+  isRemoteChangeRef,
 }: UseArchitectureAutosaveProps) {
   const dispatch = useAppDispatch();
   const persistenceStatus = useAppSelector(selectPersistenceStatus);
@@ -93,6 +95,22 @@ export function useArchitectureAutosave({
   // Keep latest graph references for the debounce timer callback
   const latestGraphRef = useRef({ nodes, edges, viewport, currentVersion });
   latestGraphRef.current = { nodes, edges, viewport, currentVersion };
+
+  // Manual baseline hash synchronization for external/remote updates
+  const syncBaselineHash = useCallback(
+    (newNodes: AppNode[], newEdges: AppEdge[], newVp?: Viewport) => {
+      lastSavedHashRef.current = createArchitectureHash(
+        newNodes,
+        newEdges,
+        newVp || latestGraphRef.current.viewport
+      );
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
+    },
+    []
+  );
 
   // 1. Initial Hydration & Project Switch Synchronization
   useEffect(() => {
@@ -247,6 +265,13 @@ export function useArchitectureAutosave({
 
     const currentHash = createArchitectureHash(nodes, edges, viewport);
 
+    // If marked as remote-origin change, update baseline and do NOT trigger autosave
+    if (isRemoteChangeRef?.current) {
+      lastSavedHashRef.current = currentHash;
+      isRemoteChangeRef.current = false;
+      return;
+    }
+
     // Only process if graph has meaningfully changed from last saved state
     if (lastSavedHashRef.current !== null && currentHash !== lastSavedHashRef.current) {
       dispatch(setPersistenceDirty());
@@ -266,7 +291,7 @@ export function useArchitectureAutosave({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [nodes, edges, viewport, isEditable, hasVersionConflict, debounceMs, executeSave, dispatch]);
+  }, [nodes, edges, viewport, isEditable, hasVersionConflict, debounceMs, executeSave, dispatch, isRemoteChangeRef]);
 
   // 4. Navigation & Unload Protection
   useEffect(() => {
@@ -288,5 +313,6 @@ export function useArchitectureAutosave({
 
   return {
     saveNow: executeSave,
+    syncBaselineHash,
   };
 }

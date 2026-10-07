@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -15,12 +15,14 @@ import {
   OnSelectionChangeParams,
   Viewport,
 } from '@xyflow/react';
-import { Architecture, ArchitectureNodeType, NODE_CATALOG, EdgeType } from '@archsync/shared';
+import { Architecture, ArchitectureNodeType, NODE_CATALOG, EdgeType, ArchitectureNode, ArchitectureEdge } from '@archsync/shared';
 import {
   CustomNodeData,
   AppNode,
   AppEdge,
   architectureToReactFlow,
+  appNodeToArchitectureNode,
+  appEdgeToArchitectureEdge,
   generateNodeId,
   generateEdgeId,
 } from '../../lib/architecture/adapters';
@@ -29,17 +31,22 @@ import { ComponentPalette } from './ComponentPalette';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
 import { ArchitectureEmptyState } from './ArchitectureEmptyState';
 import { PersistenceIndicator } from './PersistenceIndicator';
+import { CollaborationIndicator } from './CollaborationIndicator';
+import { RemoteCursorsOverlay } from './RemoteCursorsOverlay';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectSelectedNodeId,
   selectSelectedEdgeId,
+  selectCurrentVersion,
   setSelectedNodeId,
   setSelectedEdgeId,
   clearSelection,
+  setCurrentVersion,
 } from '../../store/slices/editorSlice';
 import { selectDetailsPanelOpen, setDetailsPanelOpen } from '../../store/slices/uiSlice';
 import { useArchitectureAutosave } from '../../hooks/useArchitectureAutosave';
+import { useProjectCollaboration } from '../../hooks/useProjectCollaboration';
 import { Sliders } from 'lucide-react';
 
 interface ArchitectureCanvasProps {
@@ -62,7 +69,11 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const dispatch = useAppDispatch();
   const selectedNodeId = useAppSelector(selectSelectedNodeId);
   const selectedEdgeId = useAppSelector(selectSelectedEdgeId);
+  const currentVersion = useAppSelector(selectCurrentVersion);
   const detailsPanelOpen = useAppSelector(selectDetailsPanelOpen);
+
+  const canvasContainerRef = useRef<HTMLDivElement>(null);
+  const isRemoteChangeRef = useRef<boolean>(false);
 
   const { screenToFlowPosition, setViewport } = useReactFlow();
 
@@ -78,6 +89,127 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const [currentViewport, setCurrentViewport] = useState<Viewport>(
     initialArchitecture.viewport || { x: 0, y: 0, zoom: 1 }
   );
+
+  // F10: Real-time multi-user collaboration engine
+  const {
+    emitNodeCreate,
+    emitNodeUpdate,
+    emitNodeDelete,
+    emitEdgeCreate,
+    emitEdgeUpdate,
+    emitEdgeDelete,
+    emitCursorUpdate,
+    emitSelectionUpdate,
+  } = useProjectCollaboration({
+    projectId: initialArchitecture.projectId,
+    isEditable,
+    currentVersion,
+    onRemoteNodeCreate: (remoteNode) => {
+      isRemoteChangeRef.current = true;
+      const appNode: AppNode = {
+        id: remoteNode.id,
+        type: 'architectureNode',
+        position: remoteNode.position,
+        data: {
+          label: remoteNode.data.label,
+          description: remoteNode.data.description,
+          technology: remoteNode.data.technology,
+          category: remoteNode.data.category,
+          nodeType: remoteNode.type,
+        },
+      };
+      setNodes((nds) => [...nds.filter((n) => n.id !== remoteNode.id), appNode]);
+    },
+    onRemoteNodeUpdate: (remoteNode) => {
+      isRemoteChangeRef.current = true;
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === remoteNode.id) {
+            return {
+              ...n,
+              position: remoteNode.position,
+              data: {
+                ...n.data,
+                label: remoteNode.data.label,
+                description: remoteNode.data.description,
+                technology: remoteNode.data.technology,
+                category: remoteNode.data.category,
+                nodeType: remoteNode.type,
+              },
+            };
+          }
+          return n;
+        })
+      );
+    },
+    onRemoteNodeDelete: (nodeId) => {
+      isRemoteChangeRef.current = true;
+      setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+      setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
+    },
+    onRemoteEdgeCreate: (remoteEdge) => {
+      isRemoteChangeRef.current = true;
+      const isDashed = remoteEdge.type === 'dashed';
+      const appEdge: AppEdge = {
+        id: remoteEdge.id,
+        source: remoteEdge.source,
+        target: remoteEdge.target,
+        type: 'default',
+        label: remoteEdge.label,
+        animated: Boolean(remoteEdge.animated),
+        style: {
+          strokeWidth: 2,
+          stroke: '#06b6d4',
+          ...(isDashed ? { strokeDasharray: '5,5' } : {}),
+        },
+        data: {
+          edgeType: (remoteEdge.type as EdgeType) || 'data-flow',
+        },
+      };
+      setEdges((eds) => [...eds.filter((e) => e.id !== remoteEdge.id), appEdge]);
+    },
+    onRemoteEdgeUpdate: (remoteEdge) => {
+      isRemoteChangeRef.current = true;
+      setEdges((eds) =>
+        eds.map((e) => {
+          if (e.id === remoteEdge.id) {
+            const isDashed = remoteEdge.type === 'dashed';
+            return {
+              ...e,
+              label: remoteEdge.label,
+              animated: Boolean(remoteEdge.animated),
+              style: {
+                ...e.style,
+                strokeWidth: 2,
+                stroke: '#06b6d4',
+                ...(isDashed ? { strokeDasharray: '5,5' } : { strokeDasharray: undefined }),
+              },
+              data: {
+                ...e.data,
+                edgeType: (remoteEdge.type as EdgeType) || 'data-flow',
+              },
+            };
+          }
+          return e;
+        })
+      );
+    },
+    onRemoteEdgeDelete: (edgeId) => {
+      isRemoteChangeRef.current = true;
+      setEdges((eds) => eds.filter((e) => e.id !== edgeId));
+    },
+    onRemoteProjectState: (state) => {
+      isRemoteChangeRef.current = true;
+      const converted = architectureToReactFlow(state as any);
+      setNodes(converted.nodes);
+      setEdges(converted.edges);
+      if (state.viewport) {
+        setViewport(state.viewport);
+        setCurrentViewport(state.viewport);
+      }
+      dispatch(setCurrentVersion(state.version));
+    },
+  });
 
   // Sync when initialArchitecture changes from server hydration
   useEffect(() => {
@@ -117,6 +249,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     viewport: currentViewport,
     isEditable,
     debounceMs: 1000,
+    isRemoteChangeRef,
   });
 
   const selectedNode = useMemo(
@@ -164,10 +297,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         },
       };
 
+      const domainNode = appNodeToArchitectureNode(newNode);
+
       setNodes((nds) => [...nds, newNode]);
       dispatch(setSelectedNodeId(newNodeId));
+      emitNodeCreate(domainNode);
     },
-    [isEditable, screenToFlowPosition, setNodes, dispatch]
+    [isEditable, screenToFlowPosition, setNodes, dispatch, emitNodeCreate]
   );
 
   // Handle Connecting Two Nodes
@@ -202,9 +338,12 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         },
       };
 
+      const domainEdge = appEdgeToArchitectureEdge(newEdge);
+
       setEdges((eds) => addEdge(newEdge, eds));
+      emitEdgeCreate(domainEdge);
     },
-    [isEditable, setEdges]
+    [isEditable, setEdges, emitEdgeCreate]
   );
 
   // Selection Tracking coordinated via Redux editorSlice
@@ -215,40 +354,63 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       if (node) {
         dispatch(setSelectedNodeId(node.id));
+        emitSelectionUpdate(node.id);
       } else if (edge) {
         dispatch(setSelectedEdgeId(edge.id));
+        emitSelectionUpdate(null);
       } else {
         dispatch(clearSelection());
+        emitSelectionUpdate(null);
       }
     },
-    [dispatch]
+    [dispatch, emitSelectionUpdate]
   );
 
   const onPaneClick = useCallback(() => {
     dispatch(clearSelection());
-  }, [dispatch]);
+    emitSelectionUpdate(null);
+  }, [dispatch, emitSelectionUpdate]);
+
+  // Node Drag Stop - Emit authoritative node position after user drag
+  const onNodeDragStop = useCallback(
+    (_event: unknown, node: AppNode) => {
+      if (!isEditable) return;
+      const domainNode = appNodeToArchitectureNode(node);
+      emitNodeUpdate(domainNode);
+    },
+    [isEditable, emitNodeUpdate]
+  );
 
   // Node Property Updates
   const handleUpdateNodeData = useCallback(
     (nodeId: string, updates: Partial<CustomNodeData>) => {
       if (!isEditable) return;
 
+      let updatedDomainNode: ArchitectureNode | null = null;
+
       setNodes((nds) =>
         nds.map((n) => {
           if (n.id === nodeId) {
-            return {
+            const merged: AppNode = {
               ...n,
               data: {
                 ...n.data,
                 ...updates,
               },
             };
+
+            updatedDomainNode = appNodeToArchitectureNode(merged);
+            return merged;
           }
           return n;
         })
       );
+
+      if (updatedDomainNode) {
+        emitNodeUpdate(updatedDomainNode);
+      }
     },
-    [isEditable, setNodes]
+    [isEditable, setNodes, emitNodeUpdate]
   );
 
   // Node Deletion (and all connected edges)
@@ -259,14 +421,17 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       setNodes((nds) => nds.filter((n) => n.id !== nodeId));
       setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
       dispatch(clearSelection());
+      emitNodeDelete(nodeId);
     },
-    [isEditable, setNodes, setEdges, dispatch]
+    [isEditable, setNodes, setEdges, dispatch, emitNodeDelete]
   );
 
   // Edge Property Updates
   const handleUpdateEdgeData = useCallback(
     (edgeId: string, updates: { label?: string; edgeType?: EdgeType; animated?: boolean }) => {
       if (!isEditable) return;
+
+      let updatedDomainEdge: ArchitectureEdge | null = null;
 
       setEdges((eds) =>
         eds.map((e) => {
@@ -275,7 +440,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             const isAnimated = updates.animated ?? e.animated ?? newType === 'animated';
             const isDashed = newType === 'dashed';
 
-            return {
+            const merged: AppEdge = {
               ...e,
               label: updates.label !== undefined ? updates.label : e.label,
               animated: isAnimated,
@@ -290,12 +455,19 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                 edgeType: newType,
               },
             };
+
+            updatedDomainEdge = appEdgeToArchitectureEdge(merged);
+            return merged;
           }
           return e;
         })
       );
+
+      if (updatedDomainEdge) {
+        emitEdgeUpdate(updatedDomainEdge);
+      }
     },
-    [isEditable, setEdges]
+    [isEditable, setEdges, emitEdgeUpdate]
   );
 
   // Edge Deletion
@@ -305,8 +477,19 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       setEdges((eds) => eds.filter((e) => e.id !== edgeId));
       dispatch(clearSelection());
+      emitEdgeDelete(edgeId);
     },
-    [isEditable, setEdges, dispatch]
+    [isEditable, setEdges, dispatch, emitEdgeDelete]
+  );
+
+  // High-frequency canvas pointer movement emitting throttled cursor coordinates
+  const handleCanvasMouseMove = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (!canvasContainerRef.current) return;
+      const rect = canvasContainerRef.current.getBoundingClientRect();
+      emitCursorUpdate(e.clientX - rect.left, e.clientY - rect.top);
+    },
+    [emitCursorUpdate]
   );
 
   return (
@@ -317,11 +500,23 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       </div>
 
       {/* 2. Interactive Canvas (Center Area) */}
-      <div className="relative flex-1 h-full w-full bg-[#0a0f1d]">
+      <div
+        ref={canvasContainerRef}
+        onMouseMove={handleCanvasMouseMove}
+        className="relative flex-1 h-full w-full bg-[#0a0f1d]"
+      >
         {/* Persistence Status Indicator in Top Left */}
         <div className="absolute top-4 left-4 z-10 pointer-events-auto">
           <PersistenceIndicator onRetry={saveNow} onReload={onReload} />
         </div>
+
+        {/* Real-time Collaboration Indicator in Top Right */}
+        <div className="absolute top-4 right-4 z-10 pointer-events-auto">
+          <CollaborationIndicator />
+        </div>
+
+        {/* Ephemeral Collaborator Remote Cursors Overlay */}
+        <RemoteCursorsOverlay />
 
         {nodes.length === 0 && <ArchitectureEmptyState isEditable={isEditable} />}
 
@@ -331,6 +526,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           nodeTypes={nodeTypes}
           onNodesChange={isEditable ? onNodesChange : undefined}
           onEdgesChange={isEditable ? onEdgesChange : undefined}
+          onNodeDragStop={isEditable ? onNodeDragStop : undefined}
           onConnect={onConnect}
           onDragOver={onDragOver}
           onDrop={onDrop}

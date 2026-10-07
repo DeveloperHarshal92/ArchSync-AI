@@ -2,9 +2,13 @@ import http from 'http';
 import { app } from './app';
 import { env } from './config/env';
 import { dbManager } from './config/database';
+import { initSocketServer, closeSocketServer } from './sockets';
 
 const server = http.createServer(app);
 const port = env.PORT;
+
+// Initialize Socket.IO real-time collaboration engine
+initSocketServer(server);
 
 /**
  * Initializes database connection and starts HTTP listener
@@ -16,6 +20,7 @@ async function startServer(): Promise<void> {
   server.listen(port, () => {
     console.log(`[ArchSync AI] Backend server running on port ${port} in ${env.NODE_ENV} mode`);
     console.log(`[ArchSync AI] Health check available at http://localhost:${port}/api/v1/health`);
+    console.log(`[ArchSync AI] Socket.IO collaboration engine initialized`);
   });
 }
 
@@ -38,13 +43,17 @@ async function shutdown(signal: string): Promise<void> {
   forceTimeout.unref();
 
   try {
-    // 1. Close HTTP server (stop accepting new connections)
+    // 1. Close Socket.IO server
+    await closeSocketServer();
+    console.log('[ArchSync AI] Socket.IO server closed.');
+
+    // 2. Close HTTP server (stop accepting new connections)
     await new Promise<void>((resolve, reject) => {
       server.close((err) => (err ? reject(err) : resolve()));
     });
     console.log('[ArchSync AI] HTTP server closed.');
 
-    // 2. Disconnect MongoDB connection
+    // 3. Disconnect MongoDB connection
     await dbManager.disconnect();
     console.log('[ArchSync AI] Database connection closed.');
 

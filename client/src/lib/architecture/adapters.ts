@@ -171,3 +171,43 @@ export const reactFlowToArchitecture = (
     updatedAt: new Date().toISOString(),
   };
 };
+
+export const appNodeToArchitectureNode = (node: AppNode): ArchitectureNode => {
+  const { nodeType, createdBy, createdAt, updatedAt, ...nodeData } = node.data;
+  return {
+    id: node.id,
+    type: nodeType || 'server',
+    position: {
+      x: Math.round(node.position.x),
+      y: Math.round(node.position.y),
+    },
+    width: node.width ? Math.round(node.width) : undefined,
+    height: node.height ? Math.round(node.height) : undefined,
+    data: {
+      label: nodeData.label || 'Component',
+      description: nodeData.description,
+      technology: nodeData.technology,
+      category: nodeData.category,
+      metadata: nodeData.metadata,
+    },
+    createdBy: createdBy || '',
+    createdAt: createdAt || new Date().toISOString(),
+    updatedAt: updatedAt || new Date().toISOString(),
+  };
+};
+
+export const appEdgeToArchitectureEdge = (edge: AppEdge): ArchitectureEdge => {
+  const edgeData = edge.data;
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    type: (edgeData?.edgeType as EdgeType) || 'default',
+    label: typeof edge.label === 'string' ? edge.label : undefined,
+    animated: Boolean(edge.animated),
+    metadata: edgeData?.metadata,
+    createdBy: edgeData?.createdBy || '',
+    createdAt: edgeData?.createdAt || new Date().toISOString(),
+    updatedAt: edgeData?.updatedAt || new Date().toISOString(),
+  };
+};

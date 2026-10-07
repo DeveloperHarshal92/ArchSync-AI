@@ -153,8 +153,8 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
     it('6. GIVEN Redux root store, THEN server state is owned strictly by RTK Query without duplicate Redux slices', () => {
       const state = appStore.getState();
 
-      // Verified: Store contains only UI, Editor, and RTK Query reducer
-      expect(Object.keys(state)).toEqual(['ui', 'editor', 'api']);
+      // Verified: Store contains only UI, Editor, Collaboration, and RTK Query reducer
+      expect(Object.keys(state)).toEqual(['ui', 'editor', 'collaboration', 'api']);
 
       // Prohibited duplicate slices do NOT exist
       expect((state as Record<string, unknown>).projects).toBeUndefined();
@@ -326,6 +326,7 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
           currentVersion: 1,
           hasVersionConflict: false,
         },
+        collaboration: appStore.getState().collaboration,
         api: appStore.getState().api,
       };
 

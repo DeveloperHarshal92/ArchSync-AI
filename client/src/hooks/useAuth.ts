@@ -1,4 +1,8 @@
 import { useGetMeQuery, useLogoutMutation } from '../store/api/authApi';
+import { baseApi } from '../store/api/baseApi';
+import { resetEditorState } from '../store/slices/editorSlice';
+import { resetUiState } from '../store/slices/uiSlice';
+import { useAppDispatch } from '../store/hooks';
 import { UserSafe } from '@archsync/shared';
 
 export interface UseAuthReturn {
@@ -12,11 +16,13 @@ export interface UseAuthReturn {
 
 /**
  * Custom hook providing reactive authentication state
- * Derives state strictly from server session without storing JWT in client state
+ * Derives state strictly from RTK Query server session without storing JWT in client state.
+ * On logout, guarantees full reset of private API caches and UI/editor state.
  */
 export function useAuth(): UseAuthReturn {
   const { data, isLoading, isError, error } = useGetMeQuery();
   const [logoutMutation] = useLogoutMutation();
+  const dispatch = useAppDispatch();
 
   const user = data && data.success ? data.data.user : undefined;
   const isAuthenticated = Boolean(user);
@@ -27,6 +33,11 @@ export function useAuth(): UseAuthReturn {
       await logoutMutation().unwrap();
     } catch (err) {
       console.error('Logout error:', err);
+    } finally {
+      // Clear all private caches and project-scoped state upon logout
+      dispatch(baseApi.util.resetApiState());
+      dispatch(resetEditorState());
+      dispatch(resetUiState());
     }
   };
 

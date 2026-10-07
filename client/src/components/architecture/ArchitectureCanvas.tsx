@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -28,6 +28,16 @@ import { ComponentPalette } from './ComponentPalette';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
 import { ArchitectureEmptyState } from './ArchitectureEmptyState';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
+import { useAppDispatch, useAppSelector } from '../../store/hooks';
+import {
+  selectSelectedNodeId,
+  selectSelectedEdgeId,
+  setSelectedNodeId,
+  setSelectedEdgeId,
+  clearSelection,
+} from '../../store/slices/editorSlice';
+import { selectDetailsPanelOpen, setDetailsPanelOpen } from '../../store/slices/uiSlice';
+import { Sliders } from 'lucide-react';
 
 interface ArchitectureCanvasProps {
   initialArchitecture: Architecture;
@@ -44,6 +54,11 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   isEditable,
   onArchitectureChange,
 }) => {
+  const dispatch = useAppDispatch();
+  const selectedNodeId = useAppSelector(selectSelectedNodeId);
+  const selectedEdgeId = useAppSelector(selectSelectedEdgeId);
+  const detailsPanelOpen = useAppSelector(selectDetailsPanelOpen);
+
   const { screenToFlowPosition, setViewport } = useReactFlow();
 
   // Convert domain architecture to React Flow nodes/edges
@@ -55,9 +70,6 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>(initialFlowData.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<AppEdge>(initialFlowData.edges);
 
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null);
-
   // Sync when initialArchitecture changes from server hydration
   useEffect(() => {
     const converted = architectureToReactFlow(initialArchitecture);
@@ -68,6 +80,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       setViewport(initialArchitecture.viewport);
     }
   }, [initialArchitecture, setNodes, setEdges, setViewport]);
+
+  // Clean up canvas selection upon unmount
+  useEffect(() => {
+    return () => {
+      dispatch(clearSelection());
+    };
+  }, [dispatch]);
 
   // Notify parent of state changes
   useEffect(() => {
@@ -120,10 +139,9 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       };
 
       setNodes((nds) => [...nds, newNode]);
-      setSelectedNodeId(newNodeId);
-      setSelectedEdgeId(null);
+      dispatch(setSelectedNodeId(newNodeId));
     },
-    [isEditable, screenToFlowPosition, setNodes]
+    [isEditable, screenToFlowPosition, setNodes, dispatch]
   );
 
   // Handle Connecting Two Nodes
@@ -163,27 +181,26 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     [isEditable, setEdges]
   );
 
-  // Selection Tracking
-  const onSelectionChange = useCallback((params: OnSelectionChangeParams<AppNode, AppEdge>) => {
-    const node = params.nodes[0];
-    const edge = params.edges[0];
+  // Selection Tracking coordinated via Redux editorSlice
+  const onSelectionChange = useCallback(
+    (params: OnSelectionChangeParams<AppNode, AppEdge>) => {
+      const node = params.nodes[0];
+      const edge = params.edges[0];
 
-    if (node) {
-      setSelectedNodeId(node.id);
-      setSelectedEdgeId(null);
-    } else if (edge) {
-      setSelectedEdgeId(edge.id);
-      setSelectedNodeId(null);
-    } else {
-      setSelectedNodeId(null);
-      setSelectedEdgeId(null);
-    }
-  }, []);
+      if (node) {
+        dispatch(setSelectedNodeId(node.id));
+      } else if (edge) {
+        dispatch(setSelectedEdgeId(edge.id));
+      } else {
+        dispatch(clearSelection());
+      }
+    },
+    [dispatch]
+  );
 
   const onPaneClick = useCallback(() => {
-    setSelectedNodeId(null);
-    setSelectedEdgeId(null);
-  }, []);
+    dispatch(clearSelection());
+  }, [dispatch]);
 
   // Node Property Updates
   const handleUpdateNodeData = useCallback(
@@ -215,9 +232,9 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       setNodes((nds) => nds.filter((n) => n.id !== nodeId));
       setEdges((eds) => eds.filter((e) => e.source !== nodeId && e.target !== nodeId));
-      setSelectedNodeId(null);
+      dispatch(clearSelection());
     },
-    [isEditable, setNodes, setEdges]
+    [isEditable, setNodes, setEdges, dispatch]
   );
 
   // Edge Property Updates
@@ -261,13 +278,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       if (!isEditable) return;
 
       setEdges((eds) => eds.filter((e) => e.id !== edgeId));
-      setSelectedEdgeId(null);
+      dispatch(clearSelection());
     },
-    [isEditable, setEdges]
+    [isEditable, setEdges, dispatch]
   );
 
   return (
-    <div className="flex h-[720px] w-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
+    <div className="relative flex h-[720px] w-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
       {/* 1. Component Palette (Left Panel) */}
       <div className="hidden lg:block w-72 shrink-0 h-full">
         <ComponentPalette isEditable={isEditable} />
@@ -321,20 +338,35 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             className="!rounded-xl !border !border-slate-800 !bg-slate-950/90 shadow-xl"
           />
         </ReactFlow>
+
+        {/* Toggle Details Panel Button (when panel is collapsed) */}
+        {!detailsPanelOpen && (
+          <button
+            onClick={() => dispatch(setDetailsPanelOpen(true))}
+            className="absolute top-4 right-4 z-10 flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white"
+            title="Open Properties Panel"
+          >
+            <Sliders className="h-3.5 w-3.5 text-cyan-400" />
+            <span>Properties</span>
+          </button>
+        )}
       </div>
 
       {/* 3. Details Panel (Right Panel) */}
-      <div className="hidden md:block w-80 shrink-0 h-full">
-        <NodeDetailsPanel
-          selectedNode={selectedNode}
-          selectedEdge={selectedEdge}
-          isEditable={isEditable}
-          onUpdateNodeData={handleUpdateNodeData}
-          onDeleteNode={handleDeleteNode}
-          onUpdateEdgeData={handleUpdateEdgeData}
-          onDeleteEdge={handleDeleteEdge}
-        />
-      </div>
+      {detailsPanelOpen && (
+        <div className="hidden md:block w-80 shrink-0 h-full border-l border-slate-800/80">
+          <NodeDetailsPanel
+            selectedNode={selectedNode}
+            selectedEdge={selectedEdge}
+            isEditable={isEditable}
+            onUpdateNodeData={handleUpdateNodeData}
+            onDeleteNode={handleDeleteNode}
+            onUpdateEdgeData={handleUpdateEdgeData}
+            onDeleteEdge={handleDeleteEdge}
+            onClose={() => dispatch(setDetailsPanelOpen(false))}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -22,10 +22,25 @@ import { useGetProjectByIdQuery, useGetProjectMembersQuery, useCreateInvitationM
 import { useGetArchitectureQuery } from '../store/api/architectureApi';
 import { ArchitectureCanvas } from '../components/architecture/ArchitectureCanvas';
 import { ProjectMemberWithUser } from '@archsync/shared';
+import { canEditArchitecture, canManageMembers } from '../lib/permissions';
+import { parseApiError } from '../lib/apiErrors';
+import { useAppDispatch } from '../store/hooks';
+import { setActiveProjectId, resetEditorState } from '../store/slices/editorSlice';
 
 export const ProjectWorkspacePage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
   const validProjectId = projectId || '';
+  const dispatch = useAppDispatch();
+
+  // Manage project-scoped editor state isolation
+  React.useEffect(() => {
+    if (validProjectId) {
+      dispatch(setActiveProjectId(validProjectId));
+    }
+    return () => {
+      dispatch(resetEditorState());
+    };
+  }, [validProjectId, dispatch]);
 
   const {
     data: projectRes,
@@ -71,14 +86,7 @@ export const ProjectWorkspacePage: React.FC = () => {
   }
 
   if (isProjectError || !projectRes || !projectRes.success) {
-    const errorMessage =
-      typeof projectError === 'object' &&
-      projectError !== null &&
-      'data' in projectError &&
-      typeof (projectError as { data?: { error?: { message?: string } } }).data?.error?.message ===
-        'string'
-        ? (projectError as { data: { error: { message: string } } }).data.error.message
-        : 'Project not found or access denied';
+    const errorDetails = parseApiError(projectError);
 
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
@@ -86,7 +94,7 @@ export const ProjectWorkspacePage: React.FC = () => {
           <AlertCircle className="h-7 w-7" />
         </div>
         <h2 className="mt-4 text-xl font-bold text-white">Cannot Access Project</h2>
-        <p className="mt-2 text-sm text-slate-400">{errorMessage}</p>
+        <p className="mt-2 text-sm text-slate-400">{errorDetails.message}</p>
         <div className="mt-6">
           <Link
             to="/projects"
@@ -102,8 +110,8 @@ export const ProjectWorkspacePage: React.FC = () => {
 
   const project = projectRes.data.project;
   const currentUserRole = project.access?.role ?? 'VIEWER';
-  const isOwner = currentUserRole === 'OWNER';
-  const isEditable = currentUserRole === 'OWNER' || currentUserRole === 'EDITOR';
+  const isOwner = canManageMembers(currentUserRole);
+  const isEditable = canEditArchitecture(currentUserRole);
   const members = membersRes && membersRes.success ? membersRes.data.members : [];
 
   const handleOpenInviteModal = () => {

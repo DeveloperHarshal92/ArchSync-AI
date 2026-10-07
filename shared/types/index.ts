@@ -4,3 +4,4 @@ export * from './architecture';
 export * from './project';
 export * from './membership';
 export * from './collaboration';
+export * from './ai';

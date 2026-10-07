@@ -15,8 +15,10 @@ const envSchema = z.object({
     .default('archsync_jwt_secret_dev_key_super_secure_32chars'),
   JWT_EXPIRES_IN: z.string().default('7d'),
   COOKIE_NAME: z.string().default('auth_token'),
+  GEMINI_API_KEY: z.string().optional(),
+  GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
   AI_API_KEY: z.string().optional(),
-  AI_MODEL: z.string().default('gemini-1.5-pro'),
+  AI_MODEL: z.string().default('gemini-2.5-flash'),
 });
 
 export type EnvConfig = z.infer<typeof envSchema>;

@@ -581,32 +581,32 @@ Prepare the application for deployment.
 
 ## Milestone 1: Foundation
 
-- [ ] F01 complete
-- [ ] F02 complete
+- [x] F01 complete
+- [x] F02 complete
 
 ## Milestone 2: Identity and Projects
 
-- [ ] F03 complete
-- [ ] F04 complete
-- [ ] F05 complete
+- [x] F03 complete
+- [x] F04 complete
+- [x] F05 complete
 
 ## Milestone 3: Architecture Editor
 
-- [ ] F06 complete
-- [ ] F07 complete
-- [ ] F08 complete
+- [x] F06 complete
+- [x] F07 complete
+- [x] F08 complete
 
 ## Milestone 4: Persistence
 
-- [ ] F09 complete
+- [x] F09 complete
 
 ## Milestone 5: Collaboration
 
-- [ ] F10 complete
+- [x] F10 complete
 
 ## Milestone 6: Intelligence
 
-- [ ] F11 complete
+- [x] F11 complete
 - [ ] F12 complete
 
 ## Milestone 7: Product Completion

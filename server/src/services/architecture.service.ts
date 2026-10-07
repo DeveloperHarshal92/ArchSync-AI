@@ -158,6 +158,32 @@ export class ArchitectureService {
   }): ArchitectureValidationResult {
     return ArchitectureValidationService.validateGraph(graph);
   }
+
+  /**
+   * Authorizes project access (OWNER, EDITOR, VIEWER) and validates the architecture.
+   * If draftGraph contains nodes or edges, validates the provided draft graph.
+   * Otherwise, retrieves the project's current architecture and validates it.
+   */
+  public async validateArchitecture(
+    userId: string,
+    projectId: string,
+    draftGraph?: { nodes?: any[]; edges?: any[] }
+  ): Promise<ArchitectureValidationResult> {
+    // 1. Authorize project access (OWNER, EDITOR, VIEWER allowed)
+    await permissionService.requireProjectAccess(userId, projectId);
+
+    // 2. If draft graph with nodes or edges is provided, validate it directly
+    if (draftGraph && (Array.isArray(draftGraph.nodes) || Array.isArray(draftGraph.edges))) {
+      return this.validateArchitectureGraph({
+        nodes: draftGraph.nodes || [],
+        edges: draftGraph.edges || [],
+      });
+    }
+
+    // 3. Otherwise fetch persisted architecture document
+    const { architecture } = await this.getArchitecture(userId, projectId);
+    return this.validateArchitectureGraph(architecture);
+  }
 }
 
 export const architectureService = new ArchitectureService();

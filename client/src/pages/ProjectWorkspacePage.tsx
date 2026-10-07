@@ -26,6 +26,7 @@ import { canEditArchitecture, canManageMembers } from '../lib/permissions';
 import { parseApiError } from '../lib/apiErrors';
 import { useAppDispatch } from '../store/hooks';
 import { setActiveProjectId, resetEditorState } from '../store/slices/editorSlice';
+import { setValidationPanelOpen } from '../store/slices/uiSlice';
 
 export const ProjectWorkspacePage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -459,12 +460,20 @@ export const ProjectWorkspacePage: React.FC = () => {
                 <CircleDot className="h-3.5 w-3.5 text-emerald-400" />
                 <span>{archRes.data.architecture.nodes.length} Components</span>
               </span>
-              <span className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2.5 py-1 text-xs text-slate-300">
-                <CheckCircle className="h-3.5 w-3.5 text-cyan-400" />
+              <button
+                onClick={() => dispatch(setValidationPanelOpen(true))}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2.5 py-1 text-xs text-slate-300 hover:border-slate-700 hover:text-white transition-colors cursor-pointer"
+                title="View Architecture Validation Results"
+              >
+                <CheckCircle
+                  className={`h-3.5 w-3.5 ${
+                    archRes.data.validation?.valid !== false ? 'text-cyan-400' : 'text-rose-400'
+                  }`}
+                />
                 <span>
                   {archRes.data.validation?.valid !== false ? 'Valid Graph' : 'Validation Issues'}
                 </span>
-              </span>
+              </button>
             </div>
           )}
         </div>
@@ -477,6 +486,7 @@ export const ProjectWorkspacePage: React.FC = () => {
         ) : archRes && archRes.success ? (
           <ArchitectureCanvas
             initialArchitecture={archRes.data.architecture}
+            initialValidation={archRes.data.validation}
             isEditable={isEditable}
             onReload={refetchArchitecture}
           />

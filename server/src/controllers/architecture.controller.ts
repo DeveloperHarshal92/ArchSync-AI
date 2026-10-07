@@ -35,6 +35,23 @@ export class ArchitectureController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/v1/projects/:projectId/architecture/validate
+   */
+  public async validateArchitecture(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await architectureService.validateArchitecture(
+        req.user!.id,
+        req.params.projectId as string,
+        req.body
+      );
+
+      sendSuccess(res, result, 200);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const architectureController = new ArchitectureController();

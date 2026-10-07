@@ -141,3 +141,19 @@ export const putArchitectureSchema = {
   body: updateArchitectureSchema,
 };
 
+export const validateArchitectureSchema = {
+  params: z.object({
+    projectId: z
+      .string()
+      .trim()
+      .regex(/^[0-9a-fA-F]{24}$/, 'Invalid project ID format'),
+  }),
+  body: z
+    .object({
+      nodes: z.array(z.any()).optional(),
+      edges: z.array(z.any()).optional(),
+    })
+    .optional(),
+};
+
+

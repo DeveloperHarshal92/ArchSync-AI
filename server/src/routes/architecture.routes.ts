@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate';
 import {
   getArchitectureSchema,
   putArchitectureSchema,
+  validateArchitectureSchema,
 } from '../validators/architecture.validator';
 import { asyncHandler } from '../utils/asyncHandler';
 
@@ -26,3 +27,11 @@ architectureRouter.put(
   validate(putArchitectureSchema),
   asyncHandler((req, res, next) => architectureController.updateArchitecture(req, res, next))
 );
+
+// POST /api/v1/projects/:projectId/architecture/validate
+architectureRouter.post(
+  '/validate',
+  validate(validateArchitectureSchema),
+  asyncHandler((req, res, next) => architectureController.validateArchitecture(req, res, next))
+);
+

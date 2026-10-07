@@ -5,6 +5,8 @@ import uiReducer, {
   setSidebarOpen,
   toggleDetailsPanel,
   setDetailsPanelOpen,
+  toggleValidationPanel,
+  setValidationPanelOpen,
   openModal,
   closeModal,
   resetUiState,
@@ -81,9 +83,21 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
       expect(state).toEqual({
         sidebarOpen: true,
         detailsPanelOpen: true,
+        validationPanelOpen: false,
         activeModal: null,
         theme: 'dark',
       });
+    });
+
+    it('3c. GIVEN validation panel state, WHEN toggled or reset, THEN values transition predictably', () => {
+      let state = uiReducer(undefined, { type: '@@INIT' });
+      expect(state.validationPanelOpen).toBe(false);
+
+      state = uiReducer(state, toggleValidationPanel());
+      expect(state.validationPanelOpen).toBe(true);
+
+      state = uiReducer(state, setValidationPanelOpen(false));
+      expect(state.validationPanelOpen).toBe(false);
     });
   });
 
@@ -312,6 +326,7 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
         ui: {
           sidebarOpen: false,
           detailsPanelOpen: true,
+          validationPanelOpen: false,
           activeModal: 'TEST_MODAL',
           theme: 'dark',
         },

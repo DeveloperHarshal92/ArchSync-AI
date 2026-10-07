@@ -1,0 +1,29 @@
+{
+  "name": "archsync-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-Time Collaborative Architecture Workspace",
+  "workspaces": [
+    "shared",
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n \"server,client\" -c \"blue,cyan\" \"npm run dev -w @archsync/server\" \"npm run dev -w @archsync/client\"",
+    "dev:server": "npm run dev -w @archsync/server",
+    "dev:client": "npm run dev -w @archsync/client",
+    "build": "npm run build -w @archsync/server && npm run build -w @archsync/client",
+    "build:server": "npm run build -w @archsync/server",
+    "build:client": "npm run build -w @archsync/client",
+    "typecheck": "npm run typecheck -w @archsync/shared && npm run typecheck -w @archsync/server && npm run typecheck -w @archsync/client",
+    "typecheck:shared": "npm run typecheck -w @archsync/shared",
+    "typecheck:server": "npm run typecheck -w @archsync/server",
+    "typecheck:client": "npm run typecheck -w @archsync/client",
+    "test": "npm run test -w @archsync/server && npm run test -w @archsync/client",
+    "test:server": "npm run test -w @archsync/server",
+    "test:client": "npm run test -w @archsync/client"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*
+!.env.example
+
+# Production builds
+dist/
+dist-ssr/
+build/
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+
+# IDE & OS
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
+
+# Temporary & Cache
+.cache/
+.temp/
+.tmp/
+
+# Antigravity
+.agents/
+skills-lock.json
+.claude
+.codestudio
+skills
+
+# Memory files
+memory.md
+PRD.md
+TASK.md
+GUIDELINE.md
+ARCHITECTURE.md
+DOCS.md
+TESTS.md
+SYSTEM.md
+RULES.md

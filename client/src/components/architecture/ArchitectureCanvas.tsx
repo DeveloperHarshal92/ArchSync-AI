@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   ReactFlow,
   Background,
@@ -13,6 +13,7 @@ import {
   ReactFlowProvider,
   NodeTypes,
   OnSelectionChangeParams,
+  Viewport,
 } from '@xyflow/react';
 import { Architecture, ArchitectureNodeType, NODE_CATALOG, EdgeType } from '@archsync/shared';
 import {
@@ -27,6 +28,7 @@ import { ArchitectureNodeComponent } from './ArchitectureNode';
 import { ComponentPalette } from './ComponentPalette';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
 import { ArchitectureEmptyState } from './ArchitectureEmptyState';
+import { PersistenceIndicator } from './PersistenceIndicator';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
@@ -37,12 +39,14 @@ import {
   clearSelection,
 } from '../../store/slices/editorSlice';
 import { selectDetailsPanelOpen, setDetailsPanelOpen } from '../../store/slices/uiSlice';
+import { useArchitectureAutosave } from '../../hooks/useArchitectureAutosave';
 import { Sliders } from 'lucide-react';
 
 interface ArchitectureCanvasProps {
   initialArchitecture: Architecture;
   isEditable: boolean;
   onArchitectureChange?: (nodes: AppNode[], edges: AppEdge[]) => void;
+  onReload?: () => void;
 }
 
 const nodeTypes: NodeTypes = {
@@ -53,6 +57,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   initialArchitecture,
   isEditable,
   onArchitectureChange,
+  onReload,
 }) => {
   const dispatch = useAppDispatch();
   const selectedNodeId = useAppSelector(selectSelectedNodeId);
@@ -70,6 +75,10 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const [nodes, setNodes, onNodesChange] = useNodesState<AppNode>(initialFlowData.nodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState<AppEdge>(initialFlowData.edges);
 
+  const [currentViewport, setCurrentViewport] = useState<Viewport>(
+    initialArchitecture.viewport || { x: 0, y: 0, zoom: 1 }
+  );
+
   // Sync when initialArchitecture changes from server hydration
   useEffect(() => {
     const converted = architectureToReactFlow(initialArchitecture);
@@ -78,6 +87,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
     if (initialArchitecture.viewport) {
       setViewport(initialArchitecture.viewport);
+      setCurrentViewport(initialArchitecture.viewport);
     }
   }, [initialArchitecture, setNodes, setEdges, setViewport]);
 
@@ -92,6 +102,22 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   useEffect(() => {
     onArchitectureChange?.(nodes, edges);
   }, [nodes, edges, onArchitectureChange]);
+
+  // Track viewport movements when pan/zoom stabilizes
+  const onMoveEnd = useCallback((_event: unknown, vp: Viewport) => {
+    setCurrentViewport(vp);
+  }, []);
+
+  // F09: Debounced autosave controller
+  const { saveNow } = useArchitectureAutosave({
+    projectId: initialArchitecture.projectId,
+    initialArchitecture,
+    nodes,
+    edges,
+    viewport: currentViewport,
+    isEditable,
+    debounceMs: 1000,
+  });
 
   const selectedNode = useMemo(
     () => nodes.find((n) => n.id === selectedNodeId) || null,
@@ -292,6 +318,11 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       {/* 2. Interactive Canvas (Center Area) */}
       <div className="relative flex-1 h-full w-full bg-[#0a0f1d]">
+        {/* Persistence Status Indicator in Top Left */}
+        <div className="absolute top-4 left-4 z-10 pointer-events-auto">
+          <PersistenceIndicator onRetry={saveNow} onReload={onReload} />
+        </div>
+
         {nodes.length === 0 && <ArchitectureEmptyState isEditable={isEditable} />}
 
         <ReactFlow<AppNode, AppEdge>
@@ -305,6 +336,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           onDrop={onDrop}
           onSelectionChange={onSelectionChange}
           onPaneClick={onPaneClick}
+          onMoveEnd={onMoveEnd}
           nodesDraggable={isEditable}
           nodesConnectable={isEditable}
           elementsSelectable={true}

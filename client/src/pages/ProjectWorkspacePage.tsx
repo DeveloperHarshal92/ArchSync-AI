@@ -56,7 +56,11 @@ export const ProjectWorkspacePage: React.FC = () => {
     refetch: refetchMembers,
   } = useGetProjectMembersQuery(validProjectId);
 
-  const { data: archRes, isLoading: isArchLoading } = useGetArchitectureQuery(validProjectId);
+  const {
+    data: archRes,
+    isLoading: isArchLoading,
+    refetch: refetchArchitecture,
+  } = useGetArchitectureQuery(validProjectId);
 
   const [createInvitation, { isLoading: isInviting }] = useCreateInvitationMutation();
   const [updateMemberRole, { isLoading: isUpdatingRole }] = useUpdateMemberRoleMutation();
@@ -474,6 +478,7 @@ export const ProjectWorkspacePage: React.FC = () => {
           <ArchitectureCanvas
             initialArchitecture={archRes.data.architecture}
             isEditable={isEditable}
+            onReload={refetchArchitecture}
           />
         ) : (
           <div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-12 text-center">

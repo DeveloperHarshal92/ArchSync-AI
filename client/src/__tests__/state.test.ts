@@ -140,6 +140,11 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
         selectedNodeId: null,
         selectedEdgeId: null,
         readOnly: false,
+        persistenceStatus: 'idle',
+        lastSavedAt: null,
+        lastSaveError: null,
+        currentVersion: 1,
+        hasVersionConflict: false,
       });
     });
   });
@@ -315,6 +320,11 @@ describe('ArchSync AI — F08 Redux + RTK Query State Architecture Suite', () =>
           selectedNodeId: 'node_xyz',
           selectedEdgeId: null,
           readOnly: false,
+          persistenceStatus: 'idle',
+          lastSavedAt: null,
+          lastSaveError: null,
+          currentVersion: 1,
+          hasVersionConflict: false,
         },
         api: appStore.getState().api,
       };

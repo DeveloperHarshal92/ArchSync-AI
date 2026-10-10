@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Mail,
-  ShieldCheck,
   Clock,
   CheckCircle2,
   XCircle,
@@ -11,6 +10,7 @@ import {
   FolderGit2,
   Inbox,
   ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 import {
   useGetInvitationsQuery,
@@ -23,13 +23,43 @@ export const InvitationsPage: React.FC = () => {
   const [acceptInvitation, { isLoading: isAccepting }] = useAcceptInvitationMutation();
   const [rejectInvitation, { isLoading: isRejecting }] = useRejectInvitationMutation();
 
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'RESOLVED'>('ALL');
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
 
   const invitations = response && response.success ? response.data.invitations : [];
 
+  const pendingCount = useMemo(() => {
+    const now = Date.now();
+    return invitations.filter(
+      (inv) => inv.status === 'PENDING' && new Date(inv.expiresAt).getTime() >= now
+    ).length;
+  }, [invitations]);
+
+  const resolvedCount = useMemo(() => {
+    return invitations.length - pendingCount;
+  }, [invitations, pendingCount]);
+
+  const filteredInvitations = useMemo(() => {
+    const now = Date.now();
+    if (filter === 'PENDING') {
+      return invitations.filter(
+        (inv) => inv.status === 'PENDING' && new Date(inv.expiresAt).getTime() >= now
+      );
+    }
+    if (filter === 'RESOLVED') {
+      return invitations.filter(
+        (inv) => inv.status !== 'PENDING' || new Date(inv.expiresAt).getTime() < now
+      );
+    }
+    return invitations;
+  }, [invitations, filter]);
+
+  const isAnyActionRunning = isAccepting || isRejecting || activeActionId !== null;
+
   const handleAccept = async (invitationId: string) => {
+    if (isAnyActionRunning) return;
     setActiveActionId(invitationId);
     setActionError(null);
     setActionSuccess(null);
@@ -55,6 +85,7 @@ export const InvitationsPage: React.FC = () => {
   };
 
   const handleReject = async (invitationId: string) => {
+    if (isAnyActionRunning) return;
     setActiveActionId(invitationId);
     setActionError(null);
     setActionSuccess(null);
@@ -78,41 +109,45 @@ export const InvitationsPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 text-[#226192]">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-8 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[#226192]/15">
         <div>
-          <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+          <div className="flex items-center gap-2 text-[#ef8557] font-mono text-xs uppercase tracking-widest font-semibold">
             <Mail className="h-4 w-4" />
-            <span>Project Access Invitations</span>
+            <span>Collaboration & Access Management</span>
           </div>
-          <h1 className="mt-1 text-2xl sm:text-3xl font-bold tracking-tight text-white">
+          <h1 className="mt-1 font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[#226192]">
             Invitations Inbox
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
-            Accept invitations from other architects to collaborate on architecture projects.
+          <p className="mt-1 text-xs sm:text-sm text-[#226192]/70">
+            Review and respond to collaboration requests from engineering teams across workspaces.
           </p>
         </div>
 
         <Link
           to="/projects"
-          className="inline-flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900/60 px-4 py-2 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:text-white transition-colors"
+          className="inline-flex items-center gap-2 rounded-xl border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#226192] hover:bg-[#226192]/5 transition-colors self-start sm:self-auto focus:outline-none focus:ring-2 focus:ring-[#ef8557]"
         >
-          <FolderGit2 className="h-4 w-4 text-cyan-400" />
+          <FolderGit2 className="h-4 w-4 text-[#ef8557]" />
           <span>My Projects</span>
         </Link>
       </div>
 
       {/* Action Alerts */}
       {actionSuccess && (
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs text-emerald-400">
+        <div
+          role="status"
+          className="mt-6 flex items-center justify-between rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-4 text-xs text-[#226192]"
+        >
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#ef8557]" />
             <span>{actionSuccess}</span>
           </div>
           <button
             onClick={() => setActionSuccess(null)}
-            className="text-emerald-400/80 hover:text-emerald-300"
+            className="text-[#ef8557] hover:underline transition-colors text-xs font-medium"
+            aria-label="Dismiss message"
           >
             Dismiss
           </button>
@@ -120,64 +155,116 @@ export const InvitationsPage: React.FC = () => {
       )}
 
       {actionError && (
-        <div className="mt-6 flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-400">
+        <div
+          role="alert"
+          className="mt-6 flex items-center justify-between rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-4 text-xs text-[#226192]"
+        >
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#ef8557]" />
             <span>{actionError}</span>
           </div>
           <button
             onClick={() => setActionError(null)}
-            className="text-rose-400/80 hover:text-rose-300"
+            className="text-[#ef8557] hover:underline transition-colors text-xs font-medium"
+            aria-label="Dismiss error"
           >
             Dismiss
           </button>
         </div>
       )}
 
-      {/* Invitations List */}
+      {/* Filter Tabs */}
+      {!isLoading && !isError && invitations.length > 0 && (
+        <div className="mt-6 flex items-center gap-2">
+          <div className="flex items-center gap-1 rounded-xl border border-[#226192]/20 bg-[#eae6ed] p-1 font-mono text-xs">
+            <button
+              onClick={() => setFilter('ALL')}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+                filter === 'ALL'
+                  ? 'bg-[#ef8557] text-[#226192] shadow-sm'
+                  : 'text-[#226192]/70 hover:text-[#226192]'
+              }`}
+            >
+              All ({invitations.length})
+            </button>
+            <button
+              onClick={() => setFilter('PENDING')}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+                filter === 'PENDING'
+                  ? 'bg-[#ef8557] text-[#226192] shadow-sm'
+                  : 'text-[#226192]/70 hover:text-[#226192]'
+              }`}
+            >
+              Pending ({pendingCount})
+            </button>
+            <button
+              onClick={() => setFilter('RESOLVED')}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
+                filter === 'RESOLVED'
+                  ? 'bg-[#ef8557] text-[#226192] shadow-sm'
+                  : 'text-[#226192]/70 hover:text-[#226192]'
+              }`}
+            >
+              Resolved ({resolvedCount})
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Invitations List / States */}
       {isLoading ? (
-        <div className="mt-8 space-y-4">
+        <div className="mt-6 space-y-3">
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="h-28 rounded-2xl border border-slate-800 bg-slate-900/30 p-6 animate-pulse"
+              className="h-24 rounded-2xl border border-[#226192]/15 bg-[#226192]/5 p-5 animate-pulse"
             />
           ))}
         </div>
       ) : isError ? (
-        <div className="mt-8 rounded-2xl border border-rose-500/30 bg-rose-500/10 p-6 text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-rose-400" />
-          <h3 className="mt-2 text-sm font-semibold text-white">Failed to load invitations</h3>
-          <p className="mt-1 text-xs text-rose-300">
+        <div className="mt-8 rounded-2xl border border-[#ef8557]/40 bg-[#ef8557]/10 p-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-[#ef8557]" />
+          <h3 className="mt-3 font-serif text-lg font-medium text-[#226192]">Failed to load invitations</h3>
+          <p className="mt-1 text-xs text-[#226192]/70">
             Could not connect to the invitations service.
           </p>
           <button
             onClick={() => refetch()}
-            className="mt-4 rounded-lg bg-slate-800 px-3.5 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700"
+            className="mt-4 rounded-lg bg-[#eae6ed] border border-[#226192]/20 px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#ef8557] transition-colors"
           >
-            Retry
+            Retry Connection
           </button>
         </div>
       ) : invitations.length === 0 ? (
-        <div className="mt-12 rounded-3xl border border-dashed border-slate-800 bg-slate-950/40 p-12 text-center backdrop-blur-sm">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-400">
-            <Inbox className="h-7 w-7" />
+        <div className="mt-10 rounded-2xl border border-dashed border-[#226192]/20 bg-[#226192]/5 p-12 text-center backdrop-blur-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#226192]/10 text-[#226192] border border-[#226192]/20">
+            <Inbox className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 text-base font-semibold text-white">No invitations received</h3>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-slate-400">
-            When another user invites you to join their architecture project, the invitation will appear here.
+          <h3 className="mt-4 font-serif text-xl font-medium text-[#226192]">No invitations received</h3>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-[#226192]/70">
+            When another user invites you to join their architecture project, your invitation will appear here.
           </p>
           <Link
             to="/projects"
-            className="mt-6 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[#ef8557] hover:bg-[#ef8557]/90 px-4 py-2 text-xs font-semibold text-[#226192] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557]"
           >
             <span>Go to My Projects</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
+      ) : filteredInvitations.length === 0 ? (
+        <div className="mt-8 rounded-2xl border border-[#226192]/15 bg-[#226192]/5 p-8 text-center">
+          <p className="text-xs text-[#226192]/70">No invitations matching the "{filter.toLowerCase()}" filter.</p>
+          <button
+            onClick={() => setFilter('ALL')}
+            className="mt-3 text-xs text-[#ef8557] hover:underline font-mono font-medium transition-colors"
+          >
+            View all invitations
+          </button>
+        </div>
       ) : (
-        <div className="mt-8 space-y-4">
-          {invitations.map((inv) => {
+        <div className="mt-6 space-y-3">
+          {filteredInvitations.map((inv) => {
             const isPending = inv.status === 'PENDING';
             const isExpired =
               inv.status === 'EXPIRED' ||
@@ -189,18 +276,21 @@ export const InvitationsPage: React.FC = () => {
             return (
               <div
                 key={inv.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 backdrop-blur-md shadow-lg transition-all hover:border-slate-700 hover:bg-slate-900/80"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#226192]/15 bg-[#eae6ed] p-5 shadow-sm transition-all hover:border-[#226192]"
               >
-                <div className="space-y-1.5">
+                {/* Information Column */}
+                <div className="space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="font-semibold text-white text-base">
+                    <h3 className="font-serif text-lg font-medium text-[#226192]">
                       {inv.projectName || 'Architecture Project'}
                     </h3>
+
+                    {/* Role Pill */}
                     <span
-                      className={`rounded px-2 py-0.5 text-[10px] font-semibold tracking-wide border ${
+                      className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase border ${
                         inv.role === 'EDITOR'
-                          ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
-                          : 'border-slate-500/30 bg-slate-500/10 text-slate-300'
+                          ? 'border-[#226192]/30 bg-[#226192]/10 text-[#226192]'
+                          : 'border-[#226192]/15 bg-transparent text-[#226192]/70'
                       }`}
                     >
                       {inv.role}
@@ -208,27 +298,29 @@ export const InvitationsPage: React.FC = () => {
 
                     {/* Status Badge */}
                     <span
-                      className={`rounded-full px-2 py-0.5 text-[10px] font-medium border ${
+                      className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase border ${
                         isAccepted
-                          ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400'
+                          ? 'border-[#226192]/30 bg-[#226192]/10 text-[#226192]'
                           : isRejected
-                          ? 'border-rose-500/30 bg-rose-500/10 text-rose-400'
+                          ? 'border-[#ef8557]/40 bg-[#ef8557]/15 text-[#226192]'
                           : isExpired
-                          ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                          : 'border-blue-500/30 bg-blue-500/10 text-blue-400'
+                          ? 'border-[#226192]/15 bg-transparent text-[#226192]/60'
+                          : 'border-[#ef8557]/40 bg-[#ef8557]/15 text-[#226192]'
                       }`}
                     >
                       {isExpired ? 'EXPIRED' : inv.status}
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-400 flex items-center gap-1.5">
+                  <p className="text-xs text-[#226192]/70 flex items-center gap-1.5 flex-wrap">
                     <span>Invited by</span>
-                    <strong className="text-slate-300">{inv.inviterName || 'Project Owner'}</strong>
+                    <strong className="text-[#226192] font-medium">
+                      {inv.inviterName || 'Project Owner'}
+                    </strong>
                     <span>to contribute as an {inv.role.toLowerCase()}.</span>
                   </p>
 
-                  <div className="flex items-center gap-3 text-[11px] text-slate-500 pt-1">
+                  <div className="flex items-center gap-3 text-[11px] text-[#226192]/60 font-mono pt-0.5">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       <span>
@@ -240,23 +332,23 @@ export const InvitationsPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Actions */}
+                {/* Actions Column */}
                 <div className="flex items-center gap-2 sm:self-center shrink-0">
                   {isPending && !isExpired ? (
                     <>
                       <button
                         onClick={() => handleAccept(inv.id)}
-                        disabled={isOperating || isAccepting || isRejecting}
-                        className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50 transition-all"
+                        disabled={isAnyActionRunning}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#ef8557] hover:bg-[#ef8557]/90 active:bg-[#ef8557]/80 px-4 py-2 text-xs font-semibold text-[#226192] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isOperating && isAccepting ? (
                           <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#226192]" />
                             <span>Accepting...</span>
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5 text-[#226192]" />
                             <span>Accept</span>
                           </>
                         )}
@@ -264,8 +356,8 @@ export const InvitationsPage: React.FC = () => {
 
                       <button
                         onClick={() => handleReject(inv.id)}
-                        disabled={isOperating || isAccepting || isRejecting}
-                        className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2 text-xs font-medium text-rose-300 hover:bg-rose-500/20 hover:text-rose-200 disabled:opacity-50 transition-all"
+                        disabled={isAnyActionRunning}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-medium text-[#226192]/70 hover:border-[#226192] hover:text-[#226192] transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isOperating && isRejecting ? (
                           <>
@@ -283,13 +375,13 @@ export const InvitationsPage: React.FC = () => {
                   ) : isAccepted ? (
                     <Link
                       to={`/projects/${inv.projectId}`}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-800/80 px-3.5 py-2 text-xs font-medium text-cyan-400 hover:bg-slate-700 hover:text-cyan-300"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#226192] hover:bg-[#226192]/5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557]"
                     >
-                      <ShieldCheck className="h-3.5 w-3.5" />
+                      <ShieldCheck className="h-3.5 w-3.5 text-[#ef8557]" />
                       <span>View Project</span>
                     </Link>
                   ) : (
-                    <span className="text-xs text-slate-500 italic">No action available</span>
+                    <span className="text-xs text-[#226192]/50 italic font-mono">No action available</span>
                   )}
                 </div>
               </div>

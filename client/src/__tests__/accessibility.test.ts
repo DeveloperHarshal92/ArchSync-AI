@@ -326,7 +326,7 @@ describe('F14 responsiveCanvas', () => {
 
   describe('panel visibility classes', () => {
     it('desktop AI panel uses hidden md:block pattern', () => {
-      const classes = 'hidden md:block w-96 shrink-0 h-full border-l border-slate-800/80';
+      const classes = 'hidden md:block w-96 shrink-0 h-full border-l border-[#eae6ed]/20';
       expect(classes).toContain('hidden');
       expect(classes).toContain('md:block');
     });

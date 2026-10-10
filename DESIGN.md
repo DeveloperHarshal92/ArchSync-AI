@@ -1,313 +1,248 @@
-# ArchSync AI — Comprehensive Design System & UI/UX Specification
+# ArchSync AI — Design System & UI/UX Specification
 
-**Document:** DESIGN.md  
-**Product:** ArchSync AI — Collaborative Architecture Diagramming & AI Co-Pilot Studio  
-**Version:** 1.0.0 (Production Architecture & Design System)  
-**Status:** Living Design Specification  
-**Applies To:** Web Client (`@archsync/client`), Shared UI Tokens (`@archsync/shared`), Canvas Design Engine, Component Library
+**Document:** `DESIGN.md`  
+**Product:** ArchSync AI — Collaborative Architecture Workspace  
+**Version:** 2.0.0  
+**Status:** Canonical visual source of truth  
+**Applies to:** All client routes, shared UI, architecture canvas, dialogs, forms, navigation, and responsive states
 
----
-
-## 1. Executive Design Philosophy & Visual Atmosphere
-
-ArchSync AI is a professional, high-density, real-time cloud architecture design studio. It bridges technical precision with modern creative fluidity, tailored for Solutions Architects, Principal Engineers, DevOps teams, and Engineering Leaders.
-
-### 1.1 Aesthetic Mood & Personality
-- **Studio Cockpit Density (Density Rating: 7.5 / 10):** Information-dense without clutter. Every pixel communicates functional state: node topology, edge flow, validation health, live collaborator presence, and AI-assisted recommendations.
-- **Deep Slate Canvas ("Midnight Observatory"):** A deep, low-eye-fatigue background (`#0f172a`) paired with layered translucent glass surfaces (`slate-900/95`, `slate-950/70`) that recede into the backdrop, elevating colorful architectural nodes as the primary heroes.
-- **Precision Engineering Over Generic AI Aesthetics:** 
-  - Strictly **NO** uncalibrated neon glow floods or AI-purple tropes.
-  - Singular high-contrast **Cyan / Sky Blue** accent system (`#06b6d4` / `#38bdf8`) balanced with specialized domain badges.
-  - Strict mathematical grid alignment, crisp 1px structural dividing lines (`border-slate-800`), and tactile spring micro-interactions.
-
-### 1.2 Experience Tenets
-1. **Zero Spatial Ambiguity:** Visual hierarchy directly mirrors architectural hierarchy (Client tier → Gateway → Compute → Data layer).
-2. **Deterministic Feedback:** Immediate visual acknowledgment for every state transition: autosave pulses, cursor presence, socket latency, and live AI streaming.
-3. **Inclusive by Default (WCAG 2.1 AA/AAA):** Universal keyboard focus indicators, strict contrast thresholds (>4.5:1 body, >3:1 UI components), and `prefers-reduced-motion` compliance.
+> **Priority rule:** This file is the source of truth for visual design. If an existing component, old token, generated mockup, skill suggestion, or previous design conflicts with this document, follow this document. Preserve working product behavior and architecture unless a change is explicitly required.
 
 ---
 
-## 2. Color Palette & Token Architecture
+## 1. Brand Direction
 
-The color system uses Tailwind CSS extensions and native CSS custom properties configured in `client/tailwind.config.js` and `client/src/index.css`.
+ArchSync AI should feel like a **considered editorial engineering tool**: the precision of a systems-design workspace combined with the confidence and restraint of a premium technical publication. It must not look like a generic AI SaaS starter template.
 
-### 2.1 Base & Surface Foundations
+### Design principles
 
-| Token Name | Hex Code | Tailwind Equivalent | Purpose & Role |
-| :--- | :--- | :--- | :--- |
-| **Canvas Midnight** | `#0f172a` | `slate-900` | Global application canvas background |
-| **Surface Deep** | `#020617` | `slate-950` | Modals, backdrops, dropdown popovers |
-| **Surface Elevated** | `#1e293b` | `slate-800` | Panels, toolbars, sidebar elevated containers |
-| **Surface Subtle** | `#334155` | `slate-700` | Hover states, secondary action buttons, canvas dots |
-| **Border Structural** | `#1e293b` / `rgba(30,41,59,0.8)` | `slate-800/80` | Default 1px dividing borders and panel frames |
-| **Border Hover** | `#334155` | `slate-700` | Interactive border hover and card outlines |
-| **Text Primary** | `#f8fafc` | `slate-50` / `white` | Headlines, active labels, node primary titles |
-| **Text Secondary** | `#94a3b8` | `slate-400` | Descriptions, metadata, parameter annotations |
-| **Text Muted** | `#64748b` | `slate-500` | Category watermarks, shortcuts, disabled states |
+- **Editorial, not futuristic cliché.** Use typography, alignment, proportion, and meaningful negative space to create character. Do not rely on glows, gradients, glassmorphism, or decorative dashboard cards to manufacture polish.
+- **Dense where the work is; spacious where comprehension needs it.** The architecture studio is a high-density tool. Authentication and onboarding can be calmer, but must not waste large areas of a desktop viewport.
+- **Asymmetry with purpose.** Use uneven columns, left-aligned content, varied grouping, and strong anchors when they improve hierarchy. Do not default to centered hero plus three equal cards.
+- **Product-first.** The canvas and its architecture are the main event. Navigation, side panels, status, and AI assistance must support the work rather than compete with it.
+- **Honest interface.** Only show real user data, API health, save state, member counts, timestamps, and security claims. Never invent successful status or decorative telemetry.
+- **Respect existing functionality.** Do not remove real features, change API contracts, alter role permissions, or introduce silent AI mutations as part of visual redesign.
 
-### 2.2 Brand & Interactive Accents
+## 2. Brand Tokens
 
-| Token Name | Hex Code | Role & WCAG Validation |
-| :--- | :--- | :--- |
-| **Brand Primary (Cyan 500)** | `#06b6d4` | Interactive focus rings (`--focus-ring-color`), active tab highlights |
-| **Brand Action (Cyan 600)** | `#0891b2` | High-contrast button override (`.btn-primary`), 4.6:1 contrast against `#0f172a` |
-| **Brand Focus Glow** | `rgba(6, 182, 212, 0.25)` | Focused card glow, active canvas node ring |
-| **Brand Blue Scale** | `#0c8de4` (`brand-500`) | Secondary brand accent, project links |
+### 2.1 Complete Brand Palette (Strict 3-Color Restriction)
 
-### 2.3 Semantic Status Palette
+The entire ArchSync AI user interface uses strictly and exclusively these three approved hexadecimal colors. No other hex colors are permitted for backgrounds, text, borders, icons, shadows, charts, status badges, or architecture nodes:
 
-| State | Background Tint | Border | Text | Purpose |
-| :--- | :--- | :--- | :--- | :--- |
-| **Success** | `rgba(16, 185, 129, 0.1)` | `border-emerald-500/30` | `#34d399` (`emerald-400`) | Autosaved, rule passed, 0 errors |
-| **Warning** | `rgba(245, 158, 11, 0.1)` | `border-amber-500/30` | `#fbbf24` (`amber-400`) | Latency warning, validation alert, unlinked ports |
-| **Error / Destructive** | `rgba(239, 68, 68, 0.1)` | `border-red-500/30` | `#f87171` (`red-400`) | Cycles detected, disconnected socket, role revoked |
-| **Info / AI Co-Pilot** | `rgba(14, 165, 233, 0.1)` | `border-sky-500/30` | `#38bdf8` (`sky-400`) | AI suggestions, streaming status, hint tips |
+| Token | Hex Value | RGB Value | Intended Use |
+|---|---|---|---|
+| **Warm Ivory** | `#eae6ed` | `rgb(234, 230, 237)` | Foundational canvas background, primary page background, card surfaces, inverted button text |
+| **Deep Editorial Blue** | `#226192` | `rgb(34, 97, 146)` | Typography, structural lines, dividers, icons, and primary interface elements |
+| **Coral Orange** | `#ef8557` | `rgb(239, 133, 87)` | Restrained accent, key calls-to-action, active markers, focus rings, warnings, and alerts |
 
-### 2.4 Architecture Node Types Visual System
+### 2.2 Surface Layering & Opacity System (Light Editorial Studio)
 
-Each `ArchitectureNodeType` defined in `@archsync/shared` is mapped to an authoritative visual configuration (`NODE_TYPE_VISUALS`):
+In accordance with the strict 3-color palette restriction, no fourth color or unapproved hex code (such as black, gray, cyan, green, or red) is permitted. Surfaces, layering, dividers, borders, and interactive feedback are constructed exclusively through opacity variations of the three approved colors on a Warm Ivory base:
 
-```
-┌─────────────────┬──────────────────┬───────────────┬───────────────────────────┐
-│ Node Type       │ Lucide Icon      │ Accent Hex    │ Badge Class Configuration │
-├─────────────────┼──────────────────┼───────────────┼───────────────────────────┤
-│ client          │ Monitor          │ #38bdf8 (Sky) │ bg-sky-500/10 text-sky-40 │
-│ web-app         │ Globe            │ #06b6d4 (Cyan)│ bg-cyan-500/10 text-cyan  │
-│ mobile-app      │ Smartphone       │ #3b82f6 (Blue)│ bg-blue-500/10 text-blue  │
-│ api-gateway     │ Network          │ #a855f7 (Prpl)│ bg-purple-500/10 purple   │
-│ server          │ Server           │ #6366f1 (Indg)│ bg-indigo-500/10 indigo   │
-│ microservice    │ Boxes            │ #8b5cf6 (Vlt) │ bg-violet-500/10 violet   │
-│ database        │ Database         │ #10b981 (Emrd)│ bg-emerald-500/10 emerald │
-│ cache           │ Zap              │ #f59e0b (Ambr)│ bg-amber-500/10 amber     │
-│ queue           │ Layers           │ #f97316 (Orng)│ bg-orange-500/10 orange   │
-│ external-api    │ CloudUpload      │ #ec4899 (Pink)│ bg-pink-500/10 pink       │
-│ cloud-service   │ Cloud            │ #0284c7 (Sky6)│ bg-sky-600/10 text-sky-30 │
-└─────────────────┴──────────────────┴───────────────┴───────────────────────────┘
-```
+| Purpose | Approved Composition | Rendered Appearance |
+|---|---|---|
+| **Canvas & Page Background** | `#eae6ed` | Solid Warm Ivory root background |
+| **Primary Panel / Surface** | `#eae6ed` + `rgba(34, 97, 146, 0.04)` | Subtle tinted raised surface layer on canvas |
+| **Raised Card / Dialog** | `#eae6ed` + `rgba(34, 97, 146, 0.08)` | Distinct elevated panel / card with structural border |
+| **Hover / Active Surface** | `rgba(34, 97, 146, 0.08)` | Interactive control hover / pressed state |
+| **Structural Borders** | `rgba(34, 97, 146, 0.15)`–`0.25` | Fine technical linework, quiet dividers, container outlines |
+| **Active / Focus Borders** | `#ef8557` (Coral Orange) | High-visibility focus indicators (WCAG 2.2 AA compliant) |
+| **Primary Text & Headings** | `#226192` (Deep Editorial Blue) | 5.42:1 contrast against `#eae6ed` (exceeds WCAG AA 4.5:1) |
+| **Secondary Text** | `rgba(34, 97, 146, 0.75)` | Supporting copy, descriptions, and labels |
+| **Muted Metadata** | `rgba(34, 97, 146, 0.55)` | Monospace timestamps, versions, coordinates |
+| **Critical / Attention Badge** | `#ef8557` + `rgba(239, 133, 87, 0.15)` | High-priority warnings, alerts, errors |
+| **Informational / Valid Badge** | `#226192` + `rgba(34, 97, 146, 0.10)` | Normal status, valid state, editor roles |
 
-### 2.5 Real-Time Collaborative Cursor Palettes
-Collaborative user avatars and multi-cursor overlays calculate deterministic hsl/hex values based on user ID hashes:
-- `#f43f5e` (Rose)
-- `#8b5cf6` (Violet)
-- `#06b6d4` (Cyan)
-- `#10b981` (Emerald)
-- `#f59e0b` (Amber)
-- `#ec4899` (Pink)
+### 2.3 Strict Color Usage Rules
 
----
+1. **Strictly 3 Hexadecimal Colors:** Use only `#eae6ed`, `#226192`, and `#ef8557`. Never introduce cyan, teal, purple, indigo, green, red, amber, gray, or black hex codes.
+2. **Opacity Variations Only:** You may use opacity variations of the three approved colors for layering, borders, hover states, and subtle surfaces. Do not introduce a different hue through these variations.
+3. **No Gradient Text:** All headings and body copy use solid `#226192` or `#ef8557`.
+4. **No Full-Page Gradients:** Avoid gradient backgrounds; use layered solid Warm Ivory surfaces with subtle opacity tinting and fine structural lines.
+5. **No Neon Glows:** Remove all glowing shadows (`shadow-cyan-500/20`, neon rings).
+6. **Icon & Pattern Differentiation:** Differentiate all 11 architecture node types and statuses through Lucide icons, labels, border styles (solid, dashed, double), and patterns rather than introducing new colors.
+7. **Accessibility First:** Maintain readable contrast (minimum 4.5:1 for normal text, 3:1 for large text and UI boundaries) and visible focus rings. Deep Editorial Blue `#226192` on Warm Ivory `#eae6ed` delivers 5.42:1 contrast ratio.
+8. **No Emoji:** Use Lucide icons or the project's established icon library. **Never use emoji as interface icons.**
+9. **Informative States:** Never rely on color alone to convey saved/error/permission states. Pair color with text or a proper icon.
 
-## 3. Typographic Architecture
+## 3. Typography
 
-The typographic hierarchy is designed for fast scanning across high-density diagrams, inspection property panels, and complex validation logs.
+### 3.1 Font pairing
 
-### 3.1 Font Stacks
-- **Interface Primary:** `Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
-  - High legibility at small sizes (`10px`–`14px`), distinct glyph disambiguation, broad unicode symbol support.
-- **Data & Monospace:** `JetBrains Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace`
-  - Used for Node IDs, Coordinates `(x, y)`, Latency counters (`ms`), Schema definitions, and JSON/YAML exports.
+- **Display and editorial headings:** `Cormorant Garamond`, Georgia, serif.
+- **Interface, body, controls, navigation, and labels:** `Montserrat`, system-ui, sans-serif.
+- **Technical data only:** the existing monospace stack, such as `JetBrains Mono`, ui-monospace, monospace, for IDs, coordinates, JSON, code, node metadata, and measured latency.
 
-### 3.2 Scale & Hierarchy
+Load Cormorant Garamond and Montserrat through the project's existing approved font-loading method. Include sensible fallbacks and avoid blocking initial rendering. If a font fails to load, the layout must remain usable.
 
-| Level | Size | Weight | Line Height | Tracking | Usage |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Display / Hero** | `2.25rem` (36px) | 800 (Extrabold) | 1.15 | `-0.025em` | Marketing landing hero, primary splash |
-| **Heading 1** | `1.5rem` (24px) | 700 (Bold) | 1.25 | `-0.02em` | Workspace header, project title, auth headers |
-| **Heading 2** | `1.125rem` (18px) | 600 (Semibold) | 1.3 | `-0.015em` | Drawer panel headers, modal titles |
-| **Heading 3** | `0.875rem` (14px) | 600 (Semibold) | 1.4 | `-0.01em` | Architecture node card label, section dividers |
-| **Body (Default)** | `0.875rem` (14px) | 400 (Regular) | 1.5 | `normal` | Standard text, form labels, chat messages |
-| **Body Small** | `0.75rem` (12px) | 400 (Regular) | 1.4 | `normal` | Node descriptions, helper text, panel metadata |
-| **Micro Caption** | `0.625rem` (10px) | 500 (Medium) | 1.3 | `+0.01em` | Technology tags, timestamp logs, port annotations |
-| **Badge Stamp** | `0.5625rem` (9px) | 700 (Bold) | 1.0 | `+0.05em` | Uppercase node type badge (`DATABASE`, `CACHE`) |
+### 3.2 Type hierarchy
 
----
+| Role | Guidance | Use |
+|---|---|---|
+| Editorial display | Cormorant Garamond, 500–600, responsive `clamp()` sizing | Landing and auth statement, key page titles |
+| Page heading | Cormorant Garamond, 600; avoid overly tight tracking | Page identity and major section headings |
+| Panel heading | Montserrat, 600–700 | Inspector, dialog, toolbar and utility panel titles |
+| Body | Montserrat, 400–500, 14–16px typical | Explanations, forms, product copy |
+| Labels | Montserrat, 600, 12–14px | Form labels, section labels, button text |
+| Technical metadata | Monospace, 11–13px | Node IDs, version numbers, coordinates, code-like values |
 
-## 4. Layout Architecture & Workspace Blueprint
+Do not use uppercase micro-labels everywhere. Use uppercase sparingly for short technical overlines, not for ordinary prose. Establish hierarchy through scale, weight, line length, and spacing, not by making every label bold.
 
-The application workspace uses a three-tier layout structure: Header bar, Full-height Workspace Canvas, and Contextual Floating Panels.
+## 4. Layout and Screen Real Estate
 
-```
-┌────────────────────────────────────────────────────────────────────────────────────────┐
-│  HEADER: Logo | Project Title (Editable) | Status (Autosave/Sync) | Members | Export | Auth │
-├──────────────┬─────────────────────────────────────────────────────────┬───────────────┤
-│  PALETTE     │  ARCHITECTURAL CANVAS (React Flow)                      │  INSPECTOR    │
-│  (Collapsible)│                                                         │  (Collapsible)│
-│  - Search    │  ┌───────────────────────┐                              │  - Properties │
-│  - Compute   │  │   [API-GATEWAY]       │                              │  - Config     │
-│  - Storage   │  └───────────┬───────────┘                              │  - Tech Stack │
-│  - Network   │              │ (animated flow edge)                     │  - Validation │
-│  - Cloud     │  ┌───────────▼───────────┐     ┌─────────────────────┐  │  ──────────── │
-│              │  │      [SERVER]         │────►│     [DATABASE]      │  │  AI CO-PILOT  │
-│              │  └───────────────────────┘     └─────────────────────┘  │  - Prompts    │
-│              │                                                         │  - Diffs      │
-├──────────────┴─────────────────────────────────────────────────────────┴───────────────┤
-│  FOOTER / STATUS BAR: Latency (24ms) | Node Count (14) | Edge Count (19) | Role (Editor)│
-└────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### 4.1 Use the viewport efficiently
 
-### 4.1 Layout Principles
-1. **Viewport Lock (`min-h-[100dvh]`):** The workspace canvas is locked to the dynamic viewport height without unintended body scrolling.
-2. **Layered Z-Index Hierarchy:**
-   - `z-0`: Canvas background grid (`React Flow Background`)
-   - `z-10`: Canvas nodes and directional edges
-   - `z-20`: Multi-user cursor overlays
-   - `z-30`: In-canvas floating toolbars (Minimap, Zoom controls, Quick Actions)
-   - `z-40`: Collapsible docked panels (Component Palette, Inspector, Validation Drawer)
-   - `z-50`: Top navigation header, global modals, drop-down menus
-   - `z-9999`: Skip navigation link, critical toast announcements
+The supplied screenshots show oversized outer gutters and a centered, max-width composition that leaves large unused strips on both sides. Avoid repeating this pattern on primary application screens.
 
----
+- On desktop, the main application shell should use the available viewport width. Use responsive gutters rather than a narrow fixed-width container: typically `clamp(16px, 2.4vw, 36px)` for marketing/auth routes and tighter functional gutters for workspace screens.
+- Do not set an arbitrary `max-width` on the whole authenticated application when it needlessly shrinks the canvas or dashboard. A max-width is acceptable for long-form reading content, not for the architecture workspace.
+- Avoid nested containers that each add horizontal padding. Establish one clear page gutter and let inner sections align to it.
+- At 1440px and wider, use the available width intentionally. Do not leave large blank left/right columns unless they are a deliberate part of a specific composition.
+- On small screens, retain a safe 16–20px gutter and prevent horizontal overflow. Full-width does not mean controls should touch the screen edge.
+- Prefer `min-height: 100dvh` for page shells and a viewport-filling canvas for the studio. Keep footer behavior route-specific; a global footer must not steal vertical space from the architecture canvas.
 
-## 5. Component Specifications & Behavior
+### 4.2 Layout variation
 
-### 5.1 Architecture Node Cards (`ArchitectureNodeComponent`)
-- **Dimensions:** Width `min-w-[210px]` to `max-w-[260px]`, dynamic height based on content.
-- **Card Shape:** `rounded-2xl border` with smooth 150ms transitions.
-- **Idle State:** Background `bg-slate-900/95`, border `border-slate-800`, shadow `shadow-lg shadow-black/40`.
-- **Hover State:** Border transitions to `border-slate-700`, subtle background lift `bg-slate-900`.
-- **Selected State:** Border `border-cyan-400`, ring `ring-2 ring-cyan-400/80`, glow `shadow-xl shadow-cyan-500/20`.
-- **4-Point Cardinal Connection Ports:**
-  - Handles placed at Top, Bottom, Left, and Right.
-  - Diameter: `12px` (`w-3 h-3`), border `border-2 border-slate-900`, fill `bg-cyan-400`.
-  - Hover feedback: `group-hover:scale-125` for easy mouse/touch targeting.
-- **Header Section:** Badged node icon (`w-7 h-7`), uppercase category label, and node type identifier.
-- **Body Section:** Component label (`text-sm font-semibold text-white break-words`), description (`text-xs text-slate-400`), technology badge pill (`bg-slate-800/80 border-slate-700/60 text-slate-300`).
+- Use asymmetrical split layouts, aligned editorial copy, varied section widths, and different groupings when useful.
+- Do not use the same card grid on every route. Use tables/lists for data, compact rows for navigation, and cards only when grouping has real meaning.
+- Avoid wrapping every section in a bordered rounded rectangle. Use spacing, typography, dividers, and surface changes before adding another card.
+- Avoid equal padding, equal heights, and identical corner radii by default. Component geometry should reflect its function.
 
-### 5.2 Edges & Connections
-- **Edge Type:** Smooth step or curved bezier with dynamic arrowhead markers.
-- **Idle Edge:** Stroke width `2px`, color `slate-600` (`#475569`).
-- **Active / Selected Edge:** Stroke width `2.5px`, color `cyan-400` (`#22d3ee`).
-- **Animated Data Flow:** Smooth `stroke-dashoffset` directional travel representing real-time API or message flow.
-- **Connection Validation:** Instant red stroke when an illegal cyclic or invalid edge is dragged, reverting to idle upon release.
+### 4.3 Architecture studio
 
-### 5.3 Buttons & Actions
-- **Primary Button (`.btn-primary`):** 
-  - Solid `#0891b2` (Cyan 600), bold white text, rounded `rounded-lg`, padding `px-4 py-2`.
-  - Verified 4.6:1 contrast against dark background.
-  - Active press feedback: `active:translate-y-[1px]` tactile click simulation.
-- **Secondary / Ghost Button:**
-  - Transparent fill with `border border-slate-700 hover:border-slate-600 hover:bg-slate-800/60`.
-  - Text color `text-slate-300 hover:text-white`.
-- **Destructive Button:**
-  - Fill `bg-red-500/10 border border-red-500/30 text-red-400 hover:bg-red-500/20`.
+- Keep the canvas as the largest visual region and preserve its usable area.
+- Header should be compact, functional, and single-tier where possible.
+- Palette and inspector should be collapsible/contextual and must not permanently consume excessive width on smaller screens.
+- Keep save state, collaborator presence, role, validation, AI, and export actions visible or predictably reachable without cluttering the canvas.
+- Use panel dividers and restrained surface contrast instead of bright outlines or floating neon cards.
+- AI output is advisory. Never apply proposed architecture changes to the graph without an explicit user action and clear preview of the changes.
 
-### 5.4 Form Inputs & Dialog Fields
-- **Container Structure:** High-contrast label above input, inline helper/error text below.
-- **Field Appearance:** Background `bg-slate-950/80`, border `border-slate-800`, text `text-slate-100`, placeholder `placeholder-slate-500`.
-- **Focus Treatment:** Zero fuzzy browser outlines. Strict 2px solid cyan focus ring (`--focus-ring-color: #06b6d4`) with 2px offset.
+## 5. Component and Interaction Rules
 
-### 5.5 AI Co-Pilot Assistant Panel (`AIAssistantPanel`)
-- **Docking:** Right-hand side sliding drawer with seamless collapse/expand toggle.
-- **Chat Feed:** Markdown rendering for architecture recommendations, system design trade-offs, and scaling bottlenecks.
-- **Architecture Diff Preview Card:** Displays added nodes (green badge), modified edges (yellow badge), and removed components (red badge) with a 1-click **"Apply to Canvas"** merge action.
-- **Token / Context Meter:** Visual status of current context window and model latency.
+### 5.1 Surfaces and borders
 
-### 5.6 Real-Time Collaboration & Synchronization Badges
-- **Persistence Indicator (`PersistenceIndicator`):**
-  - **Saved:** Emerald dot with "All changes saved" (`text-emerald-400`).
-  - **Saving:** Pulsing cyan dot with "Saving..." (`text-cyan-400 animate-pulse`).
-  - **Conflict / Error:** Red warning icon with "Sync conflict — click to retry" (`text-red-400`).
-- **Connection & Role Badge (`CollaborationIndicator`):**
-  - Displays project role (`Owner`, `Editor`, `Viewer`).
-  - Shows connected peers count with stacked colorful avatars.
-  - Displays instant toast if role is dynamically revoked or downgraded by project owner.
+- Use mostly solid surfaces, subtle border contrast, and limited shadow depth.
+- Reserve the strongest surface contrast for active work areas, selected items, and modal layers.
+- Use corner radii according to component scale: small controls modestly rounded, larger panels slightly more rounded. Avoid pill-shaped everything.
+- A selected canvas node may use a clear brand-colored border or outline, but avoid persistent glow/shadow effects.
 
----
+### 5.2 Buttons
 
-## 6. Motion Philosophy & Spring Dynamics
+- Primary action: use Deep Editorial Blue or another brand-token combination that passes contrast checks. Coral Orange may be used for a key CTA when its text pairing is accessible.
+- Secondary action: restrained surface or outline, clear label, no glow.
+- Destructive action: semantic danger styling and explicit wording.
+- Provide hover, pressed, disabled, loading, and focus-visible states. Keep motion short and functional.
+- Never make a button look active if it is unavailable or its action has not succeeded.
 
-Micro-interactions in ArchSync AI are purposeful, providing spatial orientation without adding cognitive lag.
+### 5.3 Inputs and forms
 
-### 6.1 Motion Token Guidelines
-- **Fast Micro-interactions (75ms – 150ms):** Button presses, handle hovers, tooltip appearances, dropdown reveals.
-  - Curve: `cubic-bezier(0.16, 1, 0.3, 1)` (snappy ease-out).
-- **Standard Structural Transitions (200ms – 250ms):** Drawer expansions, panel collapse, modal popovers.
-- **Canvas Viewport Easing (300ms – 400ms):** Canvas zoom-to-fit, center-on-node, auto-layout transitions.
+- Always show persistent labels. Placeholders supplement labels and never replace them.
+- Use consistent field heights within a form, readable placeholder contrast, clear error text, and visible keyboard focus.
+- Password visibility controls require accessible names and must not submit the form accidentally.
+- Prevent duplicate submissions while a request is in flight and preserve entered data when showing recoverable errors.
 
-### 6.2 WCAG 2.3.3 Reduced Motion Protocol
-When the operating system or user agent signals `prefers-reduced-motion: reduce`:
-```css
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  .react-flow__edge-path {
-    animation: none !important;
-    stroke-dashoffset: 0 !important;
-  }
-}
-```
-All UI elements jump immediately to their end state without animation frames.
+### 5.4 Navigation and status
 
----
+- Prefer compact navigation with clear active states and readable text labels where space allows.
+- Use Lucide icons with consistent stroke weight and size. Do not mix unrelated icon styles.
+- Show health/sync indicators only when backed by real state. Distinguish API health from user authentication and project synchronization.
+- Avoid internal milestone language, test jargon, placeholder account information, and developer-only implementation details in user-facing UI.
 
-## 7. Accessibility & Universal Usability (WCAG 2.1 AA)
+### 5.5 Architecture nodes and edges
 
-ArchSync AI implements a comprehensive accessibility baseline established in Milestone F14:
+Preserve the application's existing node types and semantic distinctions. Keep node labels readable at normal zoom, make handles usable, and use the strict 3-color palette (`#eae6ed`, `#226192`, `#ef8557`). Differentiate all 11 node categories through distinct Lucide icons, labels, border styles (solid, dashed, double), and patterns rather than introducing unapproved colors.
 
-### 7.1 Skip Navigation Link
-A dedicated skip navigation link (`.skip-link`) is anchored to the top of the DOM:
-- Visually hidden until keyboard focused (`top: -100%` transitions to `top: 0`).
-- Targets `#main-content`, instantly bypassing headers and palette drawers for keyboard and screen-reader users.
+- Idle node: Warm Ivory (`#eae6ed`) card surface with subtle Deep Editorial Blue tint (`rgba(34, 97, 146, 0.04)`), Deep Editorial Blue (`#226192`) icon & label, quiet structural border (`rgba(34, 97, 146, 0.22)`).
+- Hover: subtle Deep Editorial Blue border enhancement (`rgba(34, 97, 146, 0.45)`).
+- Selected: Coral Orange (`#ef8557`) active outline and handle accent.
+- Edges: Deep Editorial Blue (`#226192`) or Coral Orange (`#ef8557`) stroke; animation is optional and must not make dense graphs noisy.
+- Invalid connection: visible Coral Orange (`#ef8557`) alert treatment plus accessible textual feedback.
+- Use established Lucide icons for node types. Keep the mapping centralized in the existing node visual configuration.
 
-### 7.2 Focus Rings & Visual Feedback
-- Global `:focus-visible` rule guarantees high-visibility outline rings:
-  ```css
-  *:focus-visible {
-    outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
-    outline-offset: var(--focus-ring-offset) !important;
-    border-radius: 4px;
-  }
-  ```
-- Mouse pointer clicks do not trigger focus outlines (`*:focus:not(:focus-visible) { outline: none; }`).
+### 5.6 AI co-pilot
 
-### 7.3 Semantic Landmarks & ARIA Architecture
-- `<header role="banner">`: Project workspace navigation and identity.
-- `<nav aria-label="Project actions">`: Export options and navigation links.
-- `<main id="main-content" tabIndex={-1}>`: Primary interactive canvas workspace.
-- `<aside role="complementary" aria-label="Component palette">`: Node catalog drawer.
-- `<aside role="complementary" aria-label="Architecture inspector">`: Properties & AI co-pilot.
-- Live Regions: `<div aria-live="polite" aria-atomic="true">` announces status changes (e.g., autosave confirmations, peer joins, validation errors).
+- Present recommendations, trade-offs, assumptions, and confidence/limitations clearly.
+- If architecture changes are proposed, show a human-readable diff and require an explicit user confirmation before applying anything.
+- Do not fabricate token counts, model latency, model health, or capabilities.
+- Do not style the AI panel with purple gradients, glowing borders, or generic “AI magic” motifs.
 
-### 7.4 Touch & Keyboard Usability
-- Minimum tap target of `44px x 44px` on all interactive mobile and tablet buttons.
-- Full keyboard canvas accessibility: Tab selection, arrow key node movement (`10px` nudge, `50px` Shift+nudge), `Delete` / `Backspace` removal, `Ctrl+Z` / `Ctrl+Y` history rollback.
+## 6. Motion
 
----
+Motion should explain state change, preserve spatial orientation, and make controls feel responsive. It must not be decorative noise.
 
-## 8. Responsive & Adaptive Breakpoints
+- Micro-interactions: approximately 100–160ms.
+- Panel/dialog transitions: approximately 180–240ms.
+- Larger canvas transitions: approximately 250–350ms when they improve orientation.
+- Animate opacity/transform when practical; avoid animating layout dimensions if it causes jank.
+- No perpetual decorative animations, unprompted pulse effects, or glow loops.
+- Honor `prefers-reduced-motion: reduce` and disable non-essential animation.
 
-The workspace layout adapts seamlessly across devices:
+## 7. Accessibility and Quality Bar
 
-| Breakpoint | Width Range | Layout Adaptation |
-| :--- | :--- | :--- |
-| **Mobile** | `< 768px` | Sidebars convert into sliding off-canvas bottom/side sheets; canvas supports single-touch pan and pinch-zoom; compact header with overflow menu. |
-| **Tablet** | `768px – 1024px` | Palette collapses to icon-only dock; Inspector remains toggleable; header displays essential icons. |
-| **Desktop** | `1024px – 1440px` | Full 3-column workspace with docked palette, expansive canvas, and side drawer. |
-| **Ultra-Wide** | `> 1440px` | Maximum diagram canvas real estate; expanded multi-column inspector with simultaneous validation and AI co-pilot views. |
+- Target WCAG 2.2 AA where practical; minimum contrast is 4.5:1 for normal text and 3:1 for large text and essential UI boundaries.
+- Measure actual foreground/background combinations. Do not assume a brand color automatically passes contrast.
+- Provide visible `:focus-visible` styles, semantic landmarks, correct heading order, accessible dialog behavior, labels, live status announcements, and keyboard access.
+- Interactive touch targets should aim for at least 44×44 CSS pixels where layout permits.
+- Do not communicate status by color alone.
+- Respect reduced-motion preferences.
+- Verify layouts at 1440×900, 1280×800, 768×1024, and 375×812. Test actual browser rendering when available; unit tests and DOM assertions alone are not visual QA.
 
----
+## 8. Responsive Rules
 
-## 9. Design Anti-Patterns (Strictly Banned)
+- **Mobile (<768px):** Single-column content, compact navigation, side panels as drawers/sheets, safe gutters, no horizontal page overflow. The canvas must remain navigable with touch and accessible controls.
+- **Tablet (768–1023px):** Collapse secondary panels by default where necessary; preserve a useful canvas width and accessible navigation.
+- **Desktop (1024–1439px):** Use full available width with a compact shell, contextual side panels, and a generous canvas.
+- **Wide desktop (1440px+):** Increase working area rather than simply increasing empty margins. Use asymmetrical layouts where appropriate.
 
-To preserve the professional integrity and performance of ArchSync AI, the following patterns are prohibited:
+## 9. Anti-Patterns: Explicitly Prohibited
 
-1. **NO Neon Glow Overkill:** Do not apply oversaturated drop shadows or neon glows to standard cards or buttons. Glows are strictly reserved for active canvas selection states.
-2. **NO Low-Contrast Text on Dark Surfaces:** Never use text colors lighter than `#94a3b8` on dark backgrounds for readable body text; ensure minimum 4.5:1 contrast for all text elements.
-3. **NO Unstyled Browser Scrollbars:** All scrollable drawers and modals must use slim, styled scrollbars matching `slate-800` track and `slate-600` thumb.
-4. **NO Absolute Pixel Stacking Without Boundaries:** Never float uncontrolled absolute popups over the canvas that lack dismiss-on-outside-click or ESC key listener handlers.
-5. **NO Emojis as Status Icons:** Use authoritative Lucide SVG icons (`Monitor`, `Database`, `AlertTriangle`, `CheckCircle2`) instead of emojis for state, status, or component badges.
-6. **NO Generic AI Placeholders:** Avoid filler names like "Acme Corp" or "Lorem Ipsum" in default diagrams. Use realistic architectural archetypes (e.g., "Auth Service", "PostgreSQL Primary", "Redis Session Store", "Ingress Gateway").
+1. No gradient text of any kind.
+2. No full-screen gradient backgrounds or default purple-to-blue AI styling.
+3. No centered hero plus three equal cards as the automatic page template.
+4. No huge empty outer margins caused by unnecessary max-width containers or nested horizontal padding.
+5. No generic repeated cards for every content group.
+6. No identical spacing, heights, radii, or typography across components with different purposes.
+7. No emoji as interface icons. Use the established Lucide icon library.
+8. No unprompted neon glows, glowing borders, excessive glassmorphism, or ornamental pulse effects.
+9. No unverified success indicators, invented metrics, placeholder user data, or false security claims.
+10. No redesign that silently removes product features, weakens permissions, changes API contracts, or changes data behavior.
+11. No AI-generated architecture mutation without explicit review and user confirmation.
+12. No claiming visual/browser validation based solely on unit tests, snapshots, or static source inspection.
 
----
+## 10. Required Design Workflow for AI Coding Agents
 
-## 10. Summary & Implementation Verification
+Before making UI changes:
 
-This design system is implemented in:
-- `client/src/index.css`: Global styles, focus ring variables, skip-link, and reduced-motion rules.
-- `client/tailwind.config.js`: Brand tokens and color extensions.
-- `client/src/lib/architecture/nodeIcons.tsx`: Architecture node visual specifications.
-- `client/src/components/architecture/*`: Core canvas, node, palette, and panel components.
-- `shared/types/architecture.ts`: Authoritative node and edge data structures.
+1. Read `PRD.md`, `SYSTEM.md`, `RULES.md`, `FEATURES.md`, `TESTS.md`, `memory.md`, this `DESIGN.md`, and relevant `docs/ui-ux/` files.
+2. Inspect the current implementation and identify the specific route/components responsible for the requested visual issue.
+3. Use only relevant installed skills. Do not activate every available skill indiscriminately. Skills provide methods; this file controls the final design decisions.
+4. If Google Stitch is available, use it to explore/reference layout direction before implementation where appropriate. Treat output as inspiration, not as authority over this design system. Respect any tool or daily-use limits.
+5. If using 21st.dev, use it selectively for a component that genuinely benefits from it. Do not add dependencies or copy a component that conflicts with this design system.
+6. Make the smallest coherent set of changes. Reuse project components, tokens, and icon libraries. Do not replace working architecture with a generated demo.
+7. Check responsive behavior, accessibility, existing flows, permissions, loading/error/empty states, and real API-backed data.
+8. Run the complete relevant test suites, typecheck, and production build. Report exactly what was run and what was not.
+9. If browser automation is available, inspect real rendered pages at the viewport sizes listed above. Clearly separate browser evidence from unit-test evidence.
+10. Do not begin a second UI implementation task while another implementation task is actively running. Wait for it to finish, inspect its diff and report, then continue with the next scoped task to avoid overlapping edits and conflicting agents.
+
+### Installed skill selection
+
+Use explicit skill invocation in Google Antigravity with the available slash-command syntax, for example `/ui-ux-pro-max`, `/design-taste-frontend`, `/stitch-design-taste`, `/minimalist-ui`, `/high-end-visual-design`, `/redesign-existing-projects`, and `/ui-styling`, **only when those exact skills are installed and their invocation format is supported**. Do not assume every listed skill exists or invoke all of them for every task. For a focused visual redesign, select a small complementary set, such as:
+
+- `/ui-ux-pro-max` for design audit and UX heuristics
+- `/design-taste-frontend` or `/stitch-design-taste` for stronger visual direction
+- `/redesign-existing-projects` for improving existing screens without rebuilding the product
+- `/ui-styling` for implementation details
+
+Use `Google Stitch` as a design exploration tool if its MCP integration is available. Do not claim a skill or MCP tool was used unless it was actually invoked successfully. When a slash command is not supported, read the corresponding skill file and follow its instructions instead.
+
+## 11. Implementation References
+
+Keep these existing technical sources of truth aligned with the brand tokens when implementing:
+
+- `client/src/index.css` — CSS custom properties, base styles, focus and reduced-motion rules
+- `client/tailwind.config.js` — Tailwind theme extension and semantic colors
+- `client/src/lib/architecture/nodeIcons.tsx` — centralized node icon/visual configuration
+- `client/src/components/architecture/*` — canvas, nodes, palette, and panels
+- `shared/types/architecture.ts` — authoritative node and edge contracts
+
+This document defines the intended design, not proof that the current UI already implements it. After implementation, update the actual tokens and components, inspect the rendered UI, and report any gaps honestly.

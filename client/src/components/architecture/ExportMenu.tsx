@@ -166,23 +166,23 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
         aria-expanded={isOpen}
         onClick={() => setIsOpen((prev) => !prev)}
         disabled={isExporting}
-        className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-xl backdrop-blur-md transition-all focus:outline-none focus:ring-2 focus:ring-cyan-400/80 ${
+        className={`flex items-center gap-1.5 rounded-md border px-3 py-1 text-xs font-medium shadow-sm transition-all focus:outline-none focus:ring-1 focus:ring-[#ef8557] ${
           isOpen
-            ? 'border-cyan-500/60 bg-cyan-950/80 text-cyan-300'
-            : 'border-slate-800 bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white'
+            ? 'border-[#ef8557] bg-[#226192] text-[#eae6ed]'
+            : 'border-[#226192]/20 bg-[#eae6ed] text-[#226192] hover:bg-[#226192]/5'
         } ${isExporting ? 'opacity-80 cursor-wait' : ''}`}
         aria-label={isExporting ? `Exporting ${activeFormat?.toUpperCase()}…` : 'Export architecture diagram (PNG, SVG, or JSON)'}
         onKeyDown={handleTriggerKeyDown}
         title={undefined}
       >
         {isExporting ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-[#ef8557]" />
         ) : (
-          <Download className="h-3.5 w-3.5 text-cyan-400" />
+          <Download className="h-3.5 w-3.5 text-[#ef8557]" />
         )}
         <span>{isExporting ? `Exporting ${activeFormat?.toUpperCase()}...` : 'Export'}</span>
         <ChevronDown
-          className={`h-3 w-3 text-slate-400 transition-transform duration-200 ${
+          className={`h-3 w-3 text-[#226192]/70 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           }`}
         />
@@ -194,16 +194,16 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
           role="status"
           aria-live="polite"
           data-testid="export-feedback"
-          className={`absolute top-full mt-2 right-0 z-50 flex items-center gap-2 rounded-xl border p-2.5 text-xs shadow-2xl backdrop-blur-md whitespace-nowrap min-w-[220px] transition-all animate-in fade-in slide-in-from-top-1 ${
+          className={`absolute top-full mt-2 right-0 z-50 flex items-center gap-2 rounded-lg border p-2.5 text-xs shadow-2xl whitespace-nowrap min-w-[220px] transition-all animate-in fade-in slide-in-from-top-1 ${
             feedback.type === 'success'
-              ? 'border-emerald-500/30 bg-slate-900/95 text-emerald-400'
-              : 'border-rose-500/30 bg-slate-900/95 text-rose-400'
+              ? 'border-[#226192]/30 bg-[#eae6ed] text-[#226192]'
+              : 'border-[#ef8557]/40 bg-[#eae6ed] text-[#ef8557]'
           }`}
         >
           {feedback.type === 'success' ? (
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#226192]" />
           ) : (
-            <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+            <AlertCircle className="h-4 w-4 shrink-0 text-[#ef8557]" />
           )}
           <span className="font-medium text-[11px] truncate">{feedback.text}</span>
         </div>
@@ -212,16 +212,16 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-        role="menu"
+          role="menu"
           aria-orientation="vertical"
           aria-labelledby="export-architecture-btn"
           data-testid="export-menu-dropdown"
           onKeyDown={handleMenuKeyDown}
-          className="absolute right-0 top-full mt-2 z-50 w-72 origin-top-right rounded-2xl border border-slate-800 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-xl ring-1 ring-black/50 focus:outline-none animate-in fade-in slide-in-from-top-2"
+          className="absolute right-0 top-full mt-2 z-50 w-72 origin-top-right rounded-lg border border-[#226192]/20 bg-[#eae6ed] p-2 shadow-2xl ring-1 ring-[#226192]/10 focus:outline-none animate-in fade-in slide-in-from-top-2 text-[#226192]"
         >
-          <div className="px-3 py-2 border-b border-slate-800/80 mb-1">
-            <h4 className="text-xs font-semibold text-white">Export Diagram</h4>
-            <p className="text-[11px] text-slate-400 mt-0.5">
+          <div className="px-3 py-2 border-b border-[#226192]/15 mb-1">
+            <h4 className="font-serif text-sm font-medium text-[#226192]">Export Diagram</h4>
+            <p className="text-[11px] font-mono text-[#226192]/70 mt-0.5">
               {isAutosavePending
                 ? 'Includes active in-memory canvas edits'
                 : 'Current architecture state'}
@@ -239,19 +239,19 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
                 handleExport('png');
                 setIsOpen(false);
               }}
-              className="w-full flex items-start gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-slate-800/80 focus:bg-slate-800 focus:outline-none disabled:opacity-50"
+              className="w-full flex items-start gap-3 rounded-md p-2.5 text-left transition-colors hover:bg-[#226192]/5 focus:bg-[#226192]/5 focus:outline-none disabled:opacity-50"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/10 text-cyan-400">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#ef8557]/40 bg-[#ef8557]/15 text-[#ef8557]">
                 <ImageIcon className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-white">Export PNG</span>
-                  <span className="rounded bg-cyan-500/10 px-1 py-0.2 text-[9px] font-bold text-cyan-400 border border-cyan-500/20">
+                  <span className="text-xs font-medium text-[#226192]">Export PNG</span>
+                  <span className="rounded bg-[#ef8557]/20 px-1 py-0.2 text-[9px] font-mono font-bold text-[#ef8557] border border-[#ef8557]/30">
                     Raster
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-[#226192]/70 mt-0.5">
                   High-resolution raster diagram (2x Retina scale)
                 </p>
               </div>
@@ -267,19 +267,19 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
                 handleExport('svg');
                 setIsOpen(false);
               }}
-              className="w-full flex items-start gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-slate-800/80 focus:bg-slate-800 focus:outline-none disabled:opacity-50"
+              className="w-full flex items-start gap-3 rounded-md p-2.5 text-left transition-colors hover:bg-[#226192]/5 focus:bg-[#226192]/5 focus:outline-none disabled:opacity-50"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#226192]/20 bg-[#226192]/10 text-[#226192]">
                 <FileCode2 className="h-4 w-4" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-white">Export SVG</span>
-                  <span className="rounded bg-emerald-500/10 px-1 py-0.2 text-[9px] font-bold text-emerald-400 border border-emerald-500/20">
+                  <span className="text-xs font-medium text-[#226192]">Export SVG</span>
+                  <span className="rounded bg-[#226192]/10 px-1 py-0.2 text-[9px] font-mono font-bold text-[#226192] border border-[#226192]/20">
                     Vector
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-[#226192]/70 mt-0.5">
                   Scalable vector graphic for docs, web & design tools
                 </p>
               </div>
@@ -295,19 +295,19 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
                 handleExport('json');
                 setIsOpen(false);
               }}
-              className="w-full flex items-start gap-3 rounded-xl p-2.5 text-left transition-colors hover:bg-slate-800/80 focus:bg-slate-800 focus:outline-none disabled:opacity-50"
+              className="w-full flex items-start gap-3 rounded-md p-2.5 text-left transition-colors hover:bg-[#226192]/5 focus:bg-[#226192]/5 focus:outline-none disabled:opacity-50"
             >
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-indigo-500/30 bg-indigo-500/10 text-indigo-400">
-                <FileJson className="h-4 w-4" />
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded border border-[#226192]/20 bg-[#226192]/5 text-[#ef8557]">
+                <FileJson className="h-4 w-4 text-[#ef8557]" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-xs font-semibold text-white">Export JSON</span>
-                  <span className="rounded bg-indigo-500/10 px-1 py-0.2 text-[9px] font-bold text-indigo-400 border border-indigo-500/20">
+                  <span className="text-xs font-medium text-[#226192]">Export JSON</span>
+                  <span className="rounded bg-[#226192]/10 px-1 py-0.2 text-[9px] font-mono font-bold text-[#226192]/70 border border-[#226192]/20">
                     Data
                   </span>
                 </div>
-                <p className="text-[11px] text-slate-400 mt-0.5">
+                <p className="text-[11px] text-[#226192]/70 mt-0.5">
                   Portable architecture schema & topology backup
                 </p>
               </div>

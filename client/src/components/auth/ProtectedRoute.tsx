@@ -18,8 +18,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-        <p className="text-sm text-slate-400">Verifying authenticated session...</p>
+        <Loader2 className="h-8 w-8 animate-spin text-[#ef8557]" />
+        <p className="text-sm font-mono text-[#eae6ed]/70">Verifying authenticated session...</p>
       </div>
     );
   }

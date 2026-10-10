@@ -89,7 +89,7 @@ export const architectureToReactFlow = (
       animated: isAnimated,
       style: {
         strokeWidth: 2,
-        stroke: '#06b6d4', // cyan-500
+        stroke: '#ef8557', // Coral Orange
         ...(isDashed ? { strokeDasharray: '5,5' } : {}),
       },
       data: {

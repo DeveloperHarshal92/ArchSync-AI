@@ -302,7 +302,7 @@ describe('ArchSync AI — F07 Interactive Architecture Canvas Behavioral Suite',
         source,
         target,
         type: 'default',
-        style: { strokeWidth: 2, stroke: '#06b6d4' },
+        style: { strokeWidth: 2, stroke: '#ef8557' },
         data: { edgeType: 'default' },
       };
 

@@ -12,7 +12,7 @@ import { Outlet } from 'react-router-dom';
  */
 export const StudioLayout: React.FC = () => {
   return (
-    <div className="flex h-screen h-[100dvh] max-h-screen max-h-[100dvh] w-full overflow-hidden flex-col bg-slate-950 text-slate-100">
+    <div className="flex h-screen h-[100dvh] max-h-screen max-h-[100dvh] w-full overflow-hidden flex-col bg-[#eae6ed] text-[#226192]">
       {/* F14: Skip navigation link (WCAG 2.4.1) */}
       <a href="#main-content" className="skip-link">
         Skip to main content

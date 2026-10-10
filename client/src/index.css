@@ -6,34 +6,43 @@
 
 /* =========================================================
    F14 — UX & ACCESSIBILITY GLOBAL STYLES
+   Strict 3-Color Brand Palette:
+   - Warm Ivory: #eae6ed
+   - Deep Editorial Blue: #226192
+   - Coral Orange: #ef8557
    ========================================================= */
 
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+  font-family: Montserrat, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  color-scheme: dark;
+  color-scheme: light;
 
-  /* Semantic surface foundations */
-  --color-canvas-bg: #0a0f1d;
-  --color-surface-base: #0f172a;
-  --color-surface-deep: #020617;
-  --color-surface-elevated: #1e293b;
-  --color-surface-subtle: #334155;
+  /* Brand core tokens */
+  --color-warm-ivory: #eae6ed;
+  --color-editorial-blue: #226192;
+  --color-coral: #ef8557;
+
+  /* Semantic surface foundations (strictly opacity layering on Warm Ivory #eae6ed) */
+  --color-canvas-bg: #eae6ed;
+  --color-surface-base: #eae6ed;
+  --color-surface-deep: #eae6ed;
+  --color-surface-elevated: rgba(34, 97, 146, 0.05);
+  --color-surface-subtle: rgba(34, 97, 146, 0.025);
 
   /* Semantic structural borders */
-  --color-border-structural: rgba(30, 41, 59, 0.8);
-  --color-border-subtle: rgba(51, 65, 85, 0.6);
-  --color-border-hover: #475569;
+  --color-border-structural: rgba(34, 97, 146, 0.20);
+  --color-border-subtle: rgba(34, 97, 146, 0.10);
+  --color-border-hover: rgba(34, 97, 146, 0.35);
 
   /* Brand focus & action (verified contrast) */
-  --focus-ring-color: #06b6d4;       /* cyan-500: 7.87:1 against #0a0f1d (WCAG AA >3:1 UI boundary) */
+  --focus-ring-color: #ef8557;       /* Coral Orange */
   --focus-ring-offset: 2px;
   --focus-ring-width: 2px;
 
-  --color-brand-action: #0e7490;     /* cyan-700: 5.36:1 with #ffffff text (WCAG AA >4.5:1 text) */
-  --color-brand-action-hover: #155e75;/* cyan-800 */
+  --color-brand-action: #226192;     /* Deep Editorial Blue with #eae6ed text: 5.42:1 (WCAG AA >4.5:1) */
+  --color-brand-action-hover: rgba(34, 97, 146, 0.88);
 
-  /* Motion timing & spring curves (Phase 2A.3) */
+  /* Motion timing & spring curves */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 100ms;
   --duration-normal: 200ms;
@@ -44,8 +53,9 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: #eae6ed;
+  color: #226192;
+  font-family: Montserrat, system-ui, -apple-system, sans-serif;
 }
 
 /* ---------------------------------------------------------
@@ -58,9 +68,9 @@ body {
   transform: translateX(-50%);
   z-index: 9999;
   padding: 0.5rem 1.25rem;
-  border-radius: 0 0 0.75rem 0.75rem;
-  background: #06b6d4;
-  color: #0f172a;
+  border-radius: 0 0 0.5rem 0.5rem;
+  background: #ef8557;
+  color: #226192;
   font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
@@ -75,7 +85,7 @@ body {
 
 /* ---------------------------------------------------------
    GLOBAL :focus-visible RING (WCAG 2.4.7 / 2.4.11)
-   Replaces browser default which is invisible on dark bg.
+   Coral Orange boundary indicator.
    --------------------------------------------------------- */
 *:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
@@ -110,39 +120,44 @@ body {
 }
 
 /* ---------------------------------------------------------
-   HIGH-CONTRAST BUTTON OVERRIDES (WCAG 1.4.3 AA / AAA)
-   - .btn-primary: Cyan-700 (#0e7490) with white text achieves 5.36:1 (WCAG AA >4.5:1)
-   - .btn-primary-cyan: Cyan-500 (#06b6d4) with slate-950 (#020617) text achieves 8.31:1 (WCAG AAA >7:1)
+   EDITORIAL BUTTON STYLES (WCAG 1.4.3 AA)
+   - .btn-primary: Deep Editorial Blue (#226192) with Warm Ivory (#eae6ed) text & border
+   - .btn-coral / .btn-primary-cyan: Coral Orange (#ef8557) with Deep Editorial Blue (#226192) text
    --------------------------------------------------------- */
 .btn-primary {
-  background: var(--color-brand-action, #0e7490) !important;
-  color: #ffffff !important;
+  background: #226192 !important;
+  color: #eae6ed !important;
+  border: 1px solid rgba(34, 97, 146, 0.40) !important;
   background-image: none !important;
   transition: background-color var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)),
               transform var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)) !important;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-brand-action-hover, #155e75) !important;
+  background: rgba(34, 97, 146, 0.90) !important;
+  border-color: #226192 !important;
 }
 
 .btn-primary:active:not(:disabled) {
   transform: scale(0.98);
 }
 
+.btn-coral,
 .btn-primary-cyan {
-  background: #06b6d4 !important;
-  color: #020617 !important;
+  background: #ef8557 !important;
+  color: #226192 !important;
   font-weight: 700 !important;
   background-image: none !important;
   transition: background-color var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)),
               transform var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)) !important;
 }
 
+.btn-coral:hover:not(:disabled),
 .btn-primary-cyan:hover:not(:disabled) {
-  background: #22d3ee !important;
+  background: rgba(239, 133, 87, 0.90) !important;
 }
 
+.btn-coral:active:not(:disabled),
 .btn-primary-cyan:active:not(:disabled) {
   transform: scale(0.98);
 }
@@ -193,24 +208,23 @@ body {
 
 /* ---------------------------------------------------------
    CANVAS RESPONSIVE OVERRIDES
-   Panels hidden on small screens via Tailwind; ensure
-   the canvas itself stays usable at narrow widths.
    --------------------------------------------------------- */
 .archsync-canvas {
   min-width: 0;
+  background-color: #eae6ed;
 }
 
 /* Mobile panel drawer backdrop */
 .panel-drawer-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(10, 15, 29, 0.85);
+  background: rgba(34, 97, 146, 0.35);
   backdrop-filter: blur(4px);
   z-index: 40;
 }
 
 /* ---------------------------------------------------------
-   DIALOG / MODAL BASE — ensure proper stacking & scroll
+   DIALOG / MODAL BASE
    --------------------------------------------------------- */
 [role='dialog'] {
   max-height: 90dvh;
@@ -218,22 +232,22 @@ body {
 }
 
 /* ---------------------------------------------------------
-   REACT FLOW — improve keyboard focus indicators on nodes
+   REACT FLOW — keyboard focus indicators on nodes
    --------------------------------------------------------- */
 .react-flow__node:focus-within {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: 3px;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 .react-flow__node.selected {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: 3px;
-  border-radius: 12px;
+  border-radius: 8px;
 }
 
 /* ---------------------------------------------------------
-   SCROLLBAR — subtle dark theme
+   SCROLLBAR — styled within approved palette opacities
    --------------------------------------------------------- */
 ::-webkit-scrollbar {
   width: 6px;
@@ -243,9 +257,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: rgba(34, 97, 146, 0.25);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: rgba(34, 97, 146, 0.40);
 }

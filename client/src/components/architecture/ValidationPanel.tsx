@@ -1,20 +1,24 @@
 import React from 'react';
 import {
+  ArchitectureValidationResult,
+  ValidationIssue,
+  ValidationSeverity,
+} from '@archsync/shared';
+import {
   ShieldCheck,
   ShieldAlert,
   AlertTriangle,
   AlertCircle,
   Info,
   CheckCircle2,
-  X,
   RefreshCw,
+  X,
   Box,
   GitBranch,
 } from 'lucide-react';
-import { ArchitectureValidationResult, ValidationIssue, ValidationSeverity } from '@archsync/shared';
 
-interface ValidationPanelProps {
-  validationResult: ArchitectureValidationResult | null;
+export interface ValidationPanelProps {
+  validationResult?: ArchitectureValidationResult;
   isValidating: boolean;
   onValidate: () => void;
   onClose: () => void;
@@ -39,14 +43,14 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
     switch (severity) {
       case 'ERROR':
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-rose-500/15 px-2 py-0.5 text-[11px] font-semibold text-rose-400 border border-rose-500/30">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#ef8557]/20 px-2 py-0.5 text-[11px] font-semibold text-[#ef8557] border border-[#ef8557]/50 font-mono">
             <AlertTriangle className="h-3 w-3 shrink-0" />
             ERROR
           </span>
         );
       case 'WARNING':
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-2 py-0.5 text-[11px] font-semibold text-amber-400 border border-amber-500/30">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#ef8557]/10 px-2 py-0.5 text-[11px] font-semibold text-[#ef8557] border border-[#ef8557]/30 font-mono">
             <AlertCircle className="h-3 w-3 shrink-0" />
             WARNING
           </span>
@@ -54,7 +58,7 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
       case 'INFO':
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-sky-500/15 px-2 py-0.5 text-[11px] font-semibold text-sky-400 border border-sky-500/30">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#226192]/10 px-2 py-0.5 text-[11px] font-semibold text-[#226192] border border-[#226192]/20 font-mono">
             <Info className="h-3 w-3 shrink-0" />
             INFO
           </span>
@@ -65,17 +69,17 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
   return (
     <div
       data-testid="validation-panel"
-      className="flex flex-col h-full w-full bg-slate-950/95 border-l border-slate-800 text-slate-100 shadow-2xl backdrop-blur-md"
+      className="flex flex-col h-full w-full bg-[#eae6ed] border-l border-[#226192]/15 text-[#226192] shadow-xl"
     >
       {/* 1. Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800/80 bg-slate-900/60">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[#226192]/15 bg-[#eae6ed]">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#226192]/10 text-[#ef8557] border border-[#ef8557]/40">
             <ShieldCheck className="h-4.5 w-4.5" />
           </div>
           <div>
-            <h3 className="text-sm font-bold text-white tracking-wide">Architecture Validation</h3>
-            <p className="text-[11px] text-slate-400">Rules engine structural integrity</p>
+            <h3 className="font-serif text-base font-medium text-[#226192] tracking-wide">Architecture Validation</h3>
+            <p className="text-[11px] font-mono text-[#226192]/70">Rules engine structural integrity</p>
           </div>
         </div>
 
@@ -84,17 +88,17 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
             onClick={onValidate}
             disabled={isValidating}
             data-testid="run-validation-btn"
-            className="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-800/80 px-2.5 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 hover:text-white disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2.5 py-1.5 text-xs font-medium text-[#226192] transition-colors hover:bg-[#226192]/5 hover:border-[#226192]/35 disabled:opacity-50 focus:ring-2 focus:ring-[#ef8557]"
             title="Re-run architecture validation"
           >
-            <RefreshCw className={`h-3.5 w-3.5 text-cyan-400 ${isValidating ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 text-[#ef8557] ${isValidating ? 'animate-spin' : ''}`} />
             <span>{isValidating ? 'Validating...' : 'Validate'}</span>
           </button>
 
           <button
             onClick={onClose}
             data-testid="close-validation-panel-btn"
-            className="flex h-7 w-7 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+            className="flex h-7 w-7 items-center justify-center rounded-md text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors"
             title="Close validation panel"
           >
             <X className="h-4 w-4" />
@@ -103,33 +107,33 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
       </div>
 
       {/* 2. Summary Status Banner */}
-      <div className="p-4 border-b border-slate-800/60 bg-slate-900/30">
+      <div className="p-4 border-b border-[#226192]/15 bg-[#226192]/[0.02]">
         {validationResult && validationResult.valid && issues.length === 0 ? (
-          <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-emerald-300">
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400 mt-0.5" />
+          <div className="flex items-start gap-3 rounded-lg border border-[#226192]/25 bg-[#226192]/10 p-3.5 text-[#226192]">
+            <CheckCircle2 className="h-5 w-5 shrink-0 text-[#226192] mt-0.5" />
             <div>
-              <h4 className="text-xs font-bold text-emerald-200">Architecture is Structurally Valid</h4>
-              <p className="mt-0.5 text-[11px] text-emerald-300/80 leading-relaxed">
+              <h4 className="text-xs font-bold text-[#226192]">Architecture is Structurally Valid</h4>
+              <p className="mt-0.5 text-[11px] text-[#226192]/80 leading-relaxed">
                 No structural errors, disconnected nodes, or circular dependencies detected.
               </p>
             </div>
           </div>
         ) : validationResult && !validationResult.valid ? (
-          <div className="flex items-start gap-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3.5 text-rose-300">
-            <ShieldAlert className="h-5 w-5 shrink-0 text-rose-400 mt-0.5" />
+          <div className="flex items-start gap-3 rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/15 p-3.5 text-[#ef8557]">
+            <ShieldAlert className="h-5 w-5 shrink-0 text-[#ef8557] mt-0.5" />
             <div>
-              <h4 className="text-xs font-bold text-rose-200">Structural Errors Detected</h4>
-              <p className="mt-0.5 text-[11px] text-rose-300/80 leading-relaxed">
+              <h4 className="text-xs font-bold text-[#ef8557]">Structural Errors Detected</h4>
+              <p className="mt-0.5 text-[11px] text-[#ef8557]/80 leading-relaxed">
                 The architecture contains invalid graph configurations that must be resolved.
               </p>
             </div>
           </div>
         ) : (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3.5 text-amber-300">
-            <AlertCircle className="h-5 w-5 shrink-0 text-amber-400 mt-0.5" />
+          <div className="flex items-start gap-3 rounded-lg border border-[#ef8557]/30 bg-[#ef8557]/10 p-3.5 text-[#ef8557]">
+            <AlertCircle className="h-5 w-5 shrink-0 text-[#ef8557] mt-0.5" />
             <div>
-              <h4 className="text-xs font-bold text-amber-200">Architecture Warnings Found</h4>
-              <p className="mt-0.5 text-[11px] text-amber-300/80 leading-relaxed">
+              <h4 className="text-xs font-bold text-[#ef8557]">Architecture Warnings Found</h4>
+              <p className="mt-0.5 text-[11px] text-[#ef8557]/80 leading-relaxed">
                 The diagram is valid but has structural warnings that should be reviewed.
               </p>
             </div>
@@ -140,20 +144,20 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
         {issues.length > 0 && (
           <div className="mt-3 flex items-center gap-2">
             {errorCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-rose-500/15 border border-rose-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-rose-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#ef8557]/20 border border-[#ef8557]/40 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-[#ef8557]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#ef8557]" />
                 {errorCount} {errorCount === 1 ? 'Error' : 'Errors'}
               </span>
             )}
             {warningCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-amber-500/15 border border-amber-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-amber-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#ef8557]/10 border border-[#ef8557]/30 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-[#ef8557]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#ef8557]" />
                 {warningCount} {warningCount === 1 ? 'Warning' : 'Warnings'}
               </span>
             )}
             {infoCount > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-sky-500/15 border border-sky-500/30 px-2.5 py-0.5 text-[11px] font-semibold text-sky-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+              <span className="flex items-center gap-1.5 rounded-full bg-[#226192]/10 border border-[#226192]/20 px-2.5 py-0.5 text-[11px] font-mono font-semibold text-[#226192]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#226192]" />
                 {infoCount} Info
               </span>
             )}
@@ -164,10 +168,10 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
       {/* 3. Issues List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {issues.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-center text-slate-500">
-            <CheckCircle2 className="h-10 w-10 text-emerald-500/40 mb-2" />
-            <p className="text-xs font-medium text-slate-400">No validation issues</p>
-            <p className="text-[11px] text-slate-500 mt-1 max-w-xs">
+          <div className="flex flex-col items-center justify-center py-12 text-center text-[#226192]/70">
+            <CheckCircle2 className="h-10 w-10 text-[#226192]/40 mb-2" />
+            <p className="text-xs font-medium text-[#226192]">No validation issues</p>
+            <p className="text-[11px] text-[#226192]/70 mt-1 max-w-xs">
               Every node and edge satisfies all structural rules in the architecture engine.
             </p>
           </div>
@@ -176,31 +180,31 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
             <div
               key={issue.id}
               data-testid={`validation-issue-${issue.id}`}
-              className="rounded-xl border border-slate-800 bg-slate-900/60 p-3.5 transition-colors hover:border-slate-700"
+              className="rounded-lg border border-[#226192]/15 bg-[#226192]/[0.03] p-3.5 transition-colors hover:border-[#226192]/30"
             >
               <div className="flex items-center justify-between gap-2 mb-2">
                 {renderSeverityBadge(issue.severity)}
-                <span className="text-[10px] font-mono font-medium text-slate-400">
+                <span className="text-[10px] font-mono font-medium text-[#226192]/70">
                   {issue.code}
                 </span>
               </div>
 
-              <p className="text-xs text-slate-200 leading-relaxed font-normal">
+              <p className="text-xs text-[#226192] leading-relaxed font-normal">
                 {issue.message}
               </p>
 
               {/* Related Nodes Badges */}
               {issue.nodeIds && issue.nodeIds.length > 0 && (
                 <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 font-medium">Nodes:</span>
+                  <span className="text-[10px] text-[#226192]/70 font-mono">Nodes:</span>
                   {issue.nodeIds.map((nodeId) => (
                     <button
                       key={nodeId}
                       onClick={() => onSelectNode?.(nodeId)}
-                      className="inline-flex items-center gap-1 rounded-md border border-slate-700/80 bg-slate-800/80 px-1.5 py-0.5 text-[11px] font-mono text-cyan-300 transition-colors hover:bg-cyan-500/20 hover:border-cyan-500/40"
+                      className="inline-flex items-center gap-1 rounded border border-[#226192]/20 bg-[#eae6ed] px-1.5 py-0.5 text-[11px] font-mono text-[#226192] transition-colors hover:border-[#ef8557]"
                       title={`Select node "${nodeId}" on canvas`}
                     >
-                      <Box className="h-2.5 w-2.5" />
+                      <Box className="h-2.5 w-2.5 text-[#ef8557]" />
                       {nodeId}
                     </button>
                   ))}
@@ -210,15 +214,15 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
               {/* Related Edges Badges */}
               {issue.edgeIds && issue.edgeIds.length > 0 && (
                 <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  <span className="text-[10px] text-slate-400 font-medium">Edges:</span>
+                  <span className="text-[10px] text-[#226192]/70 font-mono">Edges:</span>
                   {issue.edgeIds.map((edgeId) => (
                     <button
                       key={edgeId}
                       onClick={() => onSelectEdge?.(edgeId)}
-                      className="inline-flex items-center gap-1 rounded-md border border-slate-700/80 bg-slate-800/80 px-1.5 py-0.5 text-[11px] font-mono text-cyan-300 transition-colors hover:bg-cyan-500/20 hover:border-cyan-500/40"
+                      className="inline-flex items-center gap-1 rounded border border-[#226192]/20 bg-[#eae6ed] px-1.5 py-0.5 text-[11px] font-mono text-[#226192] transition-colors hover:border-[#ef8557]"
                       title={`Select edge "${edgeId}" on canvas`}
                     >
-                      <GitBranch className="h-2.5 w-2.5" />
+                      <GitBranch className="h-2.5 w-2.5 text-[#ef8557]" />
                       {edgeId}
                     </button>
                   ))}
@@ -231,9 +235,9 @@ export const ValidationPanel: React.FC<ValidationPanelProps> = ({
 
       {/* 4. Footer timestamp */}
       {validationResult?.validatedAt && (
-        <div className="px-4 py-2.5 border-t border-slate-800/80 bg-slate-900/40 text-[10px] text-slate-500 flex items-center justify-between">
+        <div className="px-4 py-2.5 border-t border-[#226192]/15 bg-[#eae6ed] text-[10px] text-[#226192]/70 flex items-center justify-between">
           <span>Validated at:</span>
-          <span className="font-mono text-slate-400">
+          <span className="font-mono text-[#226192]">
             {new Date(validationResult.validatedAt).toLocaleTimeString()}
           </span>
         </div>

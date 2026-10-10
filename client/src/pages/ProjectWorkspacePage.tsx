@@ -118,9 +118,9 @@ export const ProjectWorkspacePage: React.FC = () => {
 
   if (isProjectLoading) {
     return (
-      <div className="flex h-full w-full min-h-[60vh] flex-col items-center justify-center gap-3 bg-[#0a0f1d]">
-        <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-        <p className="text-sm text-slate-400">Loading architecture project...</p>
+      <div className="flex h-full w-full min-h-[60vh] flex-col items-center justify-center gap-3 bg-[#eae6ed] text-[#226192]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#ef8557]" />
+        <p className="text-sm font-mono text-[#226192]/70">Loading architecture project...</p>
       </div>
     );
   }
@@ -129,16 +129,16 @@ export const ProjectWorkspacePage: React.FC = () => {
     const errorDetails = parseApiError(projectError);
 
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center bg-[#0a0f1d] px-4 py-16 text-center">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-[#eae6ed] px-4 py-16 text-center text-[#226192]">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-[#ef8557]/15 text-[#ef8557] border border-[#ef8557]/40">
           <AlertCircle className="h-7 w-7" />
         </div>
-        <h2 className="mt-4 text-xl font-bold text-white">Cannot Access Project</h2>
-        <p className="mt-2 text-sm text-slate-400">{errorDetails.message}</p>
+        <h2 className="mt-4 font-serif text-2xl font-medium text-[#226192]">Cannot Access Project</h2>
+        <p className="mt-2 text-sm text-[#226192]/70 max-w-md">{errorDetails.message}</p>
         <div className="mt-6">
           <Link
             to="/projects"
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+            className="inline-flex items-center gap-2 rounded-md bg-[#ef8557] hover:bg-[#ef8557]/90 px-4 py-2 text-xs font-semibold text-[#226192] transition-colors focus:ring-2 focus:ring-[#ef8557]"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to Projects</span>
@@ -276,12 +276,12 @@ export const ProjectWorkspacePage: React.FC = () => {
   };
 
   return (
-    <div className="h-full w-full flex flex-col overflow-hidden bg-[#0a0f1d]">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-[#eae6ed] text-[#226192]">
       {/* Architecture Canvas Full-Viewport Workspace */}
       {isArchLoading ? (
         <div className="flex h-full w-full flex-col items-center justify-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
-          <p className="text-sm text-slate-400">Loading architecture diagram and components...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#ef8557]" />
+          <p className="text-sm text-[#226192]/70 font-mono">Loading architecture diagram and components...</p>
         </div>
       ) : archRes && archRes.success ? (
         <ArchitectureCanvas
@@ -297,13 +297,13 @@ export const ProjectWorkspacePage: React.FC = () => {
           onReload={refetchArchitecture}
         />
       ) : (
-        <div className="m-auto max-w-md rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-rose-400 mb-2" />
-          <h3 className="text-base font-semibold text-white">Failed to load architecture</h3>
-          <p className="mt-1 text-xs text-rose-300">Could not retrieve diagram state from server.</p>
+        <div className="m-auto max-w-md rounded-2xl border border-[#ef8557]/40 bg-[#ef8557]/10 p-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-[#ef8557] mb-2" />
+          <h3 className="text-base font-semibold text-[#226192]">Failed to load architecture</h3>
+          <p className="mt-1 text-xs text-[#226192]/70">Could not retrieve diagram state from server.</p>
           <button
             onClick={() => refetchArchitecture()}
-            className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700"
+            className="mt-4 rounded-lg bg-[#eae6ed] border border-[#226192]/20 px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#226192]"
           >
             Retry
           </button>
@@ -313,7 +313,7 @@ export const ProjectWorkspacePage: React.FC = () => {
       {/* Accessible Project Members Modal */}
       {isMembersModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#226192]/40 p-4 backdrop-blur-sm"
           aria-hidden="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsMembersModalOpen(false);
@@ -324,22 +324,22 @@ export const ProjectWorkspacePage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="members-modal-title"
-            className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
+            className="w-full max-w-2xl rounded-xl border border-[#226192]/20 bg-[#eae6ed] p-6 shadow-2xl overflow-hidden flex flex-col max-h-[85vh] text-[#226192]"
           >
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 shrink-0">
+            <div className="flex items-center justify-between pb-4 border-b border-[#226192]/15 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#226192]/10 text-[#226192] border border-[#226192]/20">
                   <Users className="h-5 w-5" aria-hidden="true" />
                 </div>
                 <div>
-                  <h2 id="members-modal-title" className="text-base font-bold text-white flex items-center gap-2">
+                  <h2 id="members-modal-title" className="font-serif text-xl font-medium text-[#226192] flex items-center gap-2">
                     <span>Project Collaborators</span>
-                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-mono font-medium text-slate-300">
+                    <span className="rounded bg-[#226192]/10 border border-[#226192]/20 px-2 py-0.5 text-xs font-mono font-medium text-[#226192]">
                       {members.length}
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-400">
+                  <p className="text-xs text-[#226192]/70">
                     Users authorized to view or edit &quot;{project.name}&quot;.
                   </p>
                 </div>
@@ -350,16 +350,16 @@ export const ProjectWorkspacePage: React.FC = () => {
                   <button
                     onClick={handleOpenInviteModal}
                     id="invite-member-btn"
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-[#ef8557] hover:bg-[#ef8557]/90 px-3.5 py-1.5 text-xs font-semibold text-[#226192] transition-colors focus:ring-2 focus:ring-[#ef8557]"
                   >
-                    <UserPlus className="h-3.5 w-3.5" />
+                    <UserPlus className="h-3.5 w-3.5 text-[#226192]" />
                     <span>Invite</span>
                   </button>
                 )}
                 <button
                   onClick={() => setIsMembersModalOpen(false)}
                   aria-label="Close project members dialog"
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+                  className="rounded-md p-1.5 text-[#226192]/60 hover:bg-[#226192]/10 hover:text-[#226192] transition-colors"
                 >
                   <X className="h-5 w-5" aria-hidden="true" />
                 </button>
@@ -368,14 +368,14 @@ export const ProjectWorkspacePage: React.FC = () => {
 
             {/* In-Modal Alerts */}
             {feedbackSuccess && (
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-xs text-emerald-400 shrink-0">
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-2.5 text-xs text-[#226192] shrink-0">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 shrink-0 text-[#ef8557]" />
                   <span>{feedbackSuccess}</span>
                 </div>
                 <button
                   onClick={() => setFeedbackSuccess(null)}
-                  className="text-emerald-400 hover:text-emerald-300"
+                  className="text-[#ef8557] hover:underline"
                 >
                   Dismiss
                 </button>
@@ -383,14 +383,14 @@ export const ProjectWorkspacePage: React.FC = () => {
             )}
 
             {feedbackError && (
-              <div className="mt-3 flex items-center justify-between rounded-lg border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-400 shrink-0">
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-2.5 text-xs text-[#226192] shrink-0">
                 <div className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <AlertCircle className="h-4 w-4 shrink-0 text-[#ef8557]" />
                   <span>{feedbackError}</span>
                 </div>
                 <button
                   onClick={() => setFeedbackError(null)}
-                  className="text-rose-400 hover:text-rose-300"
+                  className="text-[#ef8557] hover:underline"
                 >
                   Dismiss
                 </button>
@@ -398,29 +398,29 @@ export const ProjectWorkspacePage: React.FC = () => {
             )}
 
             {/* Member List */}
-            <div className="mt-4 flex-1 overflow-y-auto divide-y divide-slate-800/80 pr-1">
+            <div className="mt-4 flex-1 overflow-y-auto divide-y divide-[#226192]/10 pr-1">
               {isMembersLoading ? (
                 <div className="space-y-3 py-4">
                   {[1, 2].map((i) => (
                     <div
                       key={i}
-                      className="h-14 rounded-xl border border-slate-800 bg-slate-900/30 animate-pulse"
+                      className="h-14 rounded-lg border border-[#226192]/15 bg-[#226192]/5 animate-pulse"
                     />
                   ))}
                 </div>
               ) : isMembersError ? (
-                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-center my-4">
-                  <AlertCircle className="mx-auto h-5 w-5 text-rose-400" />
-                  <p className="mt-2 text-xs text-rose-300">Failed to load project members.</p>
+                <div className="rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-4 text-center my-4">
+                  <AlertCircle className="mx-auto h-5 w-5 text-[#ef8557]" />
+                  <p className="mt-2 text-xs text-[#226192]/70">Failed to load project members.</p>
                   <button
                     onClick={() => refetchMembers()}
-                    className="mt-2 rounded bg-slate-800 px-3 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                    className="mt-2 rounded-md bg-[#eae6ed] border border-[#226192]/20 px-3 py-1 text-xs text-[#226192] hover:border-[#ef8557]"
                   >
                     Retry
                   </button>
                 </div>
               ) : members.length === 0 ? (
-                <div className="py-8 text-center text-xs text-slate-400">
+                <div className="py-8 text-center text-xs text-[#226192]/60">
                   No members found for this project.
                 </div>
               ) : (
@@ -433,32 +433,32 @@ export const ProjectWorkspacePage: React.FC = () => {
                       className="flex items-center justify-between py-3"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-cyan-400 border border-slate-700 font-bold text-xs">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#226192]/10 text-[#226192] border border-[#226192]/20 font-mono font-bold text-xs">
                           {member.user.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="font-semibold text-white text-xs">
+                            <span className="font-medium text-[#226192] text-xs sm:text-sm">
                               {member.user.name}
                             </span>
                             <span
-                              className={`rounded px-1.5 py-0.2 text-[10px] font-semibold border ${
+                              className={`rounded px-1.5 py-0.5 text-[10px] font-mono font-semibold uppercase border ${
                                 member.role === 'OWNER'
-                                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                                  ? 'border-[#ef8557]/60 bg-[#ef8557]/15 text-[#226192]'
                                   : member.role === 'EDITOR'
-                                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
-                                  : 'border-slate-500/30 bg-slate-500/10 text-slate-300'
+                                  ? 'border-[#226192]/30 bg-[#226192]/10 text-[#226192]'
+                                  : 'border-[#226192]/15 bg-transparent text-[#226192]/70'
                               }`}
                             >
                               {member.role}
                             </span>
                           </div>
-                          <p className="text-[11px] text-slate-400">{member.user.email}</p>
+                          <p className="text-[11px] font-mono text-[#226192]/60">{member.user.email}</p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-500">
+                        <div className="hidden sm:flex items-center gap-1 text-[11px] font-mono text-[#226192]/60">
                           <Clock className="h-3 w-3" />
                           <span>{new Date(member.joinedAt).toLocaleDateString()}</span>
                         </div>
@@ -467,7 +467,7 @@ export const ProjectWorkspacePage: React.FC = () => {
                         {isOwner && (
                           <div className="flex items-center gap-2">
                             {isMemberOwner ? (
-                              <span className="text-[11px] font-medium text-amber-400/70 italic px-2">
+                              <span className="text-[11px] font-mono text-[#ef8557] italic px-2">
                                 Owner
                               </span>
                             ) : (
@@ -481,7 +481,7 @@ export const ProjectWorkspacePage: React.FC = () => {
                                       e.target.value as 'EDITOR' | 'VIEWER'
                                     )
                                   }
-                                  className="rounded-lg border border-slate-800 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
+                                  className="rounded border border-[#226192]/20 bg-[#eae6ed] px-2 py-1 text-xs text-[#226192] focus:border-[#ef8557] focus:outline-none disabled:opacity-50 font-mono"
                                 >
                                   <option value="EDITOR">EDITOR</option>
                                   <option value="VIEWER">VIEWER</option>
@@ -491,7 +491,7 @@ export const ProjectWorkspacePage: React.FC = () => {
                                   onClick={() => setMemberToRemove(member)}
                                   disabled={isRemovingMember}
                                   title="Remove member"
-                                  className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50"
+                                  className="rounded p-1.5 text-[#226192]/60 hover:bg-[#ef8557]/20 hover:text-[#ef8557] transition-colors disabled:opacity-50"
                                 >
                                   <Trash2 className="h-3.5 w-3.5" />
                                 </button>
@@ -506,11 +506,11 @@ export const ProjectWorkspacePage: React.FC = () => {
               )}
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
+            <div className="mt-4 pt-3 border-t border-[#226192]/15 flex justify-end shrink-0">
               <button
                 type="button"
                 onClick={() => setIsMembersModalOpen(false)}
-                className="rounded-lg border border-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-[#226192]/20 bg-[#eae6ed] px-4 py-1.5 text-xs font-medium text-[#226192] hover:border-[#226192]"
               >
                 Close
               </button>
@@ -522,7 +522,7 @@ export const ProjectWorkspacePage: React.FC = () => {
       {/* Invite Member Modal */}
       {isInviteModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#226192]/40 p-4 backdrop-blur-sm"
           aria-hidden="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsInviteModalOpen(false);
@@ -533,34 +533,34 @@ export const ProjectWorkspacePage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="invite-modal-title"
-            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            className="w-full max-w-md rounded-xl border border-[#226192]/20 bg-[#eae6ed] p-6 shadow-2xl text-[#226192]"
           >
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-4 border-b border-[#226192]/15">
               <div className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-cyan-400" aria-hidden="true" />
-                <h2 id="invite-modal-title" className="text-lg font-bold text-white">
+                <UserPlus className="h-5 w-5 text-[#ef8557]" aria-hidden="true" />
+                <h2 id="invite-modal-title" className="font-serif text-xl font-medium text-[#226192]">
                   Invite Collaborator
                 </h2>
               </div>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
                 aria-label="Close invite collaborator dialog"
-                className="text-slate-400 hover:text-white"
+                className="text-[#226192]/60 hover:text-[#226192]"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
             {inviteSuccess && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs text-emerald-400">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-3 text-xs text-[#226192]">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-[#ef8557]" />
                 <span>{inviteSuccess}</span>
               </div>
             )}
 
             {inviteError && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-400">
-                <AlertCircle className="h-4 w-4 shrink-0" />
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-3 text-xs text-[#226192]">
+                <AlertCircle className="h-4 w-4 shrink-0 text-[#ef8557]" />
                 <span>{inviteError}</span>
               </div>
             )}
@@ -569,7 +569,7 @@ export const ProjectWorkspacePage: React.FC = () => {
               <div>
                 <label
                   htmlFor="invite-email-input"
-                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-xs font-mono font-semibold uppercase tracking-wider text-[#226192]"
                 >
                   Collaborator Email *
                 </label>
@@ -581,14 +581,14 @@ export const ProjectWorkspacePage: React.FC = () => {
                   placeholder="architect@organization.com"
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
-                  className="mt-1.5 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none"
+                  className="mt-1.5 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-2 text-sm text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557]"
                 />
               </div>
 
               <div>
                 <label
                   htmlFor="invite-role-select"
-                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+                  className="block text-xs font-mono font-semibold uppercase tracking-wider text-[#226192]"
                 >
                   Access Role *
                 </label>
@@ -596,29 +596,29 @@ export const ProjectWorkspacePage: React.FC = () => {
                   id="invite-role-select"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as 'EDITOR' | 'VIEWER')}
-                  className="mt-1.5 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
+                  className="mt-1.5 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-2 text-sm text-[#226192] focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557]"
                 >
                   <option value="EDITOR">EDITOR — Can edit architecture and metadata</option>
                   <option value="VIEWER">VIEWER — Can view architecture diagrams only</option>
                 </select>
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-slate-800">
+              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-[#226192]/15">
                 <button
                   type="button"
                   onClick={() => setIsInviteModalOpen(false)}
-                  className="rounded-lg border border-slate-800 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800"
+                  className="rounded-md border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-medium text-[#226192]/70 hover:border-[#226192] hover:text-[#226192]"
                 >
                   Close
                 </button>
                 <button
                   type="submit"
                   disabled={isInviting}
-                  className="flex items-center gap-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-4 py-2 text-xs font-semibold text-white transition-colors disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-md bg-[#ef8557] hover:bg-[#ef8557]/90 px-4 py-2 text-xs font-semibold text-[#226192] transition-colors disabled:opacity-50 focus:ring-2 focus:ring-[#ef8557]"
                 >
                   {isInviting ? (
                     <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="h-3.5 w-3.5 animate-spin text-[#226192]" />
                       <span>Sending Invite...</span>
                     </>
                   ) : (
@@ -634,7 +634,7 @@ export const ProjectWorkspacePage: React.FC = () => {
       {/* Remove Member Confirmation Modal */}
       {memberToRemove && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[#226192]/40 p-4 backdrop-blur-sm"
           aria-hidden="true"
           onClick={(e) => {
             if (e.target === e.currentTarget) setMemberToRemove(null);
@@ -645,17 +645,17 @@ export const ProjectWorkspacePage: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-labelledby="remove-modal-title"
-            className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+            className="w-full max-w-sm rounded-xl border border-[#226192]/20 bg-[#eae6ed] p-6 shadow-2xl text-[#226192]"
           >
-            <div className="flex items-center gap-3 text-rose-400 mb-3">
+            <div className="flex items-center gap-3 text-[#ef8557] mb-3">
               <Trash2 className="h-6 w-6" aria-hidden="true" />
-              <h3 id="remove-modal-title" className="text-base font-bold text-white">
+              <h3 id="remove-modal-title" className="font-serif text-lg font-medium text-[#226192]">
                 Remove Project Member
               </h3>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
+            <p className="text-xs text-[#226192]/70 leading-relaxed">
               Are you sure you want to revoke access for{' '}
-              <strong className="text-white font-semibold">
+              <strong className="text-[#226192] font-medium">
                 &quot;{memberToRemove.user.name}&quot; ({memberToRemove.user.email})
               </strong>
               ? They will no longer be able to view or edit this project.
@@ -666,7 +666,7 @@ export const ProjectWorkspacePage: React.FC = () => {
                 ref={removeCancelRef}
                 type="button"
                 onClick={() => setMemberToRemove(null)}
-                className="rounded-lg border border-slate-800 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800"
+                className="rounded-md border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-medium text-[#226192]/70 hover:border-[#226192] hover:text-[#226192]"
               >
                 Cancel
               </button>
@@ -674,11 +674,11 @@ export const ProjectWorkspacePage: React.FC = () => {
                 type="button"
                 onClick={handleRemoveConfirm}
                 disabled={isRemovingMember}
-                className="flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-xs font-semibold text-white hover:bg-rose-500 disabled:opacity-50"
+                className="flex items-center gap-2 rounded-md bg-[#ef8557] px-4 py-2 text-xs font-semibold text-[#226192] hover:bg-[#ef8557]/90 disabled:opacity-50 focus:ring-2 focus:ring-[#ef8557]"
               >
                 {isRemovingMember ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-[#226192]" aria-hidden="true" />
                     <span>Removing...</span>
                   </>
                 ) : (

@@ -21,96 +21,112 @@ export interface NodeTypeVisualConfig {
   badgeBorder: string;
   badgeText: string;
   glowColor: string;
+  borderStyle?: string;
 }
 
+/**
+ * Strict Brand Color Restriction (Warm Ivory #eae6ed, Deep Editorial Blue #226192, Coral Orange #ef8557).
+ * Categories are differentiated through distinct Lucide icons, labels, border styles, and opacities.
+ */
 export const NODE_TYPE_VISUALS: Record<ArchitectureNodeType, NodeTypeVisualConfig> = {
   client: {
     icon: Monitor,
-    accentColor: '#38bdf8', // sky-400
-    badgeBg: 'bg-sky-500/10',
-    badgeBorder: 'border-sky-500/30',
-    badgeText: 'text-sky-400',
-    glowColor: 'shadow-sky-500/10',
+    accentColor: '#226192',
+    badgeBg: 'bg-[#226192]/10',
+    badgeBorder: 'border-[#226192]/25',
+    badgeText: 'text-[#226192]',
+    glowColor: 'shadow-[#226192]/5',
+    borderStyle: 'border-solid',
   },
   'web-app': {
     icon: Globe,
-    accentColor: '#06b6d4', // cyan-500
-    badgeBg: 'bg-cyan-500/10',
-    badgeBorder: 'border-cyan-500/30',
-    badgeText: 'text-cyan-400',
-    glowColor: 'shadow-cyan-500/10',
+    accentColor: '#ef8557',
+    badgeBg: 'bg-[#ef8557]/15',
+    badgeBorder: 'border-[#ef8557]/40',
+    badgeText: 'text-[#ef8557]',
+    glowColor: 'shadow-[#ef8557]/5',
+    borderStyle: 'border-solid',
   },
   'mobile-app': {
     icon: Smartphone,
-    accentColor: '#3b82f6', // blue-500
-    badgeBg: 'bg-blue-500/10',
-    badgeBorder: 'border-blue-500/30',
-    badgeText: 'text-blue-400',
-    glowColor: 'shadow-blue-500/10',
+    accentColor: '#226192',
+    badgeBg: 'bg-[#226192]/10',
+    badgeBorder: 'border-dashed border-[#226192]/35',
+    badgeText: 'text-[#226192]',
+    glowColor: 'shadow-[#226192]/5',
+    borderStyle: 'border-dashed',
   },
   'api-gateway': {
     icon: Network,
-    accentColor: '#a855f7', // purple-500
-    badgeBg: 'bg-purple-500/10',
-    badgeBorder: 'border-purple-500/30',
-    badgeText: 'text-purple-400',
-    glowColor: 'shadow-purple-500/10',
+    accentColor: '#ef8557',
+    badgeBg: 'bg-[#ef8557]/15',
+    badgeBorder: 'border-double border-2 border-[#ef8557]/50',
+    badgeText: 'text-[#ef8557]',
+    glowColor: 'shadow-[#ef8557]/5',
+    borderStyle: 'border-double border-2',
   },
   server: {
     icon: Server,
-    accentColor: '#6366f1', // indigo-500
-    badgeBg: 'bg-indigo-500/10',
-    badgeBorder: 'border-indigo-500/30',
-    badgeText: 'text-indigo-400',
-    glowColor: 'shadow-indigo-500/10',
+    accentColor: '#226192',
+    badgeBg: 'bg-[#226192]/10',
+    badgeBorder: 'border-[#226192]/30',
+    badgeText: 'text-[#226192]',
+    glowColor: 'shadow-[#226192]/5',
+    borderStyle: 'border-solid',
   },
   microservice: {
     icon: Boxes,
-    accentColor: '#8b5cf6', // violet-500
-    badgeBg: 'bg-violet-500/10',
-    badgeBorder: 'border-violet-500/30',
-    badgeText: 'text-violet-400',
-    glowColor: 'shadow-violet-500/10',
+    accentColor: '#226192',
+    badgeBg: 'bg-[#226192]/10',
+    badgeBorder: 'border-dotted border-[#226192]/35',
+    badgeText: 'text-[#226192]',
+    glowColor: 'shadow-[#226192]/5',
+    borderStyle: 'border-dotted',
   },
   database: {
     icon: Database,
-    accentColor: '#10b981', // emerald-500
-    badgeBg: 'bg-emerald-500/10',
-    badgeBorder: 'border-emerald-500/30',
-    badgeText: 'text-emerald-400',
-    glowColor: 'shadow-emerald-500/10',
+    accentColor: '#ef8557',
+    badgeBg: 'bg-[#ef8557]/15',
+    badgeBorder: 'border-[#ef8557]/40',
+    badgeText: 'text-[#ef8557]',
+    glowColor: 'shadow-[#ef8557]/5',
+    borderStyle: 'border-solid',
   },
   cache: {
     icon: Zap,
-    accentColor: '#f59e0b', // amber-500
-    badgeBg: 'bg-amber-500/10',
-    badgeBorder: 'border-amber-500/30',
-    badgeText: 'text-amber-400',
-    glowColor: 'shadow-amber-500/10',
+    accentColor: '#ef8557',
+    badgeBg: 'bg-[#ef8557]/20',
+    badgeBorder: 'border-dashed border-[#ef8557]/50',
+    badgeText: 'text-[#ef8557]',
+    glowColor: 'shadow-[#ef8557]/5',
+    borderStyle: 'border-dashed',
   },
   queue: {
     icon: Layers,
-    accentColor: '#f97316', // orange-500
-    badgeBg: 'bg-orange-500/10',
-    badgeBorder: 'border-orange-500/30',
-    badgeText: 'text-orange-400',
-    glowColor: 'shadow-orange-500/10',
+    accentColor: '#226192',
+    badgeBg: 'bg-[#226192]/10',
+    badgeBorder: 'border-double border-2 border-[#226192]/40',
+    badgeText: 'text-[#226192]',
+    glowColor: 'shadow-[#226192]/5',
+    borderStyle: 'border-double border-2',
   },
   'external-api': {
     icon: CloudUpload,
-    accentColor: '#f43f5e', // rose-500
-    badgeBg: 'bg-rose-500/10',
-    badgeBorder: 'border-rose-500/30',
-    badgeText: 'text-rose-400',
-    glowColor: 'shadow-rose-500/10',
+    accentColor: '#ef8557',
+    badgeBg: 'bg-[#ef8557]/15',
+    badgeBorder: 'border-dotted border-[#ef8557]/50',
+    badgeText: 'text-[#ef8557]',
+    glowColor: 'shadow-[#ef8557]/5',
+    borderStyle: 'border-dotted',
   },
   'cloud-service': {
     icon: Cloud,
-    accentColor: '#14b8a6', // teal-500
-    badgeBg: 'bg-teal-500/10',
-    badgeBorder: 'border-teal-500/30',
-    badgeText: 'text-teal-400',
-    glowColor: 'shadow-teal-500/10',
+    accentColor: '#226192',
+    badgeBg: 'bg-[#226192]/10',
+    badgeBorder: 'border-[#226192]/25',
+    badgeText: 'text-[#226192]',
+    glowColor: 'shadow-[#226192]/5',
+    borderStyle: 'border-solid',
   },
 };
 
@@ -118,11 +134,12 @@ export const getNodeVisual = (type: ArchitectureNodeType): NodeTypeVisualConfig 
   return (
     NODE_TYPE_VISUALS[type] || {
       icon: Server,
-      accentColor: '#94a3b8',
-      badgeBg: 'bg-slate-500/10',
-      badgeBorder: 'border-slate-500/30',
-      badgeText: 'text-slate-400',
-      glowColor: 'shadow-slate-500/10',
+      accentColor: '#226192',
+      badgeBg: 'bg-[#226192]/10',
+      badgeBorder: 'border-[#226192]/25',
+      badgeText: 'text-[#226192]',
+      glowColor: 'shadow-[#226192]/5',
+      borderStyle: 'border-solid',
     }
   );
 };

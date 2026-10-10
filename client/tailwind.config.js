@@ -3,41 +3,91 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+        sans: ['Montserrat', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
+      },
       colors: {
-        // Semantic surface tokens
+        // Strict Brand Identity Tokens (Warm Ivory, Deep Editorial Blue, Coral Orange)
+        'warm-ivory': '#eae6ed',
+        'editorial-blue': '#226192',
+        coral: '#ef8557',
+
+        // Semantic surface tokens derived exclusively from the 3 approved colors
         canvas: {
-          DEFAULT: '#0a0f1d',
-          dot: '#334155',
+          DEFAULT: '#eae6ed',
+          dot: 'rgba(34, 97, 146, 0.15)',
         },
         surface: {
-          base: '#0f172a',       // slate-900: default body & cards
-          deep: '#020617',       // slate-950: dialogs, backdrop, studio chrome
-          elevated: '#1e293b',   // slate-800: docked sidebars, panels
-          subtle: '#334155',     // slate-700: hover wells, borders
+          DEFAULT: '#eae6ed',
+          base: '#eae6ed',
+          deep: '#eae6ed',
+          raised: 'rgba(34, 97, 146, 0.05)',
+          elevated: 'rgba(34, 97, 146, 0.08)',
+          subtle: 'rgba(34, 97, 146, 0.025)',
         },
-        // Semantic structural borders
         stroke: {
-          structural: 'rgba(30, 41, 59, 0.8)', // slate-800/80
-          subtle: 'rgba(51, 65, 85, 0.6)',     // slate-700/60
-          hover: '#475569',                    // slate-600
+          DEFAULT: 'rgba(34, 97, 146, 0.20)',
+          structural: 'rgba(34, 97, 146, 0.20)',
+          subtle: 'rgba(34, 97, 146, 0.10)',
+          hover: 'rgba(34, 97, 146, 0.35)',
         },
-        // Brand & Interactive Accents
+        status: {
+          success: '#226192',
+          warning: '#ef8557',
+          danger: '#ef8557',
+        },
         brand: {
-          50: '#f0f7ff',
-          100: '#e0effe',
-          200: '#bae0fd',
-          300: '#7cc7fb',
-          400: '#36a8f6',
-          500: '#0c8de4',
-          600: '#0270c2',
-          700: '#03599e',
-          800: '#074c82',
-          900: '#0b3f6d',
-          // Verified WCAG AA Action Colors
-          action: '#0e7490',         // cyan-700: verified 5.36:1 with white text (WCAG AA >4.5:1)
-          'action-hover': '#155e75', // cyan-800: active/hover state
-          focus: '#06b6d4',          // cyan-500: verified 7.87:1 against dark bg
-          accent: '#22d3ee',         // cyan-400: active selection highlights
+          DEFAULT: '#226192',
+          action: '#226192',
+          'action-hover': 'rgba(34, 97, 146, 0.88)',
+          focus: '#ef8557',
+          accent: '#ef8557',
+        },
+
+        // Backward-compatibility aliases mapped strictly to approved palette opacities
+        slate: {
+          50: '#226192',
+          100: '#226192',
+          200: 'rgba(34, 97, 146, 0.90)',
+          300: 'rgba(34, 97, 146, 0.75)',
+          400: 'rgba(34, 97, 146, 0.60)',
+          500: 'rgba(34, 97, 146, 0.45)',
+          600: 'rgba(34, 97, 146, 0.30)',
+          700: 'rgba(34, 97, 146, 0.20)',
+          800: 'rgba(34, 97, 146, 0.10)',
+          900: '#eae6ed',
+          950: '#eae6ed',
+        },
+        cyan: {
+          DEFAULT: '#ef8557',
+          300: '#ef8557',
+          400: '#ef8557',
+          500: '#ef8557',
+          600: '#ef8557',
+          700: '#226192',
+        },
+        emerald: {
+          DEFAULT: '#eae6ed',
+          200: '#eae6ed',
+          300: '#eae6ed',
+          400: '#eae6ed',
+          500: '#eae6ed',
+        },
+        rose: {
+          DEFAULT: '#ef8557',
+          200: '#ef8557',
+          300: '#ef8557',
+          400: '#ef8557',
+          500: '#ef8557',
+          600: '#ef8557',
+        },
+        amber: {
+          DEFAULT: '#ef8557',
+          300: '#ef8557',
+          400: '#ef8557',
+          500: '#ef8557',
         },
       },
       transitionTimingFunction: {

@@ -71,6 +71,40 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
     };
   }, [isOpen]);
 
+  // Arrow-key navigation for menu items
+  const handleMenuKeyDown = useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (!isOpen) return;
+    const items = Array.from(
+      e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not(:disabled)')
+    );
+    const idx = items.indexOf(document.activeElement as HTMLButtonElement);
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      items[(idx + 1) % items.length]?.focus();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      items[(idx - 1 + items.length) % items.length]?.focus();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      items[0]?.focus();
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      items[items.length - 1]?.focus();
+    } else if (e.key === 'Tab' || e.key === 'Escape') {
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    }
+  }, [isOpen]);
+
+  // Open menu and focus first item on ArrowDown from trigger
+  const handleTriggerKeyDown = useCallback((e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowDown' && !isOpen) {
+      e.preventDefault();
+      setIsOpen(true);
+    }
+  }, [isOpen]);
+
   // Auto-dismiss feedback notifications
   useEffect(() => {
     if (!feedback) return;
@@ -137,7 +171,9 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
             ? 'border-cyan-500/60 bg-cyan-950/80 text-cyan-300'
             : 'border-slate-800 bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white'
         } ${isExporting ? 'opacity-80 cursor-wait' : ''}`}
-        title="Export architecture diagram (PNG, SVG, JSON)"
+        aria-label={isExporting ? `Exporting ${activeFormat?.toUpperCase()}…` : 'Export architecture diagram (PNG, SVG, or JSON)'}
+        onKeyDown={handleTriggerKeyDown}
+        title={undefined}
       >
         {isExporting ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-cyan-400" />
@@ -176,10 +212,11 @@ export const ExportMenu: React.FC<ExportMenuProps> = ({
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          role="menu"
+        role="menu"
           aria-orientation="vertical"
           aria-labelledby="export-architecture-btn"
           data-testid="export-menu-dropdown"
+          onKeyDown={handleMenuKeyDown}
           className="absolute right-0 top-full mt-2 z-50 w-72 origin-top-right rounded-2xl border border-slate-800 bg-slate-900/95 p-2 shadow-2xl backdrop-blur-xl ring-1 ring-black/50 focus:outline-none animate-in fade-in slide-in-from-top-2"
         >
           <div className="px-3 py-2 border-b border-slate-800/80 mb-1">

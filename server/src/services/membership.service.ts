@@ -5,6 +5,7 @@ import { ProjectMemberModel } from '../models/projectMember.model';
 import { User } from '../models/user.model';
 import { permissionService } from './permission.service';
 import { NotFoundError, BadRequestError } from '../utils/errors';
+import { syncSocketMembership } from '../sockets/socketServer';
 
 export class MembershipService {
   /**
@@ -84,6 +85,9 @@ export class MembershipService {
     member.role = newRole;
     await member.save();
 
+    // Dynamically notify connected sockets of the role change
+    syncSocketMembership(projectId, targetUserId, newRole);
+
     return member.toSafeObject();
   }
 
@@ -120,6 +124,9 @@ export class MembershipService {
     if (!deleted) {
       throw new NotFoundError('Member not found', 'MEMBER_NOT_FOUND');
     }
+
+    // Dynamically evict connected sockets from the project room
+    syncSocketMembership(projectId, targetUserId, null);
   }
 }
 

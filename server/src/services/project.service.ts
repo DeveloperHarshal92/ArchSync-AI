@@ -10,6 +10,8 @@ import { ProjectInvitationModel } from '../models/projectInvitation.model';
 import { ArchitectureModel } from '../models/architecture.model';
 import { permissionService } from './permission.service';
 import { NotFoundError } from '../utils/errors';
+import { getSocketServer } from '../sockets/socketServer';
+import { getProjectRoom } from '../sockets/rooms';
 
 /**
  * Service orchestrating Project lifecycle and access control
@@ -156,6 +158,22 @@ export class ProjectService {
     await ProjectMemberModel.deleteMany({ projectId: new Types.ObjectId(projectId) });
     await ProjectInvitationModel.deleteMany({ projectId: new Types.ObjectId(projectId) });
     await ArchitectureModel.deleteMany({ projectId: new Types.ObjectId(projectId) });
+
+    const io = getSocketServer();
+    if (io) {
+      const room = getProjectRoom(projectId);
+      for (const [, socket] of io.sockets.sockets) {
+        if (socket.data.currentProjectId === projectId) {
+          socket.data.projectRole = undefined;
+          socket.data.currentProjectId = undefined;
+          socket.leave(room);
+          socket.emit('error', {
+            code: 'PROJECT_DELETED',
+            message: 'This project has been deleted by the owner',
+          });
+        }
+      }
+    }
   }
 }
 

@@ -4,9 +4,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* =========================================================
+   F14 — UX & ACCESSIBILITY GLOBAL STYLES
+   ========================================================= */
+
 :root {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   color-scheme: light dark;
+
+  /* Brand focus colour used throughout :focus-visible rings */
+  --focus-ring-color: #06b6d4;   /* cyan-500 */
+  --focus-ring-offset: 2px;
+  --focus-ring-width: 2px;
 }
 
 body {
@@ -15,4 +25,182 @@ body {
   min-height: 100vh;
   background-color: #0f172a;
   color: #f8fafc;
+}
+
+/* ---------------------------------------------------------
+   SKIP NAVIGATION LINK — hidden until focused (WCAG 2.4.1)
+   --------------------------------------------------------- */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 0.5rem 1.25rem;
+  border-radius: 0 0 0.75rem 0.75rem;
+  background: #06b6d4;
+  color: #0f172a;
+  font-size: 0.875rem;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: none;
+}
+
+/* ---------------------------------------------------------
+   GLOBAL :focus-visible RING (WCAG 2.4.7 / 2.4.11)
+   Replaces browser default which is invisible on dark bg.
+   --------------------------------------------------------- */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
+  outline-offset: var(--focus-ring-offset) !important;
+  border-radius: 4px;
+}
+
+/* Remove focus ring when using pointer (not keyboard) */
+*:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ---------------------------------------------------------
+   REDUCED MOTION (WCAG 2.3.3)
+   Disable all CSS transitions/animations when user prefers.
+   --------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* React Flow canvas animations */
+  .react-flow__edge-path {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+/* ---------------------------------------------------------
+   HIGH-CONTRAST BUTTON OVERRIDE
+   Gradient primary buttons fail WCAG 1.4.3 (≈1.7:1).
+   Override to a solid cyan that achieves >4.5:1 on dark bg.
+   --------------------------------------------------------- */
+.btn-primary {
+  background: #0891b2 !important;           /* cyan-600 – 4.6:1 on #0f172a */
+  background-image: none !important;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0e7490 !important;           /* cyan-700 */
+}
+
+/* ---------------------------------------------------------
+   LIVE REGION — visually hidden but announced by AT
+   --------------------------------------------------------- */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Focusable sr-only (skip links, etc.) */
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* ---------------------------------------------------------
+   LIVE ANNOUNCEMENT REGION
+   --------------------------------------------------------- */
+#a11y-announcer {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------
+   CANVAS RESPONSIVE OVERRIDES
+   Panels hidden on small screens via Tailwind; ensure
+   the canvas itself stays usable at narrow widths.
+   --------------------------------------------------------- */
+.archsync-canvas {
+  min-width: 0;
+}
+
+/* Mobile panel drawer backdrop */
+.panel-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 15, 29, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 40;
+}
+
+/* ---------------------------------------------------------
+   DIALOG / MODAL BASE — ensure proper stacking & scroll
+   --------------------------------------------------------- */
+[role='dialog'] {
+  max-height: 90dvh;
+  overflow-y: auto;
+}
+
+/* ---------------------------------------------------------
+   REACT FLOW — improve keyboard focus indicators on nodes
+   --------------------------------------------------------- */
+.react-flow__node:focus-within {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+.react-flow__node.selected {
+  outline: 2px solid var(--focus-ring-color);
+  outline-offset: 3px;
+  border-radius: 12px;
+}
+
+/* ---------------------------------------------------------
+   SCROLLBAR — subtle dark theme
+   --------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
 }

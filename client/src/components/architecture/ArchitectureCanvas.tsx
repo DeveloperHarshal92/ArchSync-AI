@@ -61,7 +61,7 @@ import { useArchitectureAutosave } from '../../hooks/useArchitectureAutosave';
 import { useProjectCollaboration } from '../../hooks/useProjectCollaboration';
 import { useValidateArchitectureMutation } from '../../store/api/architectureApi';
 import { ArchitectureValidationResult } from '@archsync/shared';
-import { Sliders, ShieldCheck, Sparkles } from 'lucide-react';
+import { Sliders, ShieldCheck, Sparkles, PanelRightOpen, PanelRightClose, X } from 'lucide-react';
 
 interface ArchitectureCanvasProps {
   initialArchitecture: Architecture;
@@ -96,6 +96,10 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const aiPanelOpen = useAppSelector(selectAiPanelOpen);
 
   const isAutosavePending = persistenceStatus === 'dirty' || persistenceStatus === 'saving';
+
+  // F14: Mobile panel drawer state
+  const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
+  const mobilePanelId = 'canvas-mobile-panel';
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const isRemoteChangeRef = useRef<boolean>(false);
@@ -586,9 +590,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   }, [initialArchitecture.projectId, nodes, edges, currentViewport, currentVersion]);
 
   return (
-    <div className="relative flex h-[720px] w-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
-      {/* 1. Component Palette (Left Panel) */}
-      <div className="hidden lg:block w-72 shrink-0 h-full">
+    <div
+      className="relative flex h-[720px] w-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl"
+      role="region"
+      aria-label="Architecture canvas workspace"
+    >
+      {/* 1. Component Palette (Left Panel — desktop only) */}
+      <div className="hidden lg:block w-72 shrink-0 h-full" aria-label="Component palette">
         <ComponentPalette isEditable={isEditable} />
       </div>
 
@@ -604,7 +612,11 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         </div>
 
         {/* Top-Right Control Toolbar: Collaboration Indicator + Export Menu + AI Assistant + Validate Button + Properties Toggle Button */}
-        <div className="absolute top-4 right-4 z-10 flex items-center gap-2 pointer-events-auto">
+        <div
+          className="absolute top-4 right-4 z-10 flex items-center gap-2 pointer-events-auto"
+          role="toolbar"
+          aria-label="Canvas action toolbar"
+        >
           <CollaborationIndicator />
 
           <ExportMenu
@@ -625,22 +637,25 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
               }
             }}
             data-testid="canvas-ai-assistant-btn"
+            aria-label={aiPanelOpen ? 'Close AI Architecture Assistant panel' : 'Open AI Architecture Assistant panel'}
+            aria-expanded={aiPanelOpen}
+            aria-controls="canvas-ai-panel"
             className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-xl backdrop-blur-md transition-colors ${
               aiPanelOpen
                 ? 'border-indigo-500/60 bg-indigo-950/90 text-indigo-300'
                 : 'border-slate-800 bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white'
             }`}
-            title="Toggle AI Architecture Assistant"
           >
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" />
+            <Sparkles className="h-3.5 w-3.5 text-indigo-400" aria-hidden="true" />
             <span>AI Assistant</span>
           </button>
 
           <button
             onClick={handleValidate}
             data-testid="canvas-validate-btn"
+            aria-label={`Validate architecture${validationResult && validationResult.issues.length > 0 ? ` — ${validationResult.issues.length} issue${validationResult.issues.length > 1 ? 's' : ''} found` : ''}`}
+            aria-busy={isValidating}
             className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white transition-colors"
-            title="Validate Architecture"
           >
             <ShieldCheck
               className={`h-3.5 w-3.5 ${
@@ -652,10 +667,12 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                   ? 'text-amber-400'
                   : 'text-emerald-400'
               }`}
+              aria-hidden="true"
             />
             <span>Validate</span>
             {validationResult && validationResult.issues.length > 0 && (
               <span
+                aria-hidden="true"
                 className={`ml-1 rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
                   validationResult.valid === false
                     ? 'bg-rose-500/20 text-rose-400'
@@ -674,13 +691,29 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                 dispatch(setAiPanelOpen(false));
                 dispatch(setDetailsPanelOpen(true));
               }}
+              aria-label="Open node properties panel"
+              aria-expanded={false}
+              aria-controls="canvas-details-panel"
               className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white"
-              title="Open Properties Panel"
             >
-              <Sliders className="h-3.5 w-3.5 text-cyan-400" />
+              <Sliders className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
               <span>Properties</span>
             </button>
           )}
+
+          {/* F14: Mobile panel toggle — visible only on small screens */}
+          <button
+            onClick={() => setMobilePanelOpen((prev) => !prev)}
+            className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white lg:hidden"
+            aria-label={mobilePanelOpen ? 'Close side panel' : 'Open side panel'}
+            aria-expanded={mobilePanelOpen}
+            aria-controls={mobilePanelId}
+          >
+            {mobilePanelOpen
+              ? <PanelRightClose className="h-3.5 w-3.5" aria-hidden="true" />
+              : <PanelRightOpen className="h-3.5 w-3.5" aria-hidden="true" />}
+            <span className="sr-only">{mobilePanelOpen ? 'Close panel' : 'Open panel'}</span>
+          </button>
         </div>
 
         {/* Ephemeral Collaborator Remote Cursors Overlay */}
@@ -738,15 +771,22 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       {/* 3. Right Side Panel Area (AI Assistant Panel, Validation Panel, or Node Details Panel) */}
       {aiPanelOpen ? (
-        <div className="hidden md:block w-96 shrink-0 h-full border-l border-slate-800/80">
+        <aside
+          id="canvas-ai-panel"
+          className="hidden md:block w-96 shrink-0 h-full border-l border-slate-800/80"
+          aria-label="AI Architecture Assistant panel"
+        >
           <AIAssistantPanel
             projectId={initialArchitecture.projectId}
             onClose={() => dispatch(setAiPanelOpen(false))}
             onSelectNode={handleSelectNodeFromValidation}
           />
-        </div>
+        </aside>
       ) : validationPanelOpen ? (
-        <div className="hidden md:block w-84 shrink-0 h-full border-l border-slate-800/80">
+        <aside
+          className="hidden md:block w-84 shrink-0 h-full border-l border-slate-800/80"
+          aria-label="Architecture validation results panel"
+        >
           <ValidationPanel
             validationResult={validationResult}
             isValidating={isValidating}
@@ -755,9 +795,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             onSelectNode={handleSelectNodeFromValidation}
             onSelectEdge={handleSelectEdgeFromValidation}
           />
-        </div>
+        </aside>
       ) : detailsPanelOpen ? (
-        <div className="hidden md:block w-80 shrink-0 h-full border-l border-slate-800/80">
+        <aside
+          id="canvas-details-panel"
+          className="hidden md:block w-80 shrink-0 h-full border-l border-slate-800/80"
+          aria-label="Node and edge properties panel"
+        >
           <NodeDetailsPanel
             selectedNode={selectedNode}
             selectedEdge={selectedEdge}
@@ -768,8 +812,65 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             onDeleteEdge={handleDeleteEdge}
             onClose={() => dispatch(setDetailsPanelOpen(false))}
           />
-        </div>
+        </aside>
       ) : null}
+
+      {/* F14: Mobile panel drawer — slides in over canvas on narrow viewports */}
+      {mobilePanelOpen && (
+        <>
+          {/* Backdrop */}
+          <div
+            className="panel-drawer-backdrop md:hidden"
+            aria-hidden="true"
+            onClick={() => setMobilePanelOpen(false)}
+          />
+          {/* Drawer */}
+          <div
+            id={mobilePanelId}
+            className="absolute inset-y-0 right-0 z-50 w-80 max-w-[90vw] h-full border-l border-slate-800 bg-slate-950 md:hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Canvas side panel"
+          >
+            {/* Drawer close button */}
+            <button
+              onClick={() => setMobilePanelOpen(false)}
+              className="absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+              aria-label="Close side panel"
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+
+            {aiPanelOpen ? (
+              <AIAssistantPanel
+                projectId={initialArchitecture.projectId}
+                onClose={() => { dispatch(setAiPanelOpen(false)); setMobilePanelOpen(false); }}
+                onSelectNode={handleSelectNodeFromValidation}
+              />
+            ) : validationPanelOpen ? (
+              <ValidationPanel
+                validationResult={validationResult}
+                isValidating={isValidating}
+                onValidate={handleValidate}
+                onClose={() => { dispatch(setValidationPanelOpen(false)); setMobilePanelOpen(false); }}
+                onSelectNode={handleSelectNodeFromValidation}
+                onSelectEdge={handleSelectEdgeFromValidation}
+              />
+            ) : (
+              <NodeDetailsPanel
+                selectedNode={selectedNode}
+                selectedEdge={selectedEdge}
+                isEditable={isEditable}
+                onUpdateNodeData={handleUpdateNodeData}
+                onDeleteNode={handleDeleteNode}
+                onUpdateEdgeData={handleUpdateEdgeData}
+                onDeleteEdge={handleDeleteEdge}
+                onClose={() => { dispatch(setDetailsPanelOpen(false)); setMobilePanelOpen(false); }}
+              />
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 };

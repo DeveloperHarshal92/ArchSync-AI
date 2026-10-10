@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Layers,
@@ -73,9 +73,39 @@ export const ProjectWorkspacePage: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<'EDITOR' | 'VIEWER'>('EDITOR');
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const inviteModalRef = useRef<HTMLDivElement>(null);
+  const inviteFirstFocusRef = useRef<HTMLInputElement>(null);
 
   // Remove Member States
   const [memberToRemove, setMemberToRemove] = useState<ProjectMemberWithUser | null>(null);
+  const removeModalRef = useRef<HTMLDivElement>(null);
+  const removeCancelRef = useRef<HTMLButtonElement>(null);
+
+  // F14: Focus first focusable element when invite modal opens
+  useEffect(() => {
+    if (isInviteModalOpen) {
+      setTimeout(() => inviteFirstFocusRef.current?.focus(), 50);
+    }
+  }, [isInviteModalOpen]);
+
+  // F14: Focus cancel button when remove modal opens
+  useEffect(() => {
+    if (memberToRemove) {
+      setTimeout(() => removeCancelRef.current?.focus(), 50);
+    }
+  }, [memberToRemove]);
+
+  // F14: Escape key closes whichever modal is open
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isInviteModalOpen) setIsInviteModalOpen(false);
+        if (memberToRemove) setMemberToRemove(null);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isInviteModalOpen, memberToRemove]);
 
   // General Notification
   const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
@@ -503,18 +533,29 @@ export const ProjectWorkspacePage: React.FC = () => {
 
       {/* Invite Member Modal */}
       {isInviteModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          aria-hidden="true"
+          onClick={(e) => { if (e.target === e.currentTarget) setIsInviteModalOpen(false); }}
+        >
+          <div
+            ref={inviteModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="invite-modal-title"
+            className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+          >
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div className="flex items-center gap-2">
-                <UserPlus className="h-5 w-5 text-cyan-400" />
-                <h2 className="text-lg font-bold text-white">Invite Collaborator</h2>
+                <UserPlus className="h-5 w-5 text-cyan-400" aria-hidden="true" />
+                <h2 id="invite-modal-title" className="text-lg font-bold text-white">Invite Collaborator</h2>
               </div>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
+                aria-label="Close invite collaborator dialog"
                 className="text-slate-400 hover:text-white"
               >
-                <X className="h-5 w-5" />
+                <X className="h-5 w-5" aria-hidden="true" />
               </button>
             </div>
 
@@ -534,10 +575,15 @@ export const ProjectWorkspacePage: React.FC = () => {
 
             <form onSubmit={handleInviteSubmit} className="mt-4 space-y-4">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                <label
+                  htmlFor="invite-email-input"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+                >
                   Collaborator Email *
                 </label>
                 <input
+                  id="invite-email-input"
+                  ref={inviteFirstFocusRef}
                   type="email"
                   required
                   placeholder="architect@organization.com"
@@ -548,10 +594,14 @@ export const ProjectWorkspacePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300">
+                <label
+                  htmlFor="invite-role-select"
+                  className="block text-xs font-semibold uppercase tracking-wider text-slate-300"
+                >
                   Access Role *
                 </label>
                 <select
+                  id="invite-role-select"
                   value={inviteRole}
                   onChange={(e) => setInviteRole(e.target.value as 'EDITOR' | 'VIEWER')}
                   className="mt-1.5 w-full rounded-lg border border-slate-800 bg-slate-950 px-3 py-2 text-sm text-white focus:border-cyan-500 focus:outline-none"
@@ -591,11 +641,21 @@ export const ProjectWorkspacePage: React.FC = () => {
 
       {/* Remove Member Confirmation Modal */}
       {memberToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          aria-hidden="true"
+          onClick={(e) => { if (e.target === e.currentTarget) setMemberToRemove(null); }}
+        >
+          <div
+            ref={removeModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="remove-modal-title"
+            className="w-full max-w-sm rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+          >
             <div className="flex items-center gap-3 text-rose-400 mb-3">
-              <Trash2 className="h-6 w-6" />
-              <h3 className="text-base font-bold text-white">Remove Project Member</h3>
+              <Trash2 className="h-6 w-6" aria-hidden="true" />
+              <h3 id="remove-modal-title" className="text-base font-bold text-white">Remove Project Member</h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               Are you sure you want to revoke access for{' '}
@@ -607,6 +667,7 @@ export const ProjectWorkspacePage: React.FC = () => {
 
             <div className="mt-6 flex justify-end gap-3">
               <button
+                ref={removeCancelRef}
                 type="button"
                 onClick={() => setMemberToRemove(null)}
                 className="rounded-lg border border-slate-800 px-4 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800"
@@ -621,7 +682,7 @@ export const ProjectWorkspacePage: React.FC = () => {
               >
                 {isRemovingMember ? (
                   <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
                     <span>Removing...</span>
                   </>
                 ) : (

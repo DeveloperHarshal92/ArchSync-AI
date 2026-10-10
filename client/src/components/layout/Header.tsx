@@ -26,11 +26,24 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header
+      className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur-md"
+      aria-label="ArchSync AI application header"
+    >
+      <nav
+        className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8"
+        aria-label="Main navigation"
+      >
         {/* Brand / Logo */}
-        <Link to="/" className="flex items-center gap-3 transition-opacity hover:opacity-90">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20">
+        <Link
+          to="/"
+          aria-label="ArchSync AI — go to home page"
+          className="flex items-center gap-3 transition-opacity hover:opacity-90"
+        >
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/20"
+            aria-hidden="true"
+          >
             <Layers className="h-5 w-5 text-white" />
           </div>
           <div>
@@ -129,7 +142,7 @@ export const Header: React.FC = () => {
             </div>
           )}
         </div>
-      </div>
+      </nav>
     </header>
   );
 };

@@ -3,6 +3,7 @@
  */
 
 import { ArchitectureNode, ArchitectureEdge, ArchitectureViewport } from './architecture';
+import { ProjectMemberRole } from './membership';
 
 export type SocketConnectionState =
   | 'connecting'
@@ -155,4 +156,6 @@ export interface ServerToClientEvents {
   'presence:state': (payload: PresenceStateEvent) => void;
   'cursor:update': (payload: CursorUpdateEvent) => void;
   'error': (payload: SocketErrorPayload) => void;
+  'role:update'?: (payload: { projectId: string; role: ProjectMemberRole }) => void;
+  'membership:revoked'?: (payload: { projectId: string; message: string }) => void;
 }

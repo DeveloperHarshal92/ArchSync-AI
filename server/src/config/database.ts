@@ -71,12 +71,18 @@ export class DatabaseManager {
       return true;
     } catch (error) {
       this.isConnecting = false;
+      if (env.NODE_ENV === 'production') {
+        const sanitizedMsg = error instanceof Error ? error.message : String(error);
+        console.error('[ArchSync AI] FATAL: Production database connection failed:', sanitizedMsg);
+        throw new Error(`Production MongoDB connection failed: ${sanitizedMsg}`);
+      }
       console.warn(
         '[ArchSync AI] Warning: Unable to connect to MongoDB. Continuing startup for local development without DB:',
         error instanceof Error ? error.message : error
       );
       return false;
     }
+
   }
 
   /**

@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { ClientToServerEvents, ServerToClientEvents } from '@archsync/shared';
+import { getSocketUrl } from '../apiConfig';
 
 export type TypedSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
@@ -11,7 +12,7 @@ let socketInstance: TypedSocket | null = null;
  */
 export function getSocket(customUrl?: string): TypedSocket {
   if (!socketInstance) {
-    const url = customUrl || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5000');
+    const url = getSocketUrl(customUrl);
     socketInstance = io(url, {
       withCredentials: true,
       autoConnect: false,
@@ -24,6 +25,7 @@ export function getSocket(customUrl?: string): TypedSocket {
   }
   return socketInstance;
 }
+
 
 /**
  * Cleanly disconnects and tears down the socket connection

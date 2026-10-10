@@ -72,6 +72,19 @@ export class ArchitectureService {
       );
     }
 
+    const preparedNodes = payload.nodes.map((node) => ({
+      ...node,
+      createdBy: node.createdBy || userId,
+      createdAt: node.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+    const preparedEdges = payload.edges.map((edge) => ({
+      ...edge,
+      createdBy: edge.createdBy || userId,
+      createdAt: edge.createdAt || new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }));
+
     // 3. Find current document to verify optimistic concurrency version
     const existingDoc = await ArchitectureModel.findOne({
       projectId: new Types.ObjectId(projectId),
@@ -92,26 +105,40 @@ export class ArchitectureService {
         );
       }
 
-      // Increment version
-      const nextVersion = existingDoc.version + 1;
+      // Execute atomic conditional update where version MUST match payload.version
+      const updatedDoc = await ArchitectureModel.findOneAndUpdate(
+        {
+          projectId: new Types.ObjectId(projectId),
+          version: payload.version,
+        },
+        {
+          $set: {
+            nodes: preparedNodes,
+            edges: preparedEdges,
+            viewport: payload.viewport,
+          },
+          $inc: { version: 1 },
+        },
+        { new: true }
+      );
 
-      existingDoc.nodes = payload.nodes.map((node) => ({
-        ...node,
-        createdBy: node.createdBy || userId,
-        createdAt: node.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }));
-      existingDoc.edges = payload.edges.map((edge) => ({
-        ...edge,
-        createdBy: edge.createdBy || userId,
-        createdAt: edge.createdAt || new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }));
-      existingDoc.viewport = payload.viewport;
-      existingDoc.version = nextVersion;
+      // If updatedDoc is null, a competing concurrent write already modified the version
+      if (!updatedDoc) {
+        const currentDoc = await ArchitectureModel.findOne({
+          projectId: new Types.ObjectId(projectId),
+        });
+        const currentVersion = currentDoc ? currentDoc.version : existingDoc.version;
+        throw new ConflictError(
+          `Architecture version conflict. Expected version ${currentVersion}, received ${payload.version}`,
+          'VERSION_CONFLICT',
+          {
+            expectedVersion: currentVersion,
+            submittedVersion: payload.version,
+          }
+        );
+      }
 
-      const updated = await existingDoc.save();
-      savedArchitecture = updated.toSafeObject();
+      savedArchitecture = updatedDoc.toSafeObject();
     } else {
       // First persistence: initial version submitted must be 1
       if (payload.version !== 1) {
@@ -125,26 +152,36 @@ export class ArchitectureService {
         );
       }
 
-      const created = await ArchitectureModel.create({
-        projectId: new Types.ObjectId(projectId),
-        nodes: payload.nodes.map((node) => ({
-          ...node,
-          createdBy: node.createdBy || userId,
-          createdAt: node.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })),
-        edges: payload.edges.map((edge) => ({
-          ...edge,
-          createdBy: edge.createdBy || userId,
-          createdAt: edge.createdAt || new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        })),
-        viewport: payload.viewport,
-        version: 2, // Incremented after first save
-      });
+      try {
+        const created = await ArchitectureModel.create({
+          projectId: new Types.ObjectId(projectId),
+          nodes: preparedNodes,
+          edges: preparedEdges,
+          viewport: payload.viewport,
+          version: 2, // Incremented after first save
+        });
 
-      savedArchitecture = created.toSafeObject();
+        savedArchitecture = created.toSafeObject();
+      } catch (err: any) {
+        // Handle race where competing request created document first (unique projectId index code 11000)
+        if (err && typeof err === 'object' && err.code === 11000) {
+          const currentDoc = await ArchitectureModel.findOne({
+            projectId: new Types.ObjectId(projectId),
+          });
+          const currentVersion = currentDoc ? currentDoc.version : 2;
+          throw new ConflictError(
+            `Architecture version conflict. Expected version ${currentVersion}, received ${payload.version}`,
+            'VERSION_CONFLICT',
+            {
+              expectedVersion: currentVersion,
+              submittedVersion: payload.version,
+            }
+          );
+        }
+        throw err;
+      }
     }
+
 
     return { architecture: savedArchitecture, validation };
   }

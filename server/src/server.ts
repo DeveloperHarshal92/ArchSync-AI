@@ -15,7 +15,12 @@ initSocketServer(server);
  */
 async function startServer(): Promise<void> {
   // Initialize database connection if configured
-  await dbManager.connect();
+  const connected = await dbManager.connect();
+  if (!connected && env.NODE_ENV === 'production') {
+    console.error('[ArchSync AI] FATAL: Server startup aborted because database is not connected in production mode');
+    process.exit(1);
+  }
+
 
   server.on('error', (err: NodeJS.ErrnoException) => {
     if (err.code === 'EADDRINUSE') {
@@ -79,9 +84,23 @@ async function shutdown(signal: string): Promise<void> {
 process.on('SIGTERM', () => shutdown('SIGTERM'));
 process.on('SIGINT', () => shutdown('SIGINT'));
 
+process.on('unhandledRejection', (reason: unknown) => {
+  console.error(
+    '[ArchSync AI] FATAL: Unhandled Promise Rejection:',
+    reason instanceof Error ? reason.message : reason
+  );
+  shutdown('UNHANDLED_REJECTION');
+});
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('[ArchSync AI] FATAL: Uncaught Exception:', error.message);
+  shutdown('UNCAUGHT_EXCEPTION');
+});
+
 startServer().catch((err) => {
   console.error('[ArchSync AI] Failed to start server:', err);
   process.exit(1);
 });
 
-export { server };
+export { server, shutdown };
+

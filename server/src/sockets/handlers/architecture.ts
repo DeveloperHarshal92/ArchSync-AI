@@ -15,15 +15,23 @@ import {
   edgeUpdateSchema,
   edgeDeleteSchema,
 } from '../../validators/collaboration.validator';
-import { getProjectRoom, getProjectVersion, setProjectVersion } from '../rooms';
+import {
+  getProjectRoom,
+  getProjectVersion,
+  setProjectVersion,
+  removeCollaborator,
+} from '../rooms';
+import { permissionService } from '../../services/permission.service';
 
 /**
- * Checks authorization and room membership before processing architecture mutations
+ * Checks authorization and room membership before processing architecture mutations.
+ * Enforces dynamic membership checks against permissionService to ensure that
+ * downgraded or removed members cannot mutate architecture, and handles database errors safely.
  */
-function verifyMutationAccess(
+async function verifyMutationAccess(
   socket: AppSocket,
   projectId: string
-): boolean {
+): Promise<boolean> {
   if (socket.data.currentProjectId !== projectId) {
     socket.emit('error', {
       code: 'NOT_IN_PROJECT',
@@ -32,16 +40,47 @@ function verifyMutationAccess(
     return false;
   }
 
-  const role = socket.data.projectRole;
-  if (role !== 'OWNER' && role !== 'EDITOR') {
+  try {
+    const member = await permissionService.getProjectMembership(socket.data.user.id, projectId);
+    if (!member) {
+      // Member was removed while connected: revoke socket room access immediately
+      socket.data.projectRole = undefined;
+      socket.data.currentProjectId = undefined;
+      socket.leave(getProjectRoom(projectId));
+      removeCollaborator(projectId, socket.id);
+
+      socket.to(getProjectRoom(projectId)).emit('presence:leave', {
+        projectId,
+        userId: socket.data.user.id,
+      });
+
+      socket.emit('error', {
+        code: 'FORBIDDEN',
+        message: 'You are no longer a member of this project',
+      });
+      return false;
+    }
+
+    // Refresh in-memory socket role from authoritative database record
+    socket.data.projectRole = member.role;
+
+    if (member.role !== 'OWNER' && member.role !== 'EDITOR') {
+      socket.emit('error', {
+        code: 'FORBIDDEN',
+        message: 'Viewers cannot modify architecture',
+      });
+      return false;
+    }
+
+    return true;
+  } catch (_err) {
+    // Fail closed: reject mutation rather than granting access based on stale privileges
     socket.emit('error', {
-      code: 'FORBIDDEN',
-      message: 'Viewers cannot modify architecture',
+      code: 'AUTHORIZATION_ERROR',
+      message: 'Unable to verify project permissions. Architecture mutation rejected.',
     });
     return false;
   }
-
-  return true;
 }
 
 /**
@@ -60,11 +99,11 @@ function checkAndAdvanceVersion(projectId: string, incomingVersion?: number): bo
   return true;
 }
 
-export function handleNodeCreate(
+export async function handleNodeCreate(
   _io: AppServer,
   socket: AppSocket,
   rawPayload: NodeCreateEvent
-): void {
+): Promise<void> {
   const result = nodeCreateSchema.safeParse(rawPayload);
   if (!result.success) {
     socket.emit('error', {
@@ -75,18 +114,19 @@ export function handleNodeCreate(
   }
 
   const payload = result.data as NodeCreateEvent;
-  if (!verifyMutationAccess(socket, payload.projectId)) return;
+  const authorized = await verifyMutationAccess(socket, payload.projectId);
+  if (!authorized) return;
   if (!checkAndAdvanceVersion(payload.projectId, payload.version)) return;
 
   const room = getProjectRoom(payload.projectId);
   socket.to(room).emit('node:create', payload);
 }
 
-export function handleNodeUpdate(
+export async function handleNodeUpdate(
   _io: AppServer,
   socket: AppSocket,
   rawPayload: NodeUpdateEvent
-): void {
+): Promise<void> {
   const result = nodeUpdateSchema.safeParse(rawPayload);
   if (!result.success) {
     socket.emit('error', {
@@ -97,18 +137,19 @@ export function handleNodeUpdate(
   }
 
   const payload = result.data as NodeUpdateEvent;
-  if (!verifyMutationAccess(socket, payload.projectId)) return;
+  const authorized = await verifyMutationAccess(socket, payload.projectId);
+  if (!authorized) return;
   if (!checkAndAdvanceVersion(payload.projectId, payload.version)) return;
 
   const room = getProjectRoom(payload.projectId);
   socket.to(room).emit('node:update', payload);
 }
 
-export function handleNodeDelete(
+export async function handleNodeDelete(
   _io: AppServer,
   socket: AppSocket,
   rawPayload: NodeDeleteEvent
-): void {
+): Promise<void> {
   const result = nodeDeleteSchema.safeParse(rawPayload);
   if (!result.success) {
     socket.emit('error', {
@@ -119,18 +160,19 @@ export function handleNodeDelete(
   }
 
   const payload = result.data as NodeDeleteEvent;
-  if (!verifyMutationAccess(socket, payload.projectId)) return;
+  const authorized = await verifyMutationAccess(socket, payload.projectId);
+  if (!authorized) return;
   if (!checkAndAdvanceVersion(payload.projectId, payload.version)) return;
 
   const room = getProjectRoom(payload.projectId);
   socket.to(room).emit('node:delete', payload);
 }
 
-export function handleEdgeCreate(
+export async function handleEdgeCreate(
   _io: AppServer,
   socket: AppSocket,
   rawPayload: EdgeCreateEvent
-): void {
+): Promise<void> {
   const result = edgeCreateSchema.safeParse(rawPayload);
   if (!result.success) {
     socket.emit('error', {
@@ -141,18 +183,19 @@ export function handleEdgeCreate(
   }
 
   const payload = result.data as EdgeCreateEvent;
-  if (!verifyMutationAccess(socket, payload.projectId)) return;
+  const authorized = await verifyMutationAccess(socket, payload.projectId);
+  if (!authorized) return;
   if (!checkAndAdvanceVersion(payload.projectId, payload.version)) return;
 
   const room = getProjectRoom(payload.projectId);
   socket.to(room).emit('edge:create', payload);
 }
 
-export function handleEdgeUpdate(
+export async function handleEdgeUpdate(
   _io: AppServer,
   socket: AppSocket,
   rawPayload: EdgeUpdateEvent
-): void {
+): Promise<void> {
   const result = edgeUpdateSchema.safeParse(rawPayload);
   if (!result.success) {
     socket.emit('error', {
@@ -163,18 +206,19 @@ export function handleEdgeUpdate(
   }
 
   const payload = result.data as EdgeUpdateEvent;
-  if (!verifyMutationAccess(socket, payload.projectId)) return;
+  const authorized = await verifyMutationAccess(socket, payload.projectId);
+  if (!authorized) return;
   if (!checkAndAdvanceVersion(payload.projectId, payload.version)) return;
 
   const room = getProjectRoom(payload.projectId);
   socket.to(room).emit('edge:update', payload);
 }
 
-export function handleEdgeDelete(
+export async function handleEdgeDelete(
   _io: AppServer,
   socket: AppSocket,
   rawPayload: EdgeDeleteEvent
-): void {
+): Promise<void> {
   const result = edgeDeleteSchema.safeParse(rawPayload);
   if (!result.success) {
     socket.emit('error', {
@@ -185,7 +229,8 @@ export function handleEdgeDelete(
   }
 
   const payload = result.data as EdgeDeleteEvent;
-  if (!verifyMutationAccess(socket, payload.projectId)) return;
+  const authorized = await verifyMutationAccess(socket, payload.projectId);
+  if (!authorized) return;
   if (!checkAndAdvanceVersion(payload.projectId, payload.version)) return;
 
   const room = getProjectRoom(payload.projectId);

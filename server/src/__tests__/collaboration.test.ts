@@ -86,6 +86,13 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
     });
   };
 
+  const joinProject = (client: ClientSocketType, projectId: string): Promise<ProjectStateEvent> => {
+    return new Promise((resolve) => {
+      client.once('project:state', (state) => resolve(state));
+      client.emit('project:join', { projectId });
+    });
+  };
+
   beforeAll(async () => {
     if (mongoose.connection.readyState === 0) {
       await mongoose.connect(env.MONGODB_URI);
@@ -303,11 +310,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(ownerCookie);
       const clientB = await createClientSocket(ownerCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId2 });
-
-      // Wait briefly for room join
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId2),
+      ]);
 
       let userBReceived = false;
       clientB.on('node:update', () => {
@@ -338,10 +344,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(ownerCookie);
       const clientB = await createClientSocket(editorCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       let clientAReceived = false;
       clientA.on('node:update', () => {
@@ -382,10 +388,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const viewerClient = await createClientSocket(viewerCookie);
       const editorClient = await createClientSocket(editorCookie);
 
-      viewerClient.emit('project:join', { projectId: testProjectId1 });
-      editorClient.emit('project:join', { projectId: testProjectId1 });
-
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(viewerClient, testProjectId1),
+        joinProject(editorClient, testProjectId1),
+      ]);
 
       let editorReceived = false;
       editorClient.on('node:create', () => {
@@ -423,10 +429,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const viewerClient = await createClientSocket(viewerCookie);
       const editorClient = await createClientSocket(editorCookie);
 
-      viewerClient.emit('project:join', { projectId: testProjectId1 });
-      editorClient.emit('project:join', { projectId: testProjectId1 });
-
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(viewerClient, testProjectId1),
+        joinProject(editorClient, testProjectId1),
+      ]);
 
       const cursorPromise = new Promise<{ userId: string; x: number; y: number }>((resolve) => {
         editorClient.on('cursor:update', (payload) => resolve(payload));
@@ -449,10 +455,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(editorCookie);
       const clientB = await createClientSocket(ownerCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       const createPromise = new Promise<{ node: ArchitectureNode }>((resolve) => {
         clientB.on('node:create', (payload) => resolve(payload));
@@ -482,10 +488,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(editorCookie);
       const clientB = await createClientSocket(ownerCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       const deletePromise = new Promise<{ nodeId: string }>((resolve) => {
         clientB.on('node:delete', (payload) => resolve(payload));
@@ -504,10 +510,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(editorCookie);
       const clientB = await createClientSocket(ownerCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       const edgeCreatePromise = new Promise<{ edge: ArchitectureEdge }>((resolve) => {
         clientB.on('edge:create', (payload) => resolve(payload));
@@ -570,9 +576,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(ownerCookie);
       const clientB = await createClientSocket(editorCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       const leavePromise = new Promise<{ projectId: string; userId: string }>((resolve) => {
         clientA.on('presence:leave', (payload) => resolve(payload));
@@ -592,9 +599,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(ownerCookie);
       const clientB = await createClientSocket(editorCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       const leavePromise = new Promise<{ projectId: string; userId: string }>((resolve) => {
         clientA.on('presence:leave', (payload) => resolve(payload));
@@ -612,9 +620,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(ownerCookie);
       const clientB = await createClientSocket(editorCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       const presenceUpdatePromise = new Promise<{ userId: string; selectedNodeId: string }>((resolve) => {
         clientB.on('presence:update', (payload: any) => resolve(payload));
@@ -636,9 +645,10 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
       const clientA = await createClientSocket(ownerCookie);
       const clientB = await createClientSocket(editorCookie);
 
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      clientB.emit('project:join', { projectId: testProjectId1 });
-      await new Promise((r) => setTimeout(r, 100));
+      await Promise.all([
+        joinProject(clientA, testProjectId1),
+        joinProject(clientB, testProjectId1),
+      ]);
 
       // Advance version to 5
       const advanceNode: ArchitectureNode = {
@@ -682,8 +692,7 @@ describe('ArchSync AI — F10 Real-Time Collaboration Behavioral Test Suite', ()
 
     it('20. GIVEN invalid payload (empty label), WHEN client emits node:create, THEN server rejects with INVALID_PAYLOAD', async () => {
       const clientA = await createClientSocket(ownerCookie);
-      clientA.emit('project:join', { projectId: testProjectId1 });
-      await new Promise((r) => setTimeout(r, 100));
+      await joinProject(clientA, testProjectId1);
 
       const errorPromise = new Promise<{ code: string; message: string }>((resolve) => {
         clientA.on('error', (err) => resolve(err));

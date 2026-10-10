@@ -67,7 +67,7 @@ export class GeminiProvider implements AIProvider {
 
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(
       model
-    )}:generateContent?key=${encodeURIComponent(apiKey)}`;
+    )}:generateContent`;
 
     const payload = {
       systemInstruction: {
@@ -104,12 +104,14 @@ export class GeminiProvider implements AIProvider {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey,
           },
           body: JSON.stringify(payload),
           signal: controller.signal,
         });
 
         clearTimeout(timeoutId);
+
 
         if (!response.ok) {
           const status = response.status;

@@ -21,6 +21,7 @@ import {
   AppNode,
   AppEdge,
   architectureToReactFlow,
+  reactFlowToArchitecture,
   appNodeToArchitectureNode,
   appEdgeToArchitectureEdge,
   generateNodeId,
@@ -35,12 +36,14 @@ import { CollaborationIndicator } from './CollaborationIndicator';
 import { RemoteCursorsOverlay } from './RemoteCursorsOverlay';
 import { ValidationPanel } from './ValidationPanel';
 import { AIAssistantPanel } from './AIAssistantPanel';
+import { ExportMenu } from './ExportMenu';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
 import { useAppDispatch, useAppSelector } from '../../store/hooks';
 import {
   selectSelectedNodeId,
   selectSelectedEdgeId,
   selectCurrentVersion,
+  selectPersistenceStatus,
   setSelectedNodeId,
   setSelectedEdgeId,
   clearSelection,
@@ -63,6 +66,8 @@ import { Sliders, ShieldCheck, Sparkles } from 'lucide-react';
 interface ArchitectureCanvasProps {
   initialArchitecture: Architecture;
   initialValidation?: ArchitectureValidationResult;
+  projectName?: string;
+  projectDescription?: string;
   isEditable: boolean;
   onArchitectureChange?: (nodes: AppNode[], edges: AppEdge[]) => void;
   onReload?: () => void;
@@ -75,6 +80,8 @@ const nodeTypes: NodeTypes = {
 const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   initialArchitecture,
   initialValidation,
+  projectName,
+  projectDescription,
   isEditable,
   onArchitectureChange,
   onReload,
@@ -83,9 +90,12 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const selectedNodeId = useAppSelector(selectSelectedNodeId);
   const selectedEdgeId = useAppSelector(selectSelectedEdgeId);
   const currentVersion = useAppSelector(selectCurrentVersion);
+  const persistenceStatus = useAppSelector(selectPersistenceStatus);
   const detailsPanelOpen = useAppSelector(selectDetailsPanelOpen);
   const validationPanelOpen = useAppSelector(selectValidationPanelOpen);
   const aiPanelOpen = useAppSelector(selectAiPanelOpen);
+
+  const isAutosavePending = persistenceStatus === 'dirty' || persistenceStatus === 'saving';
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const isRemoteChangeRef = useRef<boolean>(false);
@@ -564,6 +574,17 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     [emitCursorUpdate]
   );
 
+  // F13: Obtains the live, unsaved in-memory architecture state directly from React Flow
+  const getCurrentArchitecture = useCallback((): Architecture => {
+    return reactFlowToArchitecture(
+      initialArchitecture.projectId,
+      nodes,
+      edges,
+      currentViewport,
+      currentVersion
+    );
+  }, [initialArchitecture.projectId, nodes, edges, currentViewport, currentVersion]);
+
   return (
     <div className="relative flex h-[720px] w-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl">
       {/* 1. Component Palette (Left Panel) */}
@@ -582,9 +603,16 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           <PersistenceIndicator onRetry={saveNow} onReload={onReload} />
         </div>
 
-        {/* Top-Right Control Toolbar: Collaboration Indicator + AI Assistant + Validate Button + Properties Toggle Button */}
+        {/* Top-Right Control Toolbar: Collaboration Indicator + Export Menu + AI Assistant + Validate Button + Properties Toggle Button */}
         <div className="absolute top-4 right-4 z-10 flex items-center gap-2 pointer-events-auto">
           <CollaborationIndicator />
+
+          <ExportMenu
+            getCurrentArchitecture={getCurrentArchitecture}
+            projectName={projectName}
+            projectDescription={projectDescription}
+            isAutosavePending={isAutosavePending}
+          />
 
           <button
             onClick={() => {

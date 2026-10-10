@@ -17,7 +17,18 @@ async function startServer(): Promise<void> {
   // Initialize database connection if configured
   await dbManager.connect();
 
-  server.listen(port, () => {
+  server.on('error', (err: NodeJS.ErrnoException) => {
+    if (err.code === 'EADDRINUSE') {
+      console.error(`[ArchSync AI] Port ${port} is already in use by another running process.`);
+      console.error(`[ArchSync AI] An instance of the backend server is already active on port ${port}.`);
+      process.exit(1);
+    } else {
+      console.error('[ArchSync AI] Server encountered an error:', err);
+      process.exit(1);
+    }
+  });
+
+  server.listen(port, '0.0.0.0', () => {
     console.log(`[ArchSync AI] Backend server running on port ${port} in ${env.NODE_ENV} mode`);
     console.log(`[ArchSync AI] Health check available at http://localhost:${port}/api/v1/health`);
     console.log(`[ArchSync AI] Socket.IO collaboration engine initialized`);

@@ -36,3 +36,8 @@ export function canEditArchitecture(role?: string | null): boolean {
   const normalized = normalizeRole(role);
   return normalized === 'owner' || normalized === 'editor';
 }
+
+export function canExportArchitecture(role?: string | null): boolean {
+  const normalized = normalizeRole(role);
+  return normalized === 'owner' || normalized === 'editor' || normalized === 'viewer';
+}

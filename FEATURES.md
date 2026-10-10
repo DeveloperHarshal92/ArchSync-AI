@@ -487,17 +487,19 @@ Frontend
 
 Allow users to export architecture diagrams.
 
-## Initial export
+## Formats Delivered
 
-- PNG/image export.
+- PNG: High-resolution raster diagram with 2x Retina scaling and canvas bounding.
+- SVG: Standalone scalable vector graphic with safe XML escaping and clean layout.
+- JSON: Portable architecture data export conforming to the canonical shared schema with strict privacy.
 
 ## Checklist
 
-- [ ] Export button.
-- [ ] Capture visible architecture.
-- [ ] Handle transparent/background rendering appropriately.
-- [ ] Handle export failure.
-- [ ] Verify exported image.
+- [x] Export button.
+- [x] Capture visible architecture.
+- [x] Handle transparent/background rendering appropriately.
+- [x] Handle export failure.
+- [x] Verify exported image.
 
 ---
 
@@ -609,7 +611,7 @@ Prepare the application for deployment.
 
 ## Milestone 7: Product Completion
 
-- [ ] F13 complete
+- [x] F13 complete
 - [ ] F14 complete
 
 ## Milestone 8: Production Readiness

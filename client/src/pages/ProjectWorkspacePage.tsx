@@ -487,6 +487,8 @@ export const ProjectWorkspacePage: React.FC = () => {
           <ArchitectureCanvas
             initialArchitecture={archRes.data.architecture}
             initialValidation={archRes.data.validation}
+            projectName={project.name}
+            projectDescription={project.description}
             isEditable={isEditable}
             onReload={refetchArchitecture}
           />

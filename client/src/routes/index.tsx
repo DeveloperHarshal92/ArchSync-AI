@@ -1,5 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '../components/layout/AppLayout';
+import { StudioLayout } from '../components/layout/StudioLayout';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
@@ -44,14 +45,6 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'projects/:projectId',
-        element: (
-          <ProtectedRoute>
-            <ProjectWorkspacePage />
-          </ProtectedRoute>
-        ),
-      },
-      {
         path: 'invitations',
         element: (
           <ProtectedRoute>
@@ -69,4 +62,19 @@ export const router = createBrowserRouter([
       },
     ],
   },
+  {
+    path: '/projects/:projectId',
+    element: (
+      <ProtectedRoute>
+        <StudioLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        element: <ProjectWorkspacePage />,
+      },
+    ],
+  },
 ]);
+

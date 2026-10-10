@@ -1,24 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  Layers,
   ArrowLeft,
-  Calendar,
-  ShieldCheck,
   AlertCircle,
   Loader2,
-  Cpu,
   Users,
   UserPlus,
   Trash2,
   CheckCircle2,
   X,
   Clock,
-  GitBranch,
-  CircleDot,
-  CheckCircle,
 } from 'lucide-react';
-import { useGetProjectByIdQuery, useGetProjectMembersQuery, useCreateInvitationMutation, useUpdateMemberRoleMutation, useRemoveMemberMutation } from '../store/api/projectApi';
+import {
+  useGetProjectByIdQuery,
+  useGetProjectMembersQuery,
+  useCreateInvitationMutation,
+  useUpdateMemberRoleMutation,
+  useRemoveMemberMutation,
+  useUpdateProjectMutation,
+} from '../store/api/projectApi';
 import { useGetArchitectureQuery } from '../store/api/architectureApi';
 import { ArchitectureCanvas } from '../components/architecture/ArchitectureCanvas';
 import { ProjectMemberWithUser } from '@archsync/shared';
@@ -26,7 +26,6 @@ import { canEditArchitecture, canManageMembers } from '../lib/permissions';
 import { parseApiError } from '../lib/apiErrors';
 import { useAppDispatch } from '../store/hooks';
 import { setActiveProjectId, resetEditorState } from '../store/slices/editorSlice';
-import { setValidationPanelOpen } from '../store/slices/uiSlice';
 
 export const ProjectWorkspacePage: React.FC = () => {
   const { projectId } = useParams<{ projectId: string }>();
@@ -34,7 +33,7 @@ export const ProjectWorkspacePage: React.FC = () => {
   const dispatch = useAppDispatch();
 
   // Manage project-scoped editor state isolation
-  React.useEffect(() => {
+  useEffect(() => {
     if (validProjectId) {
       dispatch(setActiveProjectId(validProjectId));
     }
@@ -66,6 +65,11 @@ export const ProjectWorkspacePage: React.FC = () => {
   const [createInvitation, { isLoading: isInviting }] = useCreateInvitationMutation();
   const [updateMemberRole, { isLoading: isUpdatingRole }] = useUpdateMemberRoleMutation();
   const [removeMember, { isLoading: isRemovingMember }] = useRemoveMemberMutation();
+  const [updateProject] = useUpdateProjectMutation();
+
+  // Team Members Modal State
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const membersModalRef = useRef<HTMLDivElement>(null);
 
   // Invite Modal States
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -80,6 +84,10 @@ export const ProjectWorkspacePage: React.FC = () => {
   const [memberToRemove, setMemberToRemove] = useState<ProjectMemberWithUser | null>(null);
   const removeModalRef = useRef<HTMLDivElement>(null);
   const removeCancelRef = useRef<HTMLButtonElement>(null);
+
+  // General Notification
+  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
+  const [feedbackError, setFeedbackError] = useState<string | null>(null);
 
   // F14: Focus first focusable element when invite modal opens
   useEffect(() => {
@@ -100,20 +108,17 @@ export const ProjectWorkspacePage: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         if (isInviteModalOpen) setIsInviteModalOpen(false);
-        if (memberToRemove) setMemberToRemove(null);
+        else if (memberToRemove) setMemberToRemove(null);
+        else if (isMembersModalOpen) setIsMembersModalOpen(false);
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isInviteModalOpen, memberToRemove]);
-
-  // General Notification
-  const [feedbackSuccess, setFeedbackSuccess] = useState<string | null>(null);
-  const [feedbackError, setFeedbackError] = useState<string | null>(null);
+  }, [isInviteModalOpen, memberToRemove, isMembersModalOpen]);
 
   if (isProjectLoading) {
     return (
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3">
+      <div className="flex h-full w-full min-h-[60vh] flex-col items-center justify-center gap-3 bg-[#0a0f1d]">
         <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
         <p className="text-sm text-slate-400">Loading architecture project...</p>
       </div>
@@ -124,7 +129,7 @@ export const ProjectWorkspacePage: React.FC = () => {
     const errorDetails = parseApiError(projectError);
 
     return (
-      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+      <div className="flex h-full w-full flex-col items-center justify-center bg-[#0a0f1d] px-4 py-16 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-500/10 text-rose-400">
           <AlertCircle className="h-7 w-7" />
         </div>
@@ -180,6 +185,7 @@ export const ProjectWorkspacePage: React.FC = () => {
 
       setInviteSuccess(`Invitation sent successfully to ${emailTrimmed} as ${inviteRole}.`);
       setInviteEmail('');
+      refetchMembers();
     } catch (err: unknown) {
       if (
         typeof err === 'object' &&
@@ -206,6 +212,7 @@ export const ProjectWorkspacePage: React.FC = () => {
       }).unwrap();
 
       setFeedbackSuccess(`Role successfully updated to ${newRole}.`);
+      refetchMembers();
     } catch (err: unknown) {
       if (
         typeof err === 'object' &&
@@ -233,6 +240,7 @@ export const ProjectWorkspacePage: React.FC = () => {
 
       setFeedbackSuccess(`Member "${memberToRemove.user.name}" has been removed from the project.`);
       setMemberToRemove(null);
+      refetchMembers();
     } catch (err: unknown) {
       if (
         typeof err === 'object' &&
@@ -247,296 +255,278 @@ export const ProjectWorkspacePage: React.FC = () => {
     }
   };
 
+  const handleRenameProject = async (newName: string) => {
+    try {
+      await updateProject({
+        projectId: validProjectId,
+        body: { name: newName },
+      }).unwrap();
+    } catch (err: unknown) {
+      if (
+        typeof err === 'object' &&
+        err !== null &&
+        'data' in err &&
+        typeof (err as { data?: { error?: { message?: string } } }).data?.error?.message === 'string'
+      ) {
+        setFeedbackError((err as { data: { error: { message: string } } }).data.error.message);
+      } else {
+        setFeedbackError('Failed to rename project.');
+      }
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-      {/* Top Navigation & Project Metadata Header */}
-      <div className="flex flex-col gap-4 border-b border-slate-800 pb-6">
-        <div className="flex items-center justify-between">
-          <Link
-            to="/projects"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-cyan-400 transition-colors"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to All Projects</span>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <span
-              className={`flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold ${
-                currentUserRole === 'OWNER'
-                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                  : currentUserRole === 'EDITOR'
-                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
-                  : 'border-slate-500/30 bg-slate-500/10 text-slate-400'
-              }`}
-            >
-              <ShieldCheck className="h-3 w-3" />
-              <span>{currentUserRole} Access</span>
-            </span>
-          </div>
+    <div className="h-full w-full flex flex-col overflow-hidden bg-[#0a0f1d]">
+      {/* Architecture Canvas Full-Viewport Workspace */}
+      {isArchLoading ? (
+        <div className="flex h-full w-full flex-col items-center justify-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-cyan-500" />
+          <p className="text-sm text-slate-400">Loading architecture diagram and components...</p>
         </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
-              <Layers className="h-7 w-7 text-cyan-400" />
-              {project.name}
-            </h1>
-            <p className="mt-1.5 text-sm text-slate-400 max-w-3xl">
-              {project.description || 'No project description provided.'}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs text-slate-500 shrink-0">
-            <Calendar className="h-3.5 w-3.5" />
-            <span>Created {new Date(project.createdAt).toLocaleDateString()}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Global Action Feedback Alerts */}
-      {feedbackSuccess && (
-        <div className="flex items-center justify-between rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-xs text-emerald-400">
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{feedbackSuccess}</span>
-          </div>
+      ) : archRes && archRes.success ? (
+        <ArchitectureCanvas
+          initialArchitecture={archRes.data.architecture}
+          initialValidation={archRes.data.validation}
+          projectName={project.name}
+          projectDescription={project.description}
+          isEditable={isEditable}
+          currentUserRole={currentUserRole}
+          membersCount={members.length}
+          onOpenMembersModal={() => setIsMembersModalOpen(true)}
+          onRenameProject={handleRenameProject}
+          onReload={refetchArchitecture}
+        />
+      ) : (
+        <div className="m-auto max-w-md rounded-2xl border border-rose-500/30 bg-rose-500/10 p-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-rose-400 mb-2" />
+          <h3 className="text-base font-semibold text-white">Failed to load architecture</h3>
+          <p className="mt-1 text-xs text-rose-300">Could not retrieve diagram state from server.</p>
           <button
-            onClick={() => setFeedbackSuccess(null)}
-            className="text-emerald-400/80 hover:text-emerald-300"
+            onClick={() => refetchArchitecture()}
+            className="mt-4 rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700"
           >
-            Dismiss
+            Retry
           </button>
         </div>
       )}
 
-      {feedbackError && (
-        <div className="flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-xs text-rose-400">
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{feedbackError}</span>
-          </div>
-          <button
-            onClick={() => setFeedbackError(null)}
-            className="text-rose-400/80 hover:text-rose-300"
+      {/* Accessible Project Members Modal */}
+      {isMembersModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+          aria-hidden="true"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsMembersModalOpen(false);
+          }}
+        >
+          <div
+            ref={membersModalRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="members-modal-title"
+            className="w-full max-w-2xl rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]"
           >
-            Dismiss
-          </button>
-        </div>
-      )}
+            {/* Modal Header */}
+            <div className="flex items-center justify-between pb-4 border-b border-slate-800 shrink-0">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                  <Users className="h-5 w-5" aria-hidden="true" />
+                </div>
+                <div>
+                  <h2 id="members-modal-title" className="text-base font-bold text-white flex items-center gap-2">
+                    <span>Project Collaborators</span>
+                    <span className="rounded-full bg-slate-800 px-2 py-0.5 text-xs font-mono font-medium text-slate-300">
+                      {members.length}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-400">
+                    Users authorized to view or edit &quot;{project.name}&quot;.
+                  </p>
+                </div>
+              </div>
 
-      {/* Project Members Section */}
-      <div className="rounded-3xl border border-slate-800 bg-slate-900/40 p-6 sm:p-8 backdrop-blur-md shadow-xl">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-          <div>
-            <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-              <Users className="h-4 w-4" />
-              <span>Team & Collaboration</span>
-            </div>
-            <h2 className="mt-1 text-xl font-bold text-white">Project Members</h2>
-            <p className="mt-0.5 text-xs text-slate-400">
-              Users authorized to view or edit this architecture project.
-            </p>
-          </div>
-
-          {isOwner && (
-            <button
-              onClick={handleOpenInviteModal}
-              id="invite-member-btn"
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 active:scale-95 transition-all shrink-0"
-            >
-              <UserPlus className="h-4 w-4" />
-              <span>Invite Member</span>
-            </button>
-          )}
-        </div>
-
-        {/* Member List */}
-        {isMembersLoading ? (
-          <div className="mt-6 space-y-3">
-            {[1, 2].map((i) => (
-              <div
-                key={i}
-                className="h-16 rounded-xl border border-slate-800 bg-slate-900/30 p-4 animate-pulse"
-              />
-            ))}
-          </div>
-        ) : isMembersError ? (
-          <div className="mt-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-center">
-            <AlertCircle className="mx-auto h-6 w-6 text-rose-400" />
-            <p className="mt-2 text-xs text-rose-300">Failed to load project members.</p>
-            <button
-              onClick={() => refetchMembers()}
-              className="mt-2 rounded-lg bg-slate-800 px-3 py-1 text-xs text-slate-200 hover:bg-slate-700"
-            >
-              Retry
-            </button>
-          </div>
-        ) : members.length === 0 ? (
-          <div className="mt-6 p-8 text-center text-xs text-slate-400">
-            No members found for this project.
-          </div>
-        ) : (
-          <div className="mt-6 divide-y divide-slate-800/80">
-            {members.map((member) => {
-              const isMemberOwner = member.role === 'OWNER';
-
-              return (
-                <div
-                  key={member.id}
-                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+              <div className="flex items-center gap-2">
+                {isOwner && (
+                  <button
+                    onClick={handleOpenInviteModal}
+                    id="invite-member-btn"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span>Invite</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsMembersModalOpen(false)}
+                  aria-label="Close project members dialog"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
                 >
-                  <div className="flex items-center gap-3.5">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-cyan-500/20 to-blue-500/20 text-cyan-400 border border-cyan-500/30 font-bold text-sm">
-                      {member.user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-white text-sm">
-                          {member.user.name}
-                        </span>
-                        <span
-                          className={`rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide border ${
-                            member.role === 'OWNER'
-                              ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
-                              : member.role === 'EDITOR'
-                              ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
-                              : 'border-slate-500/30 bg-slate-500/10 text-slate-300'
-                          }`}
-                        >
-                          {member.role}
-                        </span>
+                  <X className="h-5 w-5" aria-hidden="true" />
+                </button>
+              </div>
+            </div>
+
+            {/* In-Modal Alerts */}
+            {feedbackSuccess && (
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-500/30 bg-emerald-500/10 p-2.5 text-xs text-emerald-400 shrink-0">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 shrink-0" />
+                  <span>{feedbackSuccess}</span>
+                </div>
+                <button
+                  onClick={() => setFeedbackSuccess(null)}
+                  className="text-emerald-400 hover:text-emerald-300"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {feedbackError && (
+              <div className="mt-3 flex items-center justify-between rounded-lg border border-rose-500/30 bg-rose-500/10 p-2.5 text-xs text-rose-400 shrink-0">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{feedbackError}</span>
+                </div>
+                <button
+                  onClick={() => setFeedbackError(null)}
+                  className="text-rose-400 hover:text-rose-300"
+                >
+                  Dismiss
+                </button>
+              </div>
+            )}
+
+            {/* Member List */}
+            <div className="mt-4 flex-1 overflow-y-auto divide-y divide-slate-800/80 pr-1">
+              {isMembersLoading ? (
+                <div className="space-y-3 py-4">
+                  {[1, 2].map((i) => (
+                    <div
+                      key={i}
+                      className="h-14 rounded-xl border border-slate-800 bg-slate-900/30 animate-pulse"
+                    />
+                  ))}
+                </div>
+              ) : isMembersError ? (
+                <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-center my-4">
+                  <AlertCircle className="mx-auto h-5 w-5 text-rose-400" />
+                  <p className="mt-2 text-xs text-rose-300">Failed to load project members.</p>
+                  <button
+                    onClick={() => refetchMembers()}
+                    className="mt-2 rounded bg-slate-800 px-3 py-1 text-xs text-slate-200 hover:bg-slate-700"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : members.length === 0 ? (
+                <div className="py-8 text-center text-xs text-slate-400">
+                  No members found for this project.
+                </div>
+              ) : (
+                members.map((member) => {
+                  const isMemberOwner = member.role === 'OWNER';
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center justify-between py-3"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-800 text-cyan-400 border border-slate-700 font-bold text-xs">
+                          {member.user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-white text-xs">
+                              {member.user.name}
+                            </span>
+                            <span
+                              className={`rounded px-1.5 py-0.2 text-[10px] font-semibold border ${
+                                member.role === 'OWNER'
+                                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                                  : member.role === 'EDITOR'
+                                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
+                                  : 'border-slate-500/30 bg-slate-500/10 text-slate-300'
+                              }`}
+                            >
+                              {member.role}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-slate-400">{member.user.email}</p>
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-400">{member.user.email}</p>
-                    </div>
-                  </div>
 
-                  <div className="flex items-center gap-3 sm:gap-4 justify-between sm:justify-end">
-                    <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                      <Clock className="h-3 w-3" />
-                      <span>Joined {new Date(member.joinedAt).toLocaleDateString()}</span>
-                    </div>
+                      <div className="flex items-center gap-3">
+                        <div className="hidden sm:flex items-center gap-1 text-[11px] text-slate-500">
+                          <Clock className="h-3 w-3" />
+                          <span>{new Date(member.joinedAt).toLocaleDateString()}</span>
+                        </div>
 
-                    {/* Owner Management Controls */}
-                    {isOwner && (
-                      <div className="flex items-center gap-2">
-                        {isMemberOwner ? (
-                          <span className="text-[11px] font-medium text-amber-400/70 italic px-2">
-                            Owner
-                          </span>
-                        ) : (
-                          <>
-                            {/* Role select */}
-                            <select
-                              value={member.role}
-                              disabled={isUpdatingRole}
-                              onChange={(e) =>
-                                handleRoleChange(
-                                  member.userId,
-                                  e.target.value as 'EDITOR' | 'VIEWER'
-                                )
-                              }
-                              className="rounded-lg border border-slate-800 bg-slate-950 px-2.5 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
-                            >
-                              <option value="EDITOR">EDITOR</option>
-                              <option value="VIEWER">VIEWER</option>
-                            </select>
+                        {/* Owner Controls */}
+                        {isOwner && (
+                          <div className="flex items-center gap-2">
+                            {isMemberOwner ? (
+                              <span className="text-[11px] font-medium text-amber-400/70 italic px-2">
+                                Owner
+                              </span>
+                            ) : (
+                              <>
+                                <select
+                                  value={member.role}
+                                  disabled={isUpdatingRole}
+                                  onChange={(e) =>
+                                    handleRoleChange(
+                                      member.userId,
+                                      e.target.value as 'EDITOR' | 'VIEWER'
+                                    )
+                                  }
+                                  className="rounded-lg border border-slate-800 bg-slate-950 px-2 py-1 text-xs text-slate-200 focus:border-cyan-500 focus:outline-none disabled:opacity-50"
+                                >
+                                  <option value="EDITOR">EDITOR</option>
+                                  <option value="VIEWER">VIEWER</option>
+                                </select>
 
-                            {/* Remove button */}
-                            <button
-                              onClick={() => setMemberToRemove(member)}
-                              disabled={isRemovingMember}
-                              title="Remove member"
-                              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </>
+                                <button
+                                  onClick={() => setMemberToRemove(member)}
+                                  disabled={isRemovingMember}
+                                  title="Remove member"
+                                  className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-500/10 hover:text-rose-400 transition-colors disabled:opacity-50"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Interactive Architecture Canvas Workspace */}
-      <section className="space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-              <Cpu className="h-4 w-4" />
-              <span>Interactive Architecture Canvas</span>
+                    </div>
+                  );
+                })
+              )}
             </div>
-            <h2 className="mt-1 text-xl font-bold text-white">System Architecture Canvas</h2>
-            <p className="mt-0.5 text-xs text-slate-400">
-              {isEditable
-                ? 'Drag components from the palette, connect nodes, and configure technologies in real time.'
-                : 'Viewing system architecture diagram with read-only permissions.'}
-            </p>
-          </div>
 
-          {/* Live Architecture Status Indicators */}
-          {archRes && archRes.success && (
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2.5 py-1 text-xs text-slate-300">
-                <GitBranch className="h-3.5 w-3.5 text-cyan-400" />
-                <span>v{archRes.data.architecture.version}</span>
-              </span>
-              <span className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2.5 py-1 text-xs text-slate-300">
-                <CircleDot className="h-3.5 w-3.5 text-emerald-400" />
-                <span>{archRes.data.architecture.nodes.length} Components</span>
-              </span>
+            <div className="mt-4 pt-3 border-t border-slate-800 flex justify-end shrink-0">
               <button
-                onClick={() => dispatch(setValidationPanelOpen(true))}
-                className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2.5 py-1 text-xs text-slate-300 hover:border-slate-700 hover:text-white transition-colors cursor-pointer"
-                title="View Architecture Validation Results"
+                type="button"
+                onClick={() => setIsMembersModalOpen(false)}
+                className="rounded-lg border border-slate-800 px-4 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800"
               >
-                <CheckCircle
-                  className={`h-3.5 w-3.5 ${
-                    archRes.data.validation?.valid !== false ? 'text-cyan-400' : 'text-rose-400'
-                  }`}
-                />
-                <span>
-                  {archRes.data.validation?.valid !== false ? 'Valid Graph' : 'Validation Issues'}
-                </span>
+                Close
               </button>
             </div>
-          )}
+          </div>
         </div>
-
-        {isArchLoading ? (
-          <div className="flex h-[720px] w-full flex-col items-center justify-center gap-3 rounded-3xl border border-slate-800 bg-slate-950/60 shadow-2xl backdrop-blur-md">
-            <Loader2 className="h-10 w-10 animate-spin text-cyan-500" />
-            <p className="text-sm text-slate-400">Loading architecture diagram and components...</p>
-          </div>
-        ) : archRes && archRes.success ? (
-          <ArchitectureCanvas
-            initialArchitecture={archRes.data.architecture}
-            initialValidation={archRes.data.validation}
-            projectName={project.name}
-            projectDescription={project.description}
-            isEditable={isEditable}
-            onReload={refetchArchitecture}
-          />
-        ) : (
-          <div className="rounded-3xl border border-rose-500/30 bg-rose-500/10 p-12 text-center">
-            <AlertCircle className="mx-auto h-8 w-8 text-rose-400 mb-2" />
-            <h3 className="text-sm font-semibold text-white">Failed to load architecture</h3>
-            <p className="mt-1 text-xs text-rose-300">Could not retrieve diagram state from server.</p>
-          </div>
-        )}
-      </section>
+      )}
 
       {/* Invite Member Modal */}
       {isInviteModalOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
           aria-hidden="true"
-          onClick={(e) => { if (e.target === e.currentTarget) setIsInviteModalOpen(false); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsInviteModalOpen(false);
+          }}
         >
           <div
             ref={inviteModalRef}
@@ -548,7 +538,9 @@ export const ProjectWorkspacePage: React.FC = () => {
             <div className="flex items-center justify-between pb-4 border-b border-slate-800">
               <div className="flex items-center gap-2">
                 <UserPlus className="h-5 w-5 text-cyan-400" aria-hidden="true" />
-                <h2 id="invite-modal-title" className="text-lg font-bold text-white">Invite Collaborator</h2>
+                <h2 id="invite-modal-title" className="text-lg font-bold text-white">
+                  Invite Collaborator
+                </h2>
               </div>
               <button
                 onClick={() => setIsInviteModalOpen(false)}
@@ -622,7 +614,7 @@ export const ProjectWorkspacePage: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isInviting}
-                  className="flex items-center gap-2 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-cyan-500/20 hover:from-cyan-400 hover:to-blue-500 disabled:opacity-50"
+                  className="flex items-center gap-2 rounded-lg bg-cyan-600 hover:bg-cyan-500 px-4 py-2 text-xs font-semibold text-white transition-colors disabled:opacity-50"
                 >
                   {isInviting ? (
                     <>
@@ -644,7 +636,9 @@ export const ProjectWorkspacePage: React.FC = () => {
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
           aria-hidden="true"
-          onClick={(e) => { if (e.target === e.currentTarget) setMemberToRemove(null); }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setMemberToRemove(null);
+          }}
         >
           <div
             ref={removeModalRef}
@@ -655,12 +649,14 @@ export const ProjectWorkspacePage: React.FC = () => {
           >
             <div className="flex items-center gap-3 text-rose-400 mb-3">
               <Trash2 className="h-6 w-6" aria-hidden="true" />
-              <h3 id="remove-modal-title" className="text-base font-bold text-white">Remove Project Member</h3>
+              <h3 id="remove-modal-title" className="text-base font-bold text-white">
+                Remove Project Member
+              </h3>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed">
               Are you sure you want to revoke access for{' '}
               <strong className="text-white font-semibold">
-                "{memberToRemove.user.name}" ({memberToRemove.user.email})
+                &quot;{memberToRemove.user.name}&quot; ({memberToRemove.user.email})
               </strong>
               ? They will no longer be able to view or edit this project.
             </p>

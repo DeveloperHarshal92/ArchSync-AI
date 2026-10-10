@@ -1,15 +1,14 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Header } from './Header';
 
 /**
  * StudioLayout — Dedicated full-viewport layout for ArchSync AI Architecture Studio.
  *
- * Implements Phase 2A.2:
+ * Implements Phase 2B:
  * - 100dvh viewport locking without document-level body scrollbars.
- * - Suppresses the global marketing Footer to maximize diagram real estate.
- * - Preserves accessibility landmarks (skip-link, live announcer, header, main).
- * - Allows the studio workspace to manage its internal layout and scrolling.
+ * - Suppresses global marketing Header and Footer to maximize architecture diagram real estate.
+ * - The Unified Studio Top Bar is rendered inside the studio workspace.
+ * - Preserves accessibility landmarks (skip-link, live announcer, main container).
  */
 export const StudioLayout: React.FC = () => {
   return (
@@ -27,13 +26,10 @@ export const StudioLayout: React.FC = () => {
         aria-atomic="true"
       />
 
-      {/* Studio Header (retained until Phase 2B integrates the unified Studio Top Bar) */}
-      <Header />
-
       {/* tabIndex={-1} lets the skip link programmatically focus this element */}
       <main
         id="main-content"
-        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden"
+        className="flex-1 h-full min-h-0 w-full overflow-hidden flex flex-col"
         tabIndex={-1}
       >
         <Outlet />

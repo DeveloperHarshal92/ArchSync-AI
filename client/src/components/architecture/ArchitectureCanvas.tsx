@@ -57,18 +57,33 @@ import {
   selectAiPanelOpen,
   setAiPanelOpen,
 } from '../../store/slices/uiSlice';
+import { Link } from 'react-router-dom';
 import { useArchitectureAutosave } from '../../hooks/useArchitectureAutosave';
 import { useProjectCollaboration } from '../../hooks/useProjectCollaboration';
 import { useValidateArchitectureMutation } from '../../store/api/architectureApi';
 import { ArchitectureValidationResult } from '@archsync/shared';
-import { Sliders, ShieldCheck, Sparkles, PanelRightOpen, PanelRightClose, X } from 'lucide-react';
+import {
+  Sliders,
+  ShieldCheck,
+  Sparkles,
+  PanelRightOpen,
+  PanelRightClose,
+  X,
+  ArrowLeft,
+  Edit2,
+  Users,
+} from 'lucide-react';
 
-interface ArchitectureCanvasProps {
+export interface ArchitectureCanvasProps {
   initialArchitecture: Architecture;
   initialValidation?: ArchitectureValidationResult;
   projectName?: string;
   projectDescription?: string;
   isEditable: boolean;
+  currentUserRole?: 'OWNER' | 'EDITOR' | 'VIEWER';
+  membersCount?: number;
+  onOpenMembersModal?: () => void;
+  onRenameProject?: (newName: string) => Promise<void> | void;
   onArchitectureChange?: (nodes: AppNode[], edges: AppEdge[]) => void;
   onReload?: () => void;
 }
@@ -83,6 +98,10 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   projectName,
   projectDescription,
   isEditable,
+  currentUserRole,
+  membersCount,
+  onOpenMembersModal,
+  onRenameProject,
   onArchitectureChange,
   onReload,
 }) => {
@@ -103,6 +122,33 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
   const canvasContainerRef = useRef<HTMLDivElement>(null);
   const isRemoteChangeRef = useRef<boolean>(false);
+
+  // Studio project title editing state
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(projectName || '');
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTitleDraft(projectName || '');
+  }, [projectName]);
+
+  useEffect(() => {
+    if (isEditingTitle) {
+      titleInputRef.current?.focus();
+      titleInputRef.current?.select();
+    }
+  }, [isEditingTitle]);
+
+  const handleTitleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setIsEditingTitle(false);
+    const trimmed = titleDraft.trim();
+    if (trimmed && trimmed !== projectName && onRenameProject) {
+      await onRenameProject(trimmed);
+    } else {
+      setTitleDraft(projectName || '');
+    }
+  };
 
   const { screenToFlowPosition, setViewport, setCenter } = useReactFlow();
 
@@ -342,6 +388,49 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       setNodes((nds) => [...nds, newNode]);
       dispatch(setSelectedNodeId(newNodeId));
+      emitNodeCreate(domainNode);
+    },
+    [isEditable, screenToFlowPosition, setNodes, dispatch, emitNodeCreate]
+  );
+
+  // F14 & Phase 2B: Keyboard placement of focused component onto canvas center
+  const handleAddNodeFromKeyboard = useCallback(
+    (type: ArchitectureNodeType) => {
+      if (!isEditable) return;
+      const catalogDef = NODE_CATALOG[type];
+      if (!catalogDef) return;
+
+      const canvasRect = canvasContainerRef.current?.getBoundingClientRect();
+      const centerX = canvasRect ? canvasRect.left + canvasRect.width / 2 : window.innerWidth / 2;
+      const centerY = canvasRect ? canvasRect.top + canvasRect.height / 2 : window.innerHeight / 2;
+
+      const flowPosition = screenToFlowPosition({
+        x: centerX,
+        y: centerY,
+      });
+
+      const newNodeId = generateNodeId(type);
+
+      const newNode: AppNode = {
+        id: newNodeId,
+        type: 'architectureNode',
+        position: {
+          x: Math.round(flowPosition.x - 110),
+          y: Math.round(flowPosition.y - 50),
+        },
+        data: {
+          label: catalogDef.label,
+          description: catalogDef.description,
+          category: catalogDef.category,
+          nodeType: type,
+        },
+      };
+
+      const domainNode = appNodeToArchitectureNode(newNode);
+
+      setNodes((nds) => [...nds, newNode]);
+      dispatch(setSelectedNodeId(newNodeId));
+      dispatch(setDetailsPanelOpen(true));
       emitNodeCreate(domainNode);
     },
     [isEditable, screenToFlowPosition, setNodes, dispatch, emitNodeCreate]
@@ -591,71 +680,141 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
   return (
     <div
-      className="relative flex h-[720px] w-full overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 shadow-2xl"
+      className="relative flex flex-col h-full w-full overflow-hidden bg-[#0a0f1d] select-none"
       role="region"
       aria-label="Architecture canvas workspace"
     >
-      {/* 1. Component Palette (Left Panel — desktop only) */}
-      <div className="hidden lg:block w-72 shrink-0 h-full" aria-label="Component palette">
-        <ComponentPalette isEditable={isEditable} />
-      </div>
-
-      {/* 2. Interactive Canvas (Center Area) */}
-      <div
-        ref={canvasContainerRef}
-        onMouseMove={handleCanvasMouseMove}
-        className="relative flex-1 h-full w-full bg-[#0a0f1d]"
+      {/* 1. Unified Studio Top Bar (48px / h-12) */}
+      <header
+        className="flex h-12 w-full shrink-0 items-center justify-between border-b border-slate-800/80 bg-slate-950/95 px-3 backdrop-blur-md z-30 select-none"
+        role="banner"
+        aria-label="ArchSync AI studio header"
       >
-        {/* Persistence Status Indicator in Top Left */}
-        <div className="absolute top-4 left-4 z-10 pointer-events-auto">
-          <PersistenceIndicator onRetry={saveNow} onReload={onReload} />
+        {/* Left Zone: Back to Projects, Divider, Project Name (editable), Version badge, Role badge */}
+        <div className="flex items-center gap-2 min-w-0">
+          <Link
+            to="/projects"
+            className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-slate-300 hover:bg-slate-900 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500"
+            title="Back to All Projects"
+            aria-label="Back to All Projects"
+          >
+            <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Projects</span>
+          </Link>
+
+          <div className="h-4 w-px bg-slate-800 mx-0.5" aria-hidden="true" />
+
+          {/* Project Name & Inline Editing */}
+          {isEditingTitle ? (
+            <form onSubmit={handleTitleSubmit} className="flex items-center gap-1">
+              <input
+                ref={titleInputRef}
+                type="text"
+                value={titleDraft}
+                onChange={(e) => setTitleDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    setIsEditingTitle(false);
+                    setTitleDraft(projectName || 'Untitled Architecture');
+                  }
+                }}
+                onBlur={handleTitleSubmit}
+                className="rounded border border-cyan-500 bg-slate-900 px-2 py-0.5 text-xs font-semibold text-white focus:outline-none focus:ring-1 focus:ring-cyan-500"
+                aria-label="Edit project name"
+              />
+            </form>
+          ) : (
+            <div className="flex items-center gap-1.5 truncate">
+              <h1
+                className="text-xs sm:text-sm font-bold text-white tracking-tight truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]"
+                title={projectName || 'Untitled Architecture'}
+              >
+                {projectName || 'Untitled Architecture'}
+              </h1>
+              {isEditable && onRenameProject && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingTitle(true)}
+                  className="rounded p-1 text-slate-500 hover:bg-slate-900 hover:text-slate-300 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500"
+                  title="Rename project"
+                  aria-label="Rename project"
+                >
+                  <Edit2 className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Version badge */}
+          <span
+            className="hidden md:inline-flex items-center gap-1 rounded bg-slate-900 border border-slate-800/80 px-1.5 py-0.5 text-[10px] font-mono text-cyan-400"
+            title={`Architecture Version ${currentVersion}`}
+          >
+            v{currentVersion}
+          </span>
+
+          {/* Access Role Badge */}
+          {currentUserRole && (
+            <span
+              className={`hidden lg:inline-flex items-center gap-1 rounded-full border px-2 py-0.2 text-[10px] font-semibold ${
+                currentUserRole === 'OWNER'
+                  ? 'border-amber-500/30 bg-amber-500/10 text-amber-400'
+                  : currentUserRole === 'EDITOR'
+                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-400'
+                  : 'border-slate-500/30 bg-slate-500/10 text-slate-400'
+              }`}
+            >
+              <ShieldCheck className="h-2.5 w-2.5" />
+              <span>{currentUserRole}</span>
+            </span>
+          )}
         </div>
 
-        {/* Top-Right Control Toolbar: Collaboration Indicator + Export Menu + AI Assistant + Validate Button + Properties Toggle Button */}
+        {/* Center Zone: Persistence Indicator + Team Members Trigger */}
+        <div className="hidden sm:flex items-center gap-2">
+          <PersistenceIndicator onRetry={saveNow} onReload={onReload} />
+
+          {onOpenMembersModal && (
+            <button
+              type="button"
+              onClick={onOpenMembersModal}
+              aria-label={`Project members: ${membersCount ?? 0} collaborators`}
+              className="flex items-center gap-1.5 rounded-xl border border-slate-800/80 bg-slate-900/60 px-2.5 py-1 text-xs text-slate-300 hover:border-slate-700 hover:bg-slate-900 hover:text-white transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500"
+              title="Manage project members and access"
+            >
+              <Users className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
+              <span className="font-medium">Team</span>
+              {membersCount !== undefined && (
+                <span className="rounded-full bg-slate-800 px-1.5 py-0.2 text-[10px] font-mono font-semibold text-slate-300">
+                  {membersCount}
+                </span>
+              )}
+            </button>
+          )}
+        </div>
+
+        {/* Right Zone: Collaboration Indicator, Validate, AI Assistant, Export Menu, Properties toggle, Mobile toggle */}
         <div
-          className="absolute top-4 right-4 z-10 flex items-center gap-2 pointer-events-auto"
+          className="flex items-center gap-1.5 sm:gap-2"
           role="toolbar"
           aria-label="Canvas action toolbar"
         >
           <CollaborationIndicator />
 
-          <ExportMenu
-            getCurrentArchitecture={getCurrentArchitecture}
-            projectName={projectName}
-            projectDescription={projectDescription}
-            isAutosavePending={isAutosavePending}
-          />
+          <div className="hidden sm:block h-4 w-px bg-slate-800" aria-hidden="true" />
 
+          {/* Validate Button */}
           <button
-            onClick={() => {
-              if (aiPanelOpen) {
-                dispatch(setAiPanelOpen(false));
-              } else {
-                dispatch(setValidationPanelOpen(false));
-                dispatch(setDetailsPanelOpen(false));
-                dispatch(setAiPanelOpen(true));
-              }
-            }}
-            data-testid="canvas-ai-assistant-btn"
-            aria-label={aiPanelOpen ? 'Close AI Architecture Assistant panel' : 'Open AI Architecture Assistant panel'}
-            aria-expanded={aiPanelOpen}
-            aria-controls="canvas-ai-panel"
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold shadow-xl backdrop-blur-md transition-colors ${
-              aiPanelOpen
-                ? 'border-indigo-500/60 bg-indigo-950/90 text-indigo-300'
-                : 'border-slate-800 bg-slate-900/90 text-slate-300 hover:bg-slate-800 hover:text-white'
-            }`}
-          >
-            <Sparkles className="h-3.5 w-3.5 text-indigo-400" aria-hidden="true" />
-            <span>AI Assistant</span>
-          </button>
-
-          <button
+            type="button"
             onClick={handleValidate}
             data-testid="canvas-validate-btn"
             aria-label={`Validate architecture${validationResult && validationResult.issues.length > 0 ? ` — ${validationResult.issues.length} issue${validationResult.issues.length > 1 ? 's' : ''} found` : ''}`}
             aria-busy={isValidating}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white transition-colors"
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 ${
+              validationPanelOpen
+                ? 'border-cyan-500/60 bg-cyan-950/80 text-cyan-300'
+                : 'border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white'
+            }`}
           >
             <ShieldCheck
               className={`h-3.5 w-3.5 ${
@@ -669,11 +828,11 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
               }`}
               aria-hidden="true"
             />
-            <span>Validate</span>
+            <span className="hidden md:inline">Validate</span>
             {validationResult && validationResult.issues.length > 0 && (
               <span
                 aria-hidden="true"
-                className={`ml-1 rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
+                className={`rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
                   validationResult.valid === false
                     ? 'bg-rose-500/20 text-rose-400'
                     : 'bg-amber-500/20 text-amber-400'
@@ -684,193 +843,254 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             )}
           </button>
 
-          {!detailsPanelOpen && (
-            <button
-              onClick={() => {
+          {/* AI Assistant Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (aiPanelOpen) {
+                dispatch(setAiPanelOpen(false));
+              } else {
+                dispatch(setValidationPanelOpen(false));
+                dispatch(setDetailsPanelOpen(false));
+                dispatch(setAiPanelOpen(true));
+              }
+            }}
+            data-testid="canvas-ai-assistant-btn"
+            aria-label={aiPanelOpen ? 'Close AI Architecture Assistant panel' : 'Open AI Architecture Assistant panel'}
+            aria-expanded={aiPanelOpen}
+            aria-controls="canvas-ai-panel"
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 ${
+              aiPanelOpen
+                ? 'border-indigo-500/60 bg-indigo-950/80 text-indigo-300'
+                : 'border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Sparkles className="h-3.5 w-3.5 text-indigo-400" aria-hidden="true" />
+            <span className="hidden md:inline">AI Co-Pilot</span>
+          </button>
+
+          {/* Export Menu */}
+          <ExportMenu
+            getCurrentArchitecture={getCurrentArchitecture}
+            projectName={projectName}
+            projectDescription={projectDescription}
+            isAutosavePending={isAutosavePending}
+          />
+
+          {/* Properties Toggle Button */}
+          <button
+            type="button"
+            onClick={() => {
+              if (detailsPanelOpen) {
+                dispatch(setDetailsPanelOpen(false));
+              } else {
                 dispatch(setValidationPanelOpen(false));
                 dispatch(setAiPanelOpen(false));
                 dispatch(setDetailsPanelOpen(true));
-              }}
-              aria-label="Open node properties panel"
-              aria-expanded={false}
-              aria-controls="canvas-details-panel"
-              className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white"
-            >
-              <Sliders className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
-              <span>Properties</span>
-            </button>
-          )}
+              }
+            }}
+            aria-label={detailsPanelOpen ? 'Close properties panel' : 'Open node properties panel'}
+            aria-expanded={detailsPanelOpen}
+            aria-controls="canvas-details-panel"
+            className={`hidden md:flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500 ${
+              detailsPanelOpen
+                ? 'border-cyan-500/60 bg-cyan-950/80 text-cyan-300'
+                : 'border-slate-800 bg-slate-900/80 text-slate-300 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Sliders className="h-3.5 w-3.5 text-cyan-400" aria-hidden="true" />
+            <span className="hidden lg:inline">Properties</span>
+          </button>
 
-          {/* F14: Mobile panel toggle — visible only on small screens */}
+          {/* Mobile panel toggle — visible only on small screens */}
           <button
+            type="button"
             onClick={() => setMobilePanelOpen((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-300 shadow-xl backdrop-blur-md hover:bg-slate-800 hover:text-white lg:hidden"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-2 py-1 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white md:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500"
             aria-label={mobilePanelOpen ? 'Close side panel' : 'Open side panel'}
             aria-expanded={mobilePanelOpen}
             aria-controls={mobilePanelId}
           >
-            {mobilePanelOpen
-              ? <PanelRightClose className="h-3.5 w-3.5" aria-hidden="true" />
-              : <PanelRightOpen className="h-3.5 w-3.5" aria-hidden="true" />}
+            {mobilePanelOpen ? (
+              <PanelRightClose className="h-3.5 w-3.5" aria-hidden="true" />
+            ) : (
+              <PanelRightOpen className="h-3.5 w-3.5" aria-hidden="true" />
+            )}
             <span className="sr-only">{mobilePanelOpen ? 'Close panel' : 'Open panel'}</span>
           </button>
         </div>
+      </header>
 
-        {/* Ephemeral Collaborator Remote Cursors Overlay */}
-        <RemoteCursorsOverlay />
-
-        {nodes.length === 0 && <ArchitectureEmptyState isEditable={isEditable} />}
-
-        <ReactFlow<AppNode, AppEdge>
-          nodes={nodes}
-          edges={edges}
-          nodeTypes={nodeTypes}
-          onNodesChange={isEditable ? onNodesChange : undefined}
-          onEdgesChange={isEditable ? onEdgesChange : undefined}
-          onNodeDragStop={isEditable ? onNodeDragStop : undefined}
-          onConnect={onConnect}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          onSelectionChange={onSelectionChange}
-          onPaneClick={onPaneClick}
-          onMoveEnd={onMoveEnd}
-          nodesDraggable={isEditable}
-          nodesConnectable={isEditable}
-          elementsSelectable={true}
-          deleteKeyCode={isEditable ? ['Backspace', 'Delete'] : null}
-          fitView
-          minZoom={0.1}
-          maxZoom={4}
-          proOptions={{ hideAttribution: true }}
-          className="archsync-canvas"
-        >
-          <Background
-            variant={BackgroundVariant.Dots}
-            gap={20}
-            size={1.2}
-            color="#334155"
-          />
-
-          <Controls
-            showInteractive={isEditable}
-            className="!rounded-xl !border !border-slate-800 !bg-slate-900/90 !fill-slate-300 shadow-xl"
-          />
-
-          <MiniMap
-            zoomable
-            pannable
-            nodeColor={(n) => {
-              const type = (n.data as unknown as CustomNodeData)?.nodeType;
-              return type ? getNodeVisual(type).accentColor : '#94a3b8';
-            }}
-            maskColor="rgba(10, 15, 29, 0.75)"
-            className="!rounded-xl !border !border-slate-800 !bg-slate-950/90 shadow-xl"
-          />
-        </ReactFlow>
-      </div>
-
-      {/* 3. Right Side Panel Area (AI Assistant Panel, Validation Panel, or Node Details Panel) */}
-      {aiPanelOpen ? (
-        <aside
-          id="canvas-ai-panel"
-          className="hidden md:block w-96 shrink-0 h-full border-l border-slate-800/80"
-          aria-label="AI Architecture Assistant panel"
-        >
-          <AIAssistantPanel
-            projectId={initialArchitecture.projectId}
-            onClose={() => dispatch(setAiPanelOpen(false))}
-            onSelectNode={handleSelectNodeFromValidation}
-          />
-        </aside>
-      ) : validationPanelOpen ? (
-        <aside
-          className="hidden md:block w-84 shrink-0 h-full border-l border-slate-800/80"
-          aria-label="Architecture validation results panel"
-        >
-          <ValidationPanel
-            validationResult={validationResult}
-            isValidating={isValidating}
-            onValidate={handleValidate}
-            onClose={() => dispatch(setValidationPanelOpen(false))}
-            onSelectNode={handleSelectNodeFromValidation}
-            onSelectEdge={handleSelectEdgeFromValidation}
-          />
-        </aside>
-      ) : detailsPanelOpen ? (
-        <aside
-          id="canvas-details-panel"
-          className="hidden md:block w-80 shrink-0 h-full border-l border-slate-800/80"
-          aria-label="Node and edge properties panel"
-        >
-          <NodeDetailsPanel
-            selectedNode={selectedNode}
-            selectedEdge={selectedEdge}
+      {/* 2. Studio Body (Palette + Canvas + Unified Context Drawer) */}
+      <div className="flex-1 min-h-0 flex w-full relative overflow-hidden">
+        {/* Left: Categorized Component Palette (240px wide) */}
+        <div className="hidden lg:block w-60 shrink-0 h-full z-20" aria-label="Component palette">
+          <ComponentPalette
             isEditable={isEditable}
-            onUpdateNodeData={handleUpdateNodeData}
-            onDeleteNode={handleDeleteNode}
-            onUpdateEdgeData={handleUpdateEdgeData}
-            onDeleteEdge={handleDeleteEdge}
-            onClose={() => dispatch(setDetailsPanelOpen(false))}
+            onSelectComponent={handleAddNodeFromKeyboard}
           />
-        </aside>
-      ) : null}
+        </div>
 
-      {/* F14: Mobile panel drawer — slides in over canvas on narrow viewports */}
-      {mobilePanelOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="panel-drawer-backdrop md:hidden"
-            aria-hidden="true"
-            onClick={() => setMobilePanelOpen(false)}
-          />
-          {/* Drawer */}
-          <div
-            id={mobilePanelId}
-            className="absolute inset-y-0 right-0 z-50 w-80 max-w-[90vw] h-full border-l border-slate-800 bg-slate-950 md:hidden"
-            role="dialog"
-            aria-modal="true"
-            aria-label="Canvas side panel"
+        {/* Center: Interactive Canvas */}
+        <div
+          ref={canvasContainerRef}
+          onMouseMove={handleCanvasMouseMove}
+          className="relative flex-1 h-full w-full bg-[#0a0f1d] min-w-0"
+        >
+          {/* Ephemeral Collaborator Remote Cursors Overlay */}
+          <RemoteCursorsOverlay />
+
+          {nodes.length === 0 && <ArchitectureEmptyState isEditable={isEditable} />}
+
+          <ReactFlow<AppNode, AppEdge>
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            onNodesChange={isEditable ? onNodesChange : undefined}
+            onEdgesChange={isEditable ? onEdgesChange : undefined}
+            onNodeDragStop={isEditable ? onNodeDragStop : undefined}
+            onConnect={onConnect}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onSelectionChange={onSelectionChange}
+            onPaneClick={onPaneClick}
+            onMoveEnd={onMoveEnd}
+            nodesDraggable={isEditable}
+            nodesConnectable={isEditable}
+            elementsSelectable={true}
+            deleteKeyCode={isEditable ? ['Backspace', 'Delete'] : null}
+            fitView
+            minZoom={0.1}
+            maxZoom={4}
+            proOptions={{ hideAttribution: true }}
+            className="archsync-canvas"
           >
-            {/* Drawer close button */}
-            <button
-              onClick={() => setMobilePanelOpen(false)}
-              className="absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
-              aria-label="Close side panel"
-            >
-              <X className="h-4 w-4" aria-hidden="true" />
-            </button>
+            <Background
+              variant={BackgroundVariant.Dots}
+              gap={20}
+              size={1.2}
+              color="#334155"
+            />
 
-            {aiPanelOpen ? (
-              <AIAssistantPanel
-                projectId={initialArchitecture.projectId}
-                onClose={() => { dispatch(setAiPanelOpen(false)); setMobilePanelOpen(false); }}
-                onSelectNode={handleSelectNodeFromValidation}
-              />
-            ) : validationPanelOpen ? (
-              <ValidationPanel
-                validationResult={validationResult}
-                isValidating={isValidating}
-                onValidate={handleValidate}
-                onClose={() => { dispatch(setValidationPanelOpen(false)); setMobilePanelOpen(false); }}
-                onSelectNode={handleSelectNodeFromValidation}
-                onSelectEdge={handleSelectEdgeFromValidation}
-              />
-            ) : (
-              <NodeDetailsPanel
-                selectedNode={selectedNode}
-                selectedEdge={selectedEdge}
-                isEditable={isEditable}
-                onUpdateNodeData={handleUpdateNodeData}
-                onDeleteNode={handleDeleteNode}
-                onUpdateEdgeData={handleUpdateEdgeData}
-                onDeleteEdge={handleDeleteEdge}
-                onClose={() => { dispatch(setDetailsPanelOpen(false)); setMobilePanelOpen(false); }}
-              />
-            )}
-          </div>
-        </>
-      )}
+            <Controls
+              showInteractive={isEditable}
+              className="!rounded-xl !border !border-slate-800 !bg-slate-900/90 !fill-slate-300 shadow-xl"
+            />
+
+            <MiniMap
+              zoomable
+              pannable
+              nodeColor={(n) => {
+                const type = (n.data as unknown as CustomNodeData)?.nodeType;
+                return type ? getNodeVisual(type).accentColor : '#94a3b8';
+              }}
+              maskColor="rgba(10, 15, 29, 0.75)"
+              className="!rounded-xl !border !border-slate-800 !bg-slate-950/90 shadow-xl"
+            />
+          </ReactFlow>
+        </div>
+
+        {/* Right: Unified Context Drawer Container (mutually exclusive) */}
+        {aiPanelOpen ? (
+          <aside
+            id="canvas-ai-panel"
+            className="hidden md:block w-96 shrink-0 h-full border-l border-slate-800/80 bg-slate-950/95 z-20"
+            aria-label="AI Architecture Assistant panel"
+          >
+            <AIAssistantPanel
+              projectId={initialArchitecture.projectId}
+              onClose={() => dispatch(setAiPanelOpen(false))}
+              onSelectNode={handleSelectNodeFromValidation}
+            />
+          </aside>
+        ) : validationPanelOpen ? (
+          <aside
+            className="hidden md:block w-84 shrink-0 h-full border-l border-slate-800/80 bg-slate-950/95 z-20"
+            aria-label="Architecture validation results panel"
+          >
+            <ValidationPanel
+              validationResult={validationResult}
+              isValidating={isValidating}
+              onValidate={handleValidate}
+              onClose={() => dispatch(setValidationPanelOpen(false))}
+              onSelectNode={handleSelectNodeFromValidation}
+              onSelectEdge={handleSelectEdgeFromValidation}
+            />
+          </aside>
+        ) : detailsPanelOpen ? (
+          <aside
+            id="canvas-details-panel"
+            className="hidden md:block w-80 shrink-0 h-full border-l border-slate-800/80 bg-slate-950/95 z-20"
+            aria-label="Node and edge properties panel"
+          >
+            <NodeDetailsPanel
+              selectedNode={selectedNode}
+              selectedEdge={selectedEdge}
+              isEditable={isEditable}
+              onUpdateNodeData={handleUpdateNodeData}
+              onDeleteNode={handleDeleteNode}
+              onUpdateEdgeData={handleUpdateEdgeData}
+              onDeleteEdge={handleDeleteEdge}
+              onClose={() => dispatch(setDetailsPanelOpen(false))}
+            />
+          </aside>
+        ) : null}
+
+        {/* Mobile Off-Canvas Drawer */}
+        {mobilePanelOpen && (
+          <>
+            <div
+              className="panel-drawer-backdrop md:hidden"
+              aria-hidden="true"
+              onClick={() => setMobilePanelOpen(false)}
+            />
+            <div
+              id={mobilePanelId}
+              className="absolute inset-y-0 right-0 z-50 w-80 max-w-[90vw] h-full border-l border-slate-800 bg-slate-950 md:hidden"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Canvas side panel"
+            >
+              <button
+                type="button"
+                onClick={() => setMobilePanelOpen(false)}
+                className="absolute top-3 right-3 z-10 rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+                aria-label="Close side panel"
+              >
+                <X className="h-4 w-4" aria-hidden="true" />
+              </button>
+
+              {aiPanelOpen ? (
+                <AIAssistantPanel
+                  projectId={initialArchitecture.projectId}
+                  onClose={() => { dispatch(setAiPanelOpen(false)); setMobilePanelOpen(false); }}
+                  onSelectNode={handleSelectNodeFromValidation}
+                />
+              ) : validationPanelOpen ? (
+                <ValidationPanel
+                  validationResult={validationResult}
+                  isValidating={isValidating}
+                  onValidate={handleValidate}
+                  onClose={() => { dispatch(setValidationPanelOpen(false)); setMobilePanelOpen(false); }}
+                  onSelectNode={handleSelectNodeFromValidation}
+                  onSelectEdge={handleSelectEdgeFromValidation}
+                />
+              ) : (
+                <NodeDetailsPanel
+                  selectedNode={selectedNode}
+                  selectedEdge={selectedEdge}
+                  isEditable={isEditable}
+                  onUpdateNodeData={handleUpdateNodeData}
+                  onDeleteNode={handleDeleteNode}
+                  onUpdateEdgeData={handleUpdateEdgeData}
+                  onDeleteEdge={handleDeleteEdge}
+                  onClose={() => { dispatch(setDetailsPanelOpen(false)); setMobilePanelOpen(false); }}
+                />
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

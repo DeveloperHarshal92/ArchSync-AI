@@ -1,32 +1,83 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   NODE_CATALOG,
   ArchitectureNodeType,
 } from '@archsync/shared';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
-import { Search, GripVertical, ShieldAlert, Layers } from 'lucide-react';
+import {
+  Search,
+  GripVertical,
+  ShieldAlert,
+  Layers,
+  ChevronDown,
+  X,
+} from 'lucide-react';
 
-interface ComponentPaletteProps {
+export interface ComponentPaletteProps {
   isEditable: boolean;
   onSelectComponent?: (type: ArchitectureNodeType) => void;
+  className?: string;
 }
+
+export interface PaletteCategory {
+  id: string;
+  name: string;
+  types: ArchitectureNodeType[];
+}
+
+export const PALETTE_CATEGORIES: PaletteCategory[] = [
+  {
+    id: 'compute',
+    name: 'Compute',
+    types: ['server', 'microservice'],
+  },
+  {
+    id: 'storage',
+    name: 'Storage',
+    types: ['database', 'cache'],
+  },
+  {
+    id: 'networking',
+    name: 'Networking',
+    types: ['api-gateway'],
+  },
+  {
+    id: 'messaging',
+    name: 'Messaging',
+    types: ['queue'],
+  },
+  {
+    id: 'integration',
+    name: 'Integration',
+    types: ['external-api'],
+  },
+  {
+    id: 'client-cloud',
+    name: 'Client & Cloud',
+    types: ['client', 'web-app', 'mobile-app', 'cloud-service'],
+  },
+];
 
 export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
   isEditable,
   onSelectComponent,
+  className = '',
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedCategories, setCollapsedCategories] = useState<Record<string, boolean>>({});
 
-  const catalogItems = Object.values(NODE_CATALOG);
+  const toggleCategory = (categoryId: string) => {
+    setCollapsedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
 
-  const filteredItems = catalogItems.filter((item) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      item.label.toLowerCase().includes(query) ||
-      item.description.toLowerCase().includes(query) ||
-      item.category.toLowerCase().includes(query)
-    );
-  });
+  const isCategoryExpanded = (categoryId: string) => {
+    // When searching, always expand categories that have matching items
+    if (searchQuery.trim().length > 0) return true;
+    return !collapsedCategories[categoryId];
+  };
 
   const handleDragStart = (
     event: React.DragEvent<HTMLDivElement>,
@@ -40,7 +91,7 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
     event.dataTransfer.effectAllowed = 'move';
   };
 
-  // F14: keyboard activation — Enter/Space triggers onSelectComponent
+  // F14: keyboard activation — Enter or Space triggers onSelectComponent
   const handleKeyDown = (
     event: React.KeyboardEvent<HTMLDivElement>,
     nodeType: ArchitectureNodeType
@@ -52,34 +103,63 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
     }
   };
 
+  // Filtered categories and their items
+  const categorizedItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return PALETTE_CATEGORIES.map((category) => {
+      const items = category.types
+        .map((type) => NODE_CATALOG[type])
+        .filter(Boolean)
+        .filter((item) => {
+          if (!query) return true;
+          return (
+            item.label.toLowerCase().includes(query) ||
+            item.description.toLowerCase().includes(query) ||
+            item.category.toLowerCase().includes(query) ||
+            item.type.toLowerCase().includes(query)
+          );
+        });
+
+      return {
+        ...category,
+        items,
+        totalCount: category.types.length,
+      };
+    });
+  }, [searchQuery]);
+
+  const totalMatchingItems = useMemo(() => {
+    return categorizedItems.reduce((acc, cat) => acc + cat.items.length, 0);
+  }, [categorizedItems]);
+
   return (
     <aside
-      className="flex h-full w-full flex-col border-r border-slate-800 bg-slate-950/70 backdrop-blur-md"
+      className={`flex h-full w-full flex-col border-r border-slate-800/80 bg-slate-950/90 text-slate-100 select-none backdrop-blur-md ${className}`}
       aria-label="Component palette"
     >
-      {/* Header */}
-      <div className="border-b border-slate-800 p-4">
-        <div className="flex items-center gap-2 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-          <Layers className="h-4 w-4" aria-hidden="true" />
-          <span>Components</span>
+      {/* 1. Header & Search Bar */}
+      <div className="border-b border-slate-800/80 p-3 shrink-0">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 text-cyan-400 text-[11px] font-semibold uppercase tracking-wider">
+            <Layers className="h-3.5 w-3.5" aria-hidden="true" />
+            <span>Node Catalog</span>
+          </div>
+          <span className="rounded-full bg-slate-900 border border-slate-800 px-2 py-0.5 text-[10px] font-mono text-slate-400">
+            {totalMatchingItems} items
+          </span>
         </div>
-        <h3 className="mt-1 text-sm font-bold text-white">Component Palette</h3>
-        <p className="mt-0.5 text-[11px] text-slate-400">
-          {isEditable
-            ? 'Drag any component onto the canvas to construct your architecture.'
-            : 'Viewer mode: Component creation is disabled.'}
-        </p>
 
         {/* Read-Only Notice for Viewers */}
         {!isEditable && (
-          <div className="mt-2.5 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-300">
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-2 text-[11px] text-amber-300">
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>Read-Only mode. Viewers cannot add nodes.</span>
+            <span>Viewer mode: Node placement disabled.</span>
           </div>
         )}
 
         {/* Search Input */}
-        <div className="relative mt-3">
+        <div className="relative mt-2.5">
           <div
             className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-500"
             aria-hidden="true"
@@ -92,82 +172,145 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
           <input
             id="palette-search"
             type="search"
-            placeholder="Search components..."
+            placeholder="Search nodes (e.g. redis, api)..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search components"
-            className="w-full rounded-lg border border-slate-800 bg-slate-900/90 py-1.5 pl-8 pr-3 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500"
+            className="w-full rounded-lg border border-slate-800 bg-slate-900/90 py-1.5 pl-8 pr-7 text-xs text-white placeholder-slate-500 focus:border-cyan-500 focus:outline-none focus:ring-1 focus:ring-cyan-500 transition-colors"
           />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              aria-label="Clear search query"
+              className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-300"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Palette Item List */}
+      {/* 2. Categorized Accordion List */}
       <div
-        className="flex-1 overflow-y-auto p-3 space-y-2"
-        role="list"
-        aria-label={`${filteredItems.length} component${filteredItems.length !== 1 ? 's' : ''} available`}
+        className="flex-1 overflow-y-auto p-2 space-y-2.5"
+        role="region"
+        aria-label="Categorized component catalog"
       >
-        {filteredItems.length === 0 ? (
-          <div className="py-8 text-center text-xs text-slate-500" role="status">
-            No components matched &quot;{searchQuery}&quot;
+        {totalMatchingItems === 0 ? (
+          <div className="py-8 px-4 text-center text-xs text-slate-500" role="status">
+            No components matching &quot;{searchQuery}&quot;
+            <button
+              onClick={() => setSearchQuery('')}
+              className="mt-2 block mx-auto text-[11px] text-cyan-400 hover:underline"
+            >
+              Clear filter
+            </button>
           </div>
         ) : (
-          filteredItems.map((item) => {
-            const visual = getNodeVisual(item.type);
-            const Icon = visual.icon;
+          categorizedItems.map((category) => {
+            if (category.items.length === 0) return null;
+            const isExpanded = isCategoryExpanded(category.id);
 
             return (
               <div
-                key={item.type}
-                role="listitem"
-                draggable={isEditable}
-                onDragStart={(e) => handleDragStart(e, item.type)}
-                onKeyDown={(e) => handleKeyDown(e, item.type)}
-                tabIndex={isEditable ? 0 : -1}
-                aria-label={`${item.label} — ${item.category}. ${item.description}`}
-                aria-disabled={!isEditable}
-                className={`group flex items-start gap-3 rounded-xl border p-2.5 transition-all select-none ${
-                  isEditable
-                    ? 'cursor-grab border-slate-800/80 bg-slate-900/40 hover:border-cyan-500/40 hover:bg-slate-900/80 hover:shadow-md hover:shadow-cyan-500/5 active:cursor-grabbing focus:border-cyan-500/60 focus:bg-slate-900/80'
-                    : 'cursor-not-allowed opacity-60 border-slate-800/40 bg-slate-950'
-                }`}
+                key={category.id}
+                className="rounded-xl border border-slate-800/60 bg-slate-900/30 overflow-hidden transition-colors"
               >
-                <div
-                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${visual.badgeBg} ${visual.badgeBorder} ${visual.badgeText}`}
-                  aria-hidden="true"
+                {/* Accordion Category Header */}
+                <button
+                  type="button"
+                  onClick={() => toggleCategory(category.id)}
+                  aria-expanded={isExpanded}
+                  aria-controls={`category-panel-${category.id}`}
+                  className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-xs font-semibold text-slate-300 hover:bg-slate-800/40 hover:text-white transition-colors"
                 >
-                  <Icon className="h-4 w-4" />
-                </div>
-
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between gap-1">
-                    <span className="text-xs font-semibold text-white group-hover:text-cyan-300 transition-colors truncate">
-                      {item.label}
-                    </span>
-                    <span
-                      className="text-[9px] font-medium text-slate-500 uppercase tracking-wider shrink-0"
+                  <span className="flex items-center gap-1.5">
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${
+                        isExpanded ? 'rotate-0' : '-rotate-90'
+                      }`}
                       aria-hidden="true"
-                    >
-                      {item.category}
-                    </span>
-                  </div>
-                  <p className="mt-0.5 text-[11px] text-slate-400 line-clamp-1 leading-relaxed">
-                    {item.description}
-                  </p>
-                </div>
+                    />
+                    <span>{category.name}</span>
+                  </span>
+                  <span className="rounded bg-slate-800/80 px-1.5 py-0.2 text-[10px] font-mono text-slate-400">
+                    {category.items.length}
+                  </span>
+                </button>
 
-                {isEditable && (
+                {/* Category Items */}
+                {isExpanded && (
                   <div
-                    className="text-slate-600 group-hover:text-slate-400 transition-colors mt-2"
-                    aria-hidden="true"
+                    id={`category-panel-${category.id}`}
+                    role="list"
+                    aria-label={`${category.name} components`}
+                    className="p-1.5 pt-0.5 space-y-1"
                   >
-                    <GripVertical className="h-3.5 w-3.5" />
+                    {category.items.map((item) => {
+                      const visual = getNodeVisual(item.type);
+                      const Icon = visual.icon;
+
+                      return (
+                        <div
+                          key={item.type}
+                          role="listitem"
+                          draggable={isEditable}
+                          onDragStart={(e) => handleDragStart(e, item.type)}
+                          onKeyDown={(e) => handleKeyDown(e, item.type)}
+                          tabIndex={isEditable ? 0 : -1}
+                          aria-label={`${item.label} — ${category.name}. ${item.description}`}
+                          aria-disabled={!isEditable}
+                          title={
+                            isEditable
+                              ? `Drag onto canvas or press Enter/Space to place ${item.label}`
+                              : `${item.label} (Viewer: read-only)`
+                          }
+                          className={`group flex items-center justify-between gap-2 rounded-lg border px-2 py-1.5 text-xs transition-all select-none ${
+                            isEditable
+                              ? 'cursor-grab border-slate-800/80 bg-slate-950/60 hover:border-cyan-500/50 hover:bg-slate-900/90 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-cyan-500'
+                              : 'cursor-not-allowed opacity-60 border-slate-800/40 bg-slate-950'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div
+                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${visual.badgeBg} ${visual.badgeBorder} ${visual.badgeText}`}
+                              aria-hidden="true"
+                            >
+                              <Icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="truncate">
+                              <span className="font-medium text-slate-200 group-hover:text-white transition-colors truncate block text-[11px]">
+                                {item.label}
+                              </span>
+                            </div>
+                          </div>
+
+                          {isEditable && (
+                            <div
+                              className="text-slate-600 group-hover:text-slate-400 transition-colors shrink-0"
+                              aria-hidden="true"
+                            >
+                              <GripVertical className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
             );
           })
         )}
+      </div>
+
+      {/* 3. Footer Keyboard Hint */}
+      <div className="border-t border-slate-800/80 px-3 py-2 text-[10px] text-slate-500 bg-slate-950/60 shrink-0">
+        <span className="block truncate">
+          {isEditable
+            ? 'Tip: Drag or press Enter to add node.'
+            : 'Read-only canvas mode.'}
+        </span>
       </div>
     </aside>
   );

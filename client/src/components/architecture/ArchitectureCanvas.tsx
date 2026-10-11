@@ -15,7 +15,17 @@ import {
   OnSelectionChangeParams,
   Viewport,
 } from '@xyflow/react';
-import { Architecture, ArchitectureNodeType, NODE_CATALOG, EdgeType, ArchitectureNode, ArchitectureEdge } from '@archsync/shared';
+import {
+  Architecture,
+  ArchitectureNodeType,
+  NODE_CATALOG,
+  EdgeType,
+  ArchitectureNode,
+  ArchitectureEdge,
+  CanvasAppearance,
+  ArchitectureNodeStyle,
+  ArchitectureEdgeStyle,
+} from '@archsync/shared';
 import {
   CustomNodeData,
   AppNode,
@@ -26,7 +36,15 @@ import {
   appEdgeToArchitectureEdge,
   generateNodeId,
   generateEdgeId,
+  computeEdgeVisuals,
 } from '../../lib/architecture/adapters';
+import {
+  AlignmentGuide,
+  calculateSnapAndGuides,
+  alignSelectedNodes,
+  distributeSelectedNodes,
+} from '../../lib/architecture/alignment';
+import { AlignmentGuidesOverlay } from './AlignmentGuidesOverlay';
 import { ArchitectureNodeComponent } from './ArchitectureNode';
 import { ComponentPalette } from './ComponentPalette';
 import { NodeDetailsPanel } from './NodeDetailsPanel';
@@ -62,6 +80,8 @@ import { useArchitectureAutosave } from '../../hooks/useArchitectureAutosave';
 import { useProjectCollaboration } from '../../hooks/useProjectCollaboration';
 import { useValidateArchitectureMutation } from '../../store/api/architectureApi';
 import { ArchitectureValidationResult } from '@archsync/shared';
+import { CommandPalette, CommandPaletteAction } from './CommandPalette';
+import { PanelResizeHandle } from './PanelResizeHandle';
 import {
   Sliders,
   ShieldCheck,
@@ -72,6 +92,11 @@ import {
   ArrowLeft,
   Edit2,
   Users,
+  Command,
+  Copy,
+  Trash2,
+  LayoutGrid,
+  Eye,
 } from 'lucide-react';
 
 export interface ArchitectureCanvasProps {
@@ -177,6 +202,84 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     initialArchitecture.viewport || { x: 0, y: 0, zoom: 1 }
   );
 
+  const [canvasSettings, setCanvasSettings] = useState<CanvasAppearance>(
+    initialArchitecture.canvasSettings || {
+      backgroundColor: '#eae6ed',
+      gridType: 'dots',
+      gridSpacing: 20,
+      gridVisible: true,
+      snapToGrid: false,
+    }
+  );
+
+  const [guides, setGuides] = useState<AlignmentGuide[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<AppNode[]>([]);
+  const [selectedEdges, setSelectedEdges] = useState<AppEdge[]>([]);
+  const loadedProjectIdRef = useRef<string | null>(null);
+
+  const PANEL_WIDTHS_KEY = 'archsync_studio_panel_widths';
+  const DEFAULT_LEFT_WIDTH = 256;
+  const DEFAULT_RIGHT_WIDTH = 340;
+
+  const [panelWidths, setPanelWidths] = useState<{ left: number; right: number }>(() => {
+    try {
+      const stored = typeof window !== 'undefined' ? localStorage.getItem(PANEL_WIDTHS_KEY) : null;
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (typeof parsed.left === 'number' && typeof parsed.right === 'number') {
+          return {
+            left: Math.max(200, Math.min(380, parsed.left)),
+            right: Math.max(280, Math.min(520, parsed.right)),
+          };
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return { left: DEFAULT_LEFT_WIDTH, right: DEFAULT_RIGHT_WIDTH };
+  });
+
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const clipboardNodesRef = useRef<AppNode[]>([]);
+
+  const handleResizeLeft = useCallback((w: number) => {
+    setPanelWidths((prev) => {
+      const maxAllowed = typeof window !== 'undefined' ? Math.max(200, window.innerWidth - prev.right - 320) : 380;
+      const clamped = Math.max(200, Math.min(Math.min(380, maxAllowed), w));
+      const next = { ...prev, left: clamped };
+      try { localStorage.setItem(PANEL_WIDTHS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  const handleResizeRight = useCallback((w: number) => {
+    setPanelWidths((prev) => {
+      const maxAllowed = typeof window !== 'undefined' ? Math.max(280, window.innerWidth - prev.left - 320) : 520;
+      const clamped = Math.max(280, Math.min(Math.min(520, maxAllowed), w));
+      const next = { ...prev, right: clamped };
+      try { localStorage.setItem(PANEL_WIDTHS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleWindowResize = () => {
+      setPanelWidths((prev) => {
+        const available = window.innerWidth;
+        const maxLeft = Math.max(200, available - prev.right - 320);
+        const clampedLeft = Math.max(200, Math.min(Math.min(380, maxLeft), prev.left));
+        const maxRight = Math.max(280, available - clampedLeft - 320);
+        const clampedRight = Math.max(280, Math.min(Math.min(520, maxRight), prev.right));
+        if (clampedLeft !== prev.left || clampedRight !== prev.right) {
+          return { left: clampedLeft, right: clampedRight };
+        }
+        return prev;
+      });
+    };
+    window.addEventListener('resize', handleWindowResize);
+    return () => window.removeEventListener('resize', handleWindowResize);
+  }, []);
+
   // F10: Real-time multi-user collaboration engine
   const {
     emitNodeCreate,
@@ -203,6 +306,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           technology: remoteNode.data.technology,
           category: remoteNode.data.category,
           nodeType: remoteNode.type,
+          style: remoteNode.style,
         },
       };
       setNodes((nds) => [...nds.filter((n) => n.id !== remoteNode.id), appNode]);
@@ -222,6 +326,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                 technology: remoteNode.data.technology,
                 category: remoteNode.data.category,
                 nodeType: remoteNode.type,
+                style: remoteNode.style,
               },
             };
           }
@@ -236,21 +341,22 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     },
     onRemoteEdgeCreate: (remoteEdge) => {
       isRemoteChangeRef.current = true;
-      const isDashed = remoteEdge.type === 'dashed';
+      const edgeType = (remoteEdge.type as EdgeType) || 'data-flow';
+      const visuals = computeEdgeVisuals(edgeType, remoteEdge.animated, remoteEdge.style);
+
       const appEdge: AppEdge = {
         id: remoteEdge.id,
         source: remoteEdge.source,
         target: remoteEdge.target,
-        type: 'default',
+        type: visuals.reactFlowType,
         label: remoteEdge.label,
-        animated: Boolean(remoteEdge.animated),
-        style: {
-          strokeWidth: 2,
-          stroke: '#ef8557',
-          ...(isDashed ? { strokeDasharray: '5,5' } : {}),
-        },
+        animated: visuals.isAnimated,
+        markerEnd: visuals.markerEnd,
+        markerStart: visuals.markerStart,
+        style: visuals.edgeStyle,
         data: {
-          edgeType: (remoteEdge.type as EdgeType) || 'data-flow',
+          edgeType,
+          style: remoteEdge.style,
         },
       };
       setEdges((eds) => [...eds.filter((e) => e.id !== remoteEdge.id), appEdge]);
@@ -260,20 +366,21 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       setEdges((eds) =>
         eds.map((e) => {
           if (e.id === remoteEdge.id) {
-            const isDashed = remoteEdge.type === 'dashed';
+            const edgeType = (remoteEdge.type as EdgeType) || 'data-flow';
+            const visuals = computeEdgeVisuals(edgeType, remoteEdge.animated, remoteEdge.style);
+
             return {
               ...e,
+              type: visuals.reactFlowType,
               label: remoteEdge.label,
-              animated: Boolean(remoteEdge.animated),
-              style: {
-                ...e.style,
-                strokeWidth: 2,
-                stroke: '#ef8557',
-                ...(isDashed ? { strokeDasharray: '5,5' } : { strokeDasharray: undefined }),
-              },
+              animated: visuals.isAnimated,
+              markerEnd: visuals.markerEnd,
+              markerStart: visuals.markerStart,
+              style: visuals.edgeStyle,
               data: {
                 ...e.data,
-                edgeType: (remoteEdge.type as EdgeType) || 'data-flow',
+                edgeType,
+                style: remoteEdge.style,
               },
             };
           }
@@ -298,15 +405,21 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     },
   });
 
-  // Sync when initialArchitecture changes from server hydration
+  // Sync ONLY when project changes or initially mounting, to prevent overwriting local edits on save completion
   useEffect(() => {
-    const converted = architectureToReactFlow(initialArchitecture);
-    setNodes(converted.nodes);
-    setEdges(converted.edges);
+    if (loadedProjectIdRef.current !== initialArchitecture.projectId) {
+      loadedProjectIdRef.current = initialArchitecture.projectId;
+      const converted = architectureToReactFlow(initialArchitecture);
+      setNodes(converted.nodes);
+      setEdges(converted.edges);
 
-    if (initialArchitecture.viewport) {
-      setViewport(initialArchitecture.viewport);
-      setCurrentViewport(initialArchitecture.viewport);
+      if (initialArchitecture.viewport) {
+        setViewport(initialArchitecture.viewport);
+        setCurrentViewport(initialArchitecture.viewport);
+      }
+      if (initialArchitecture.canvasSettings) {
+        setCanvasSettings(initialArchitecture.canvasSettings);
+      }
     }
   }, [initialArchitecture, setNodes, setEdges, setViewport]);
 
@@ -327,13 +440,14 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     setCurrentViewport(vp);
   }, []);
 
-  // F09: Debounced autosave controller
+  // F09: Debounced autosave controller with persistent styling and canvas settings
   const { saveNow } = useArchitectureAutosave({
     projectId: initialArchitecture.projectId,
     initialArchitecture,
     nodes,
     edges,
     viewport: currentViewport,
+    canvasSettings,
     isEditable,
     debounceMs: 1000,
     isRemoteChangeRef,
@@ -476,17 +590,24 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     [isEditable, setEdges, emitEdgeCreate]
   );
 
-  // Selection Tracking coordinated via Redux editorSlice
+  // Selection Tracking coordinated via Redux editorSlice & multi-selection state
   const onSelectionChange = useCallback(
     (params: OnSelectionChangeParams<AppNode, AppEdge>) => {
+      setSelectedNodes(params.nodes);
+      setSelectedEdges(params.edges);
+
       const node = params.nodes[0];
       const edge = params.edges[0];
 
-      if (node) {
+      if (params.nodes.length === 1) {
         dispatch(setSelectedNodeId(node.id));
         emitSelectionUpdate(node.id);
-      } else if (edge) {
+      } else if (params.nodes.length === 0 && params.edges.length === 1) {
         dispatch(setSelectedEdgeId(edge.id));
+        emitSelectionUpdate(null);
+      } else if (params.nodes.length > 1) {
+        dispatch(setSelectedNodeId(null));
+        dispatch(setSelectedEdgeId(null));
         emitSelectionUpdate(null);
       } else {
         dispatch(clearSelection());
@@ -497,13 +618,26 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   );
 
   const onPaneClick = useCallback(() => {
+    setSelectedNodes([]);
+    setSelectedEdges([]);
     dispatch(clearSelection());
     emitSelectionUpdate(null);
   }, [dispatch, emitSelectionUpdate]);
 
-  // Node Drag Stop - Emit authoritative node position after user drag
+  // Node Dragging with Dynamic Alignment Guides
+  const onNodeDrag = useCallback(
+    (_event: unknown, node: AppNode) => {
+      if (!isEditable) return;
+      const snapResult = calculateSnapAndGuides(node, nodes, 6);
+      setGuides(snapResult.guides);
+    },
+    [isEditable, nodes]
+  );
+
+  // Node Drag Stop - Clear temporary guides and emit authoritative node position
   const onNodeDragStop = useCallback(
     (_event: unknown, node: AppNode) => {
+      setGuides([]);
       if (!isEditable) return;
       const domainNode = appNodeToArchitectureNode(node);
       emitNodeUpdate(domainNode);
@@ -556,9 +690,17 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     [isEditable, setNodes, setEdges, dispatch, emitNodeDelete]
   );
 
-  // Edge Property Updates
+  // Edge Property Updates with full persistent styling
   const handleUpdateEdgeData = useCallback(
-    (edgeId: string, updates: { label?: string; edgeType?: EdgeType; animated?: boolean }) => {
+    (
+      edgeId: string,
+      updates: {
+        label?: string;
+        edgeType?: EdgeType;
+        animated?: boolean;
+        style?: ArchitectureEdgeStyle;
+      }
+    ) => {
       if (!isEditable) return;
 
       let updatedDomainEdge: ArchitectureEdge | null = null;
@@ -568,21 +710,21 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           if (e.id === edgeId) {
             const newType = updates.edgeType ?? e.data?.edgeType ?? 'default';
             const isAnimated = updates.animated ?? e.animated ?? newType === 'animated';
-            const isDashed = newType === 'dashed';
+            const newStyle = updates.style ?? e.data?.style;
+            const visuals = computeEdgeVisuals(newType, isAnimated, newStyle);
 
             const merged: AppEdge = {
               ...e,
               label: updates.label !== undefined ? updates.label : e.label,
-              animated: isAnimated,
-              style: {
-                ...e.style,
-                strokeWidth: 2,
-                stroke: '#ef8557',
-                ...(isDashed ? { strokeDasharray: '5,5' } : { strokeDasharray: undefined }),
-              },
+              type: visuals.reactFlowType,
+              animated: visuals.isAnimated,
+              markerEnd: visuals.markerEnd,
+              markerStart: visuals.markerStart,
+              style: visuals.edgeStyle,
               data: {
                 ...e.data,
                 edgeType: newType,
+                style: newStyle,
               },
             };
 
@@ -600,6 +742,85 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     [isEditable, setEdges, emitEdgeUpdate]
   );
 
+  // Multi-node Batch Styling
+  const handleBatchUpdateNodeStyle = useCallback(
+    (nodeIds: string[], styleUpdates: Partial<ArchitectureNodeStyle>) => {
+      if (!isEditable) return;
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (nodeIds.includes(n.id)) {
+            const mergedStyle: ArchitectureNodeStyle = {
+              ...n.data.style,
+              ...styleUpdates,
+            };
+            const merged: AppNode = {
+              ...n,
+              data: {
+                ...n.data,
+                style: mergedStyle,
+              },
+            };
+            emitNodeUpdate(appNodeToArchitectureNode(merged));
+            return merged;
+          }
+          return n;
+        })
+      );
+    },
+    [isEditable, setNodes, emitNodeUpdate]
+  );
+
+  // Smart Alignment Handlers
+  const handleAlignNodes = useCallback(
+    (alignment: 'left' | 'center' | 'right' | 'top' | 'middle' | 'bottom') => {
+      if (!isEditable) return;
+      const targetIds = selectedNodes.map((n) => n.id);
+      setNodes((nds) => {
+        const aligned = alignSelectedNodes(nds, targetIds, alignment);
+        aligned
+          .filter((n) => targetIds.includes(n.id))
+          .forEach((n) => emitNodeUpdate(appNodeToArchitectureNode(n)));
+        return aligned;
+      });
+    },
+    [isEditable, selectedNodes, setNodes, emitNodeUpdate]
+  );
+
+  const handleDistributeNodes = useCallback(
+    (axis: 'horizontal' | 'vertical') => {
+      if (!isEditable) return;
+      const targetIds = selectedNodes.map((n) => n.id);
+      setNodes((nds) => {
+        const distributed = distributeSelectedNodes(nds, targetIds, axis);
+        distributed
+          .filter((n) => targetIds.includes(n.id))
+          .forEach((n) => emitNodeUpdate(appNodeToArchitectureNode(n)));
+        return distributed;
+      });
+    },
+    [isEditable, selectedNodes, setNodes, emitNodeUpdate]
+  );
+
+  // Canvas Settings Handlers
+  const handleUpdateCanvasSettings = useCallback(
+    (updates: Partial<CanvasAppearance>) => {
+      if (!isEditable) return;
+      setCanvasSettings((prev) => ({ ...prev, ...updates }));
+    },
+    [isEditable]
+  );
+
+  const handleResetCanvasSettings = useCallback(() => {
+    if (!isEditable) return;
+    setCanvasSettings({
+      backgroundColor: '#eae6ed',
+      gridType: 'dots',
+      gridSpacing: 20,
+      gridVisible: true,
+      snapToGrid: false,
+    });
+  }, [isEditable]);
+
   // Edge Deletion
   const handleDeleteEdge = useCallback(
     (edgeId: string) => {
@@ -611,6 +832,251 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
     },
     [isEditable, setEdges, dispatch, emitEdgeDelete]
   );
+
+  // Duplicate Selected Node(s)
+  const handleDuplicateSelected = useCallback(() => {
+    if (!isEditable) return;
+    const nodesToDuplicate =
+      selectedNodes.length > 0 ? selectedNodes : selectedNode ? [selectedNode] : [];
+
+    if (nodesToDuplicate.length === 0) return;
+
+    const newNodes: AppNode[] = [];
+    const newDomainNodes: ArchitectureNode[] = [];
+
+    for (const node of nodesToDuplicate) {
+      const nodeType = (node.data.nodeType || node.type || 'server') as ArchitectureNodeType;
+      const newId = generateNodeId(nodeType);
+      const duplicatedNode: AppNode = {
+        id: newId,
+        type: 'architectureNode',
+        position: {
+          x: node.position.x + 30,
+          y: node.position.y + 30,
+        },
+        data: {
+          label: `${node.data.label} (Copy)`,
+          description: node.data.description,
+          technology: node.data.technology,
+          category: node.data.category,
+          nodeType: node.data.nodeType,
+          style: node.data.style ? { ...node.data.style } : undefined,
+        },
+      };
+
+      const domainNode = appNodeToArchitectureNode(duplicatedNode);
+      newNodes.push(duplicatedNode);
+      newDomainNodes.push(domainNode);
+    }
+
+    setNodes((nds) => [...nds, ...newNodes]);
+    if (newNodes.length === 1) {
+      dispatch(setSelectedNodeId(newNodes[0].id));
+    } else {
+      setSelectedNodes(newNodes);
+    }
+
+    for (const domainNode of newDomainNodes) {
+      emitNodeCreate(domainNode);
+    }
+  }, [isEditable, selectedNodes, selectedNode, setNodes, dispatch, emitNodeCreate]);
+
+  // Copy Selected Node(s)
+  const handleCopySelected = useCallback(() => {
+    const nodesToCopy =
+      selectedNodes.length > 0 ? selectedNodes : selectedNode ? [selectedNode] : [];
+
+    if (nodesToCopy.length === 0) return;
+    clipboardNodesRef.current = nodesToCopy.map((n) => ({ ...n, data: { ...n.data } }));
+  }, [selectedNodes, selectedNode]);
+
+  // Paste Copied Node(s)
+  const handlePasteCopied = useCallback(() => {
+    if (!isEditable || clipboardNodesRef.current.length === 0) return;
+
+    const pastedNodes: AppNode[] = [];
+    const pastedDomainNodes: ArchitectureNode[] = [];
+
+    for (const node of clipboardNodesRef.current) {
+      const nodeType = (node.data.nodeType || node.type || 'server') as ArchitectureNodeType;
+      const newId = generateNodeId(nodeType);
+      const newNode: AppNode = {
+        id: newId,
+        type: 'architectureNode',
+        position: {
+          x: node.position.x + 30,
+          y: node.position.y + 30,
+        },
+        data: {
+          label: node.data.label,
+          description: node.data.description,
+          technology: node.data.technology,
+          category: node.data.category,
+          nodeType: node.data.nodeType,
+          style: node.data.style ? { ...node.data.style } : undefined,
+        },
+      };
+
+      const domainNode = appNodeToArchitectureNode(newNode);
+      pastedNodes.push(newNode);
+      pastedDomainNodes.push(domainNode);
+    }
+
+    clipboardNodesRef.current = clipboardNodesRef.current.map((n) => ({
+      ...n,
+      position: { x: n.position.x + 30, y: n.position.y + 30 },
+    }));
+
+    setNodes((nds) => [...nds, ...pastedNodes]);
+    if (pastedNodes.length === 1) {
+      dispatch(setSelectedNodeId(pastedNodes[0].id));
+    } else {
+      setSelectedNodes(pastedNodes);
+    }
+
+    for (const domainNode of pastedDomainNodes) {
+      emitNodeCreate(domainNode);
+    }
+  }, [isEditable, setNodes, dispatch, emitNodeCreate]);
+
+  // Delete Selected Node(s) or Edge(s)
+  const handleDeleteSelected = useCallback(() => {
+    if (!isEditable) return;
+    if (selectedNodes.length > 0) {
+      const idsToDelete = selectedNodes.map((n) => n.id);
+      setNodes((nds) => nds.filter((n) => !idsToDelete.includes(n.id)));
+      setEdges((eds) =>
+        eds.filter((e) => !idsToDelete.includes(e.source) && !idsToDelete.includes(e.target))
+      );
+      dispatch(clearSelection());
+      setSelectedNodes([]);
+      idsToDelete.forEach((id) => emitNodeDelete(id));
+    } else if (selectedNodeId) {
+      handleDeleteNode(selectedNodeId);
+    } else if (selectedEdges.length > 0) {
+      const edgeIds = selectedEdges.map((e) => e.id);
+      setEdges((eds) => eds.filter((e) => !edgeIds.includes(e.id)));
+      dispatch(clearSelection());
+      setSelectedEdges([]);
+      edgeIds.forEach((id) => emitEdgeDelete(id));
+    } else if (selectedEdgeId) {
+      handleDeleteEdge(selectedEdgeId);
+    }
+  }, [
+    isEditable,
+    selectedNodes,
+    selectedNodeId,
+    selectedEdges,
+    selectedEdgeId,
+    handleDeleteNode,
+    handleDeleteEdge,
+    emitNodeDelete,
+    emitEdgeDelete,
+    dispatch,
+  ]);
+
+  // Global Keyboard Shortcuts (Duplicate, Copy, Paste, Delete, Esc, Ctrl+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      if (activeEl) {
+        const tagName = activeEl.tagName.toLowerCase();
+        if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
+          if (e.key === 'Escape') {
+            (activeEl as HTMLElement).blur();
+          }
+          return;
+        }
+        if (activeEl.getAttribute('contenteditable') === 'true') {
+          return;
+        }
+        if (activeEl.closest('[data-testid="ai-assistant-panel"]')) {
+          return;
+        }
+      }
+
+      const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+
+      // Command Palette (Ctrl/Cmd + K)
+      if (isCtrlOrMeta && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Duplicate (Ctrl/Cmd + D)
+      if (isCtrlOrMeta && e.key.toLowerCase() === 'd') {
+        const hasSelected = selectedNodes.length > 0 || Boolean(selectedNodeId);
+        if (hasSelected && isEditable) {
+          e.preventDefault();
+          handleDuplicateSelected();
+          return;
+        }
+      }
+
+      // Copy (Ctrl/Cmd + C)
+      if (isCtrlOrMeta && e.key.toLowerCase() === 'c') {
+        const hasSelected = selectedNodes.length > 0 || Boolean(selectedNodeId);
+        if (hasSelected && !window.getSelection()?.toString()) {
+          e.preventDefault();
+          handleCopySelected();
+          return;
+        }
+      }
+
+      // Paste (Ctrl/Cmd + V)
+      if (isCtrlOrMeta && e.key.toLowerCase() === 'v') {
+        if (clipboardNodesRef.current.length > 0 && isEditable) {
+          e.preventDefault();
+          handlePasteCopied();
+          return;
+        }
+      }
+
+      // Delete / Backspace
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        const hasSelection =
+          selectedNodes.length > 0 ||
+          Boolean(selectedNodeId) ||
+          selectedEdges.length > 0 ||
+          Boolean(selectedEdgeId);
+        if (hasSelection && isEditable) {
+          e.preventDefault();
+          handleDeleteSelected();
+          return;
+        }
+      }
+
+      // Escape (Clear selection or dismiss palette)
+      if (e.key === 'Escape') {
+        if (commandPaletteOpen) {
+          setCommandPaletteOpen(false);
+          return;
+        }
+        setSelectedNodes([]);
+        setSelectedEdges([]);
+        dispatch(clearSelection());
+        emitSelectionUpdate(null);
+        return;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [
+    isEditable,
+    selectedNodes,
+    selectedNodeId,
+    selectedEdges,
+    selectedEdgeId,
+    commandPaletteOpen,
+    handleDuplicateSelected,
+    handleCopySelected,
+    handlePasteCopied,
+    handleDeleteSelected,
+    dispatch,
+    emitSelectionUpdate,
+  ]);
 
   // F11: Handle validation invocation
   const handleValidate = useCallback(async () => {
@@ -674,9 +1140,238 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
       nodes,
       edges,
       currentViewport,
-      currentVersion
+      currentVersion,
+      canvasSettings
     );
-  }, [initialArchitecture.projectId, nodes, edges, currentViewport, currentVersion]);
+  }, [initialArchitecture.projectId, nodes, edges, currentViewport, currentVersion, canvasSettings]);
+
+  // Command Palette Actions Definition
+  const commandActions = useMemo<CommandPaletteAction[]>(() => {
+    const actions: CommandPaletteAction[] = [];
+
+    // Edit actions
+    const hasSelectedNodes = selectedNodes.length > 0 || Boolean(selectedNode);
+    const hasSelection =
+      hasSelectedNodes || selectedEdges.length > 0 || Boolean(selectedEdge);
+
+    actions.push({
+      id: 'duplicate-selected',
+      label: 'Duplicate Selected Component',
+      description: 'Create an offset clone preserving configuration and styling (Ctrl+D)',
+      category: 'edit',
+      shortcut: 'Ctrl+D',
+      icon: <Copy className="h-4 w-4" />,
+      disabled: !isEditable || !hasSelectedNodes,
+      onExecute: handleDuplicateSelected,
+    });
+
+    actions.push({
+      id: 'copy-selected',
+      label: 'Copy Selected Component',
+      description: 'Copy selected component to clipboard (Ctrl+C)',
+      category: 'edit',
+      shortcut: 'Ctrl+C',
+      icon: <Copy className="h-4 w-4" />,
+      disabled: !hasSelectedNodes,
+      onExecute: handleCopySelected,
+    });
+
+    actions.push({
+      id: 'paste-copied',
+      label: 'Paste Component',
+      description: 'Paste copied component from clipboard (Ctrl+V)',
+      category: 'edit',
+      shortcut: 'Ctrl+V',
+      icon: <Copy className="h-4 w-4" />,
+      disabled: !isEditable || clipboardNodesRef.current.length === 0,
+      onExecute: handlePasteCopied,
+    });
+
+    actions.push({
+      id: 'delete-selected',
+      label: 'Delete Selected Element',
+      description: 'Remove selected nodes and connected edges from canvas (Del)',
+      category: 'edit',
+      shortcut: 'Del',
+      icon: <Trash2 className="h-4 w-4" />,
+      disabled: !isEditable || !hasSelection,
+      onExecute: handleDeleteSelected,
+    });
+
+    actions.push({
+      id: 'clear-selection',
+      label: 'Clear Selection',
+      description: 'Deselect all components and connections (Esc)',
+      category: 'edit',
+      shortcut: 'Esc',
+      disabled: !hasSelection,
+      onExecute: () => {
+        setSelectedNodes([]);
+        setSelectedEdges([]);
+        dispatch(clearSelection());
+        emitSelectionUpdate(null);
+      },
+    });
+
+    // Alignment actions (for 2+ selected nodes)
+    const canAlign = isEditable && selectedNodes.length >= 2;
+    const canDistribute = isEditable && selectedNodes.length >= 3;
+
+    actions.push({
+      id: 'align-left',
+      label: 'Align Left',
+      description: 'Align selected nodes to leftmost edge',
+      category: 'align',
+      disabled: !canAlign,
+      onExecute: () => handleAlignNodes('left'),
+    });
+
+    actions.push({
+      id: 'align-center',
+      label: 'Align Center (Horizontal)',
+      description: 'Align selected nodes to horizontal midpoint',
+      category: 'align',
+      disabled: !canAlign,
+      onExecute: () => handleAlignNodes('center'),
+    });
+
+    actions.push({
+      id: 'align-right',
+      label: 'Align Right',
+      description: 'Align selected nodes to rightmost edge',
+      category: 'align',
+      disabled: !canAlign,
+      onExecute: () => handleAlignNodes('right'),
+    });
+
+    actions.push({
+      id: 'align-top',
+      label: 'Align Top',
+      description: 'Align selected nodes to topmost edge',
+      category: 'align',
+      disabled: !canAlign,
+      onExecute: () => handleAlignNodes('top'),
+    });
+
+    actions.push({
+      id: 'align-middle',
+      label: 'Align Middle (Vertical)',
+      description: 'Align selected nodes to vertical midpoint',
+      category: 'align',
+      disabled: !canAlign,
+      onExecute: () => handleAlignNodes('middle'),
+    });
+
+    actions.push({
+      id: 'align-bottom',
+      label: 'Align Bottom',
+      description: 'Align selected nodes to bottommost edge',
+      category: 'align',
+      disabled: !canAlign,
+      onExecute: () => handleAlignNodes('bottom'),
+    });
+
+    actions.push({
+      id: 'distribute-h',
+      label: 'Distribute Horizontally',
+      description: 'Distribute 3+ nodes evenly along horizontal axis',
+      category: 'align',
+      disabled: !canDistribute,
+      onExecute: () => handleDistributeNodes('horizontal'),
+    });
+
+    actions.push({
+      id: 'distribute-v',
+      label: 'Distribute Vertically',
+      description: 'Distribute 3+ nodes evenly along vertical axis',
+      category: 'align',
+      disabled: !canDistribute,
+      onExecute: () => handleDistributeNodes('vertical'),
+    });
+
+    // Canvas appearance actions
+    actions.push({
+      id: 'toggle-snap-to-grid',
+      label: canvasSettings.snapToGrid ? 'Disable Snap to Grid' : 'Enable Snap to Grid',
+      description: 'Toggle automatic snapping when dragging nodes',
+      category: 'canvas',
+      icon: <LayoutGrid className="h-4 w-4" />,
+      disabled: !isEditable,
+      onExecute: () => handleUpdateCanvasSettings({ snapToGrid: !canvasSettings.snapToGrid }),
+    });
+
+    actions.push({
+      id: 'toggle-grid-visibility',
+      label: canvasSettings.gridVisible === false ? 'Show Canvas Grid' : 'Hide Canvas Grid',
+      description: 'Toggle background grid rendering on diagram canvas',
+      category: 'canvas',
+      icon: <Eye className="h-4 w-4" />,
+      disabled: !isEditable,
+      onExecute: () =>
+        handleUpdateCanvasSettings({ gridVisible: canvasSettings.gridVisible === false }),
+    });
+
+    // Component catalog additions
+    (Object.keys(NODE_CATALOG) as ArchitectureNodeType[]).forEach((type) => {
+      const def = NODE_CATALOG[type];
+      actions.push({
+        id: `add-component-${type}`,
+        label: `Add ${def.label}`,
+        description: def.description,
+        category: 'components',
+        disabled: !isEditable,
+        onExecute: () => handleAddNodeFromKeyboard(type),
+      });
+    });
+
+    // Tools & Panels
+    actions.push({
+      id: 'open-ai-assistant',
+      label: 'Open AI Architecture Assistant',
+      description: 'Analyze single points of failure, scalability, and security',
+      category: 'tools',
+      icon: <Sparkles className="h-4 w-4" />,
+      onExecute: () => {
+        dispatch(setValidationPanelOpen(false));
+        dispatch(setDetailsPanelOpen(false));
+        dispatch(setAiPanelOpen(true));
+      },
+    });
+
+    actions.push({
+      id: 'open-validation',
+      label: 'Validate Architecture',
+      description: 'Run architectural rule checks and inspect disconnected nodes',
+      category: 'tools',
+      icon: <ShieldCheck className="h-4 w-4" />,
+      onExecute: () => {
+        handleValidate();
+        dispatch(setAiPanelOpen(false));
+        dispatch(setDetailsPanelOpen(false));
+        dispatch(setValidationPanelOpen(true));
+      },
+    });
+
+    return actions;
+  }, [
+    isEditable,
+    selectedNodes,
+    selectedNode,
+    selectedEdges,
+    selectedEdge,
+    canvasSettings,
+    handleDuplicateSelected,
+    handleCopySelected,
+    handlePasteCopied,
+    handleDeleteSelected,
+    handleAlignNodes,
+    handleDistributeNodes,
+    handleUpdateCanvasSettings,
+    handleAddNodeFromKeyboard,
+    handleValidate,
+    dispatch,
+    emitSelectionUpdate,
+  ]);
 
   return (
     <div
@@ -873,6 +1568,21 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             isAutosavePending={isAutosavePending}
           />
 
+          {/* Command Palette Button */}
+          <button
+            type="button"
+            onClick={() => setCommandPaletteOpen(true)}
+            data-testid="canvas-command-palette-btn"
+            aria-label="Open command palette (Ctrl+K)"
+            className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2.5 py-1 text-xs font-medium text-[#226192] hover:bg-[#226192]/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]"
+          >
+            <Command className="h-3.5 w-3.5 text-[#ef8557]" aria-hidden="true" />
+            <span className="hidden sm:inline">Commands</span>
+            <kbd className="hidden lg:inline text-[10px] bg-[#226192]/10 px-1 py-0.5 rounded border border-[#226192]/15 font-mono text-[#226192]/70">
+              Ctrl+K
+            </kbd>
+          </button>
+
           {/* Properties Toggle Button */}
           <button
             type="button"
@@ -919,11 +1629,26 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
       {/* 2. Studio Body (Palette + Canvas + Unified Context Drawer) */}
       <div className="flex-1 min-h-0 flex w-full relative overflow-hidden">
-        {/* Left: Categorized Component Palette (240px wide) */}
-        <div className="hidden lg:block w-60 shrink-0 h-full z-20" aria-label="Component palette">
+        {/* Left: Categorized Component Palette (Resizable) */}
+        <div
+          style={{ width: `${panelWidths.left}px` }}
+          className="hidden lg:block shrink-0 h-full z-20"
+          aria-label="Component palette"
+        >
           <ComponentPalette
             isEditable={isEditable}
             onSelectComponent={handleAddNodeFromKeyboard}
+          />
+        </div>
+
+        <div className="hidden lg:flex h-full items-stretch">
+          <PanelResizeHandle
+            side="left"
+            width={panelWidths.left}
+            minWidth={200}
+            maxWidth={380}
+            onResize={handleResizeLeft}
+            label="Resize component palette"
           />
         </div>
 
@@ -944,6 +1669,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             nodeTypes={nodeTypes}
             onNodesChange={isEditable ? onNodesChange : undefined}
             onEdgesChange={isEditable ? onEdgesChange : undefined}
+            onNodeDrag={isEditable ? onNodeDrag : undefined}
             onNodeDragStop={isEditable ? onNodeDragStop : undefined}
             onConnect={onConnect}
             onDragOver={onDragOver}
@@ -954,19 +1680,33 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             nodesDraggable={isEditable}
             nodesConnectable={isEditable}
             elementsSelectable={true}
+            snapToGrid={Boolean(canvasSettings.snapToGrid)}
+            snapGrid={[canvasSettings.gridSpacing || 20, canvasSettings.gridSpacing || 20]}
             deleteKeyCode={isEditable ? ['Backspace', 'Delete'] : null}
             fitView
             minZoom={0.1}
             maxZoom={4}
             proOptions={{ hideAttribution: true }}
             className="archsync-canvas"
+            style={{ backgroundColor: canvasSettings.backgroundColor || '#eae6ed' }}
           >
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={20}
-              size={1.2}
-              color="rgba(34, 97, 146, 0.15)"
-            />
+            {/* Visual alignment guides overlay */}
+            <AlignmentGuidesOverlay guides={guides} />
+
+            {canvasSettings.gridVisible !== false && canvasSettings.gridType !== 'none' && (
+              <Background
+                variant={
+                  canvasSettings.gridType === 'lines'
+                    ? BackgroundVariant.Lines
+                    : canvasSettings.gridType === 'cross'
+                    ? BackgroundVariant.Cross
+                    : BackgroundVariant.Dots
+                }
+                gap={canvasSettings.gridSpacing || 20}
+                size={canvasSettings.gridType === 'lines' ? 1 : 1.2}
+                color="rgba(34, 97, 146, 0.15)"
+              />
+            )}
 
             <Controls
               showInteractive={isEditable}
@@ -987,21 +1727,37 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         </div>
 
         {/* Right: Unified Context Drawer Container (mutually exclusive) */}
+        {(aiPanelOpen || validationPanelOpen || detailsPanelOpen) && (
+          <div className="hidden md:flex h-full items-stretch">
+            <PanelResizeHandle
+              side="right"
+              width={panelWidths.right}
+              minWidth={280}
+              maxWidth={520}
+              onResize={handleResizeRight}
+              label="Resize contextual inspector"
+            />
+          </div>
+        )}
+
         {aiPanelOpen ? (
           <aside
             id="canvas-ai-panel"
-            className="hidden md:block w-96 shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
+            style={{ width: `${panelWidths.right}px` }}
+            className="hidden md:block shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
             aria-label="AI Architecture Assistant panel"
           >
             <AIAssistantPanel
               projectId={initialArchitecture.projectId}
               onClose={() => dispatch(setAiPanelOpen(false))}
               onSelectNode={handleSelectNodeFromValidation}
+              onSelectEdge={handleSelectEdgeFromValidation}
             />
           </aside>
         ) : validationPanelOpen ? (
           <aside
-            className="hidden md:block w-84 shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
+            style={{ width: `${panelWidths.right}px` }}
+            className="hidden md:block shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
             aria-label="Architecture validation results panel"
           >
             <ValidationPanel
@@ -1016,17 +1772,26 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         ) : detailsPanelOpen ? (
           <aside
             id="canvas-details-panel"
-            className="hidden md:block w-80 shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
+            style={{ width: `${panelWidths.right}px` }}
+            className="hidden md:block shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
             aria-label="Node and edge properties panel"
           >
             <NodeDetailsPanel
               selectedNode={selectedNode}
               selectedEdge={selectedEdge}
+              selectedNodes={selectedNodes}
+              selectedEdges={selectedEdges}
+              canvasSettings={canvasSettings}
               isEditable={isEditable}
               onUpdateNodeData={handleUpdateNodeData}
               onDeleteNode={handleDeleteNode}
               onUpdateEdgeData={handleUpdateEdgeData}
               onDeleteEdge={handleDeleteEdge}
+              onUpdateCanvasSettings={handleUpdateCanvasSettings}
+              onResetCanvasSettings={handleResetCanvasSettings}
+              onAlignNodes={handleAlignNodes}
+              onDistributeNodes={handleDistributeNodes}
+              onBatchUpdateNodeStyle={handleBatchUpdateNodeStyle}
               onClose={() => dispatch(setDetailsPanelOpen(false))}
             />
           </aside>
@@ -1075,11 +1840,19 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                 <NodeDetailsPanel
                   selectedNode={selectedNode}
                   selectedEdge={selectedEdge}
+                  selectedNodes={selectedNodes}
+                  selectedEdges={selectedEdges}
+                  canvasSettings={canvasSettings}
                   isEditable={isEditable}
                   onUpdateNodeData={handleUpdateNodeData}
                   onDeleteNode={handleDeleteNode}
                   onUpdateEdgeData={handleUpdateEdgeData}
                   onDeleteEdge={handleDeleteEdge}
+                  onUpdateCanvasSettings={handleUpdateCanvasSettings}
+                  onResetCanvasSettings={handleResetCanvasSettings}
+                  onAlignNodes={handleAlignNodes}
+                  onDistributeNodes={handleDistributeNodes}
+                  onBatchUpdateNodeStyle={handleBatchUpdateNodeStyle}
                   onClose={() => { dispatch(setDetailsPanelOpen(false)); setMobilePanelOpen(false); }}
                 />
               )}
@@ -1087,6 +1860,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           </>
         )}
       </div>
+
+      {/* Command Palette Modal */}
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        actions={commandActions}
+      />
     </div>
   );
 };

@@ -2,7 +2,7 @@
  * Architecture export domain contracts matching RULES.md Section 4 & Epic F13
  */
 
-import { ArchitectureNode, ArchitectureEdge, ArchitectureViewport } from './architecture';
+import { ArchitectureNode, ArchitectureEdge, ArchitectureViewport, CanvasAppearance } from './architecture';
 
 export type ExportFormatIdentifier = 'archsync-architecture';
 
@@ -17,6 +17,7 @@ export interface ArchitectureExportPayload {
   nodes: ArchitectureNode[];
   edges: ArchitectureEdge[];
   viewport: ArchitectureViewport;
+  canvasSettings?: CanvasAppearance;
 }
 
 export interface ArchitectureExport {

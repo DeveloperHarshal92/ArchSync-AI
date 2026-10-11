@@ -41,6 +41,7 @@ function sanitizeNode(node: ArchitectureNode): ArchitectureNode {
       category: node.data?.category,
       metadata: node.data?.metadata ? { ...node.data.metadata } : undefined,
     },
+    style: node.style ? { ...node.style } : undefined,
     createdBy: node.createdBy || '',
     createdAt: node.createdAt || new Date().toISOString(),
     updatedAt: node.updatedAt || new Date().toISOString(),
@@ -58,6 +59,7 @@ function sanitizeEdge(edge: ArchitectureEdge): ArchitectureEdge {
     type: edge.type || 'default',
     label: edge.label,
     animated: Boolean(edge.animated),
+    style: edge.style ? { ...edge.style } : undefined,
     metadata: edge.metadata ? { ...edge.metadata } : undefined,
     createdBy: edge.createdBy || '',
     createdAt: edge.createdAt || new Date().toISOString(),
@@ -95,6 +97,7 @@ export function buildArchitectureJsonExport(
       nodes: sortedNodes,
       edges: sortedEdges,
       viewport: architecture.viewport || { x: 0, y: 0, zoom: 1 },
+      canvasSettings: architecture.canvasSettings ? { ...architecture.canvasSettings } : undefined,
     },
   };
 }

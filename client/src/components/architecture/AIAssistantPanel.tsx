@@ -11,6 +11,7 @@ import {
   HelpCircle,
   X,
   Box,
+  Link2,
 } from 'lucide-react';
 import {
   AIAnalysisResponse,
@@ -19,6 +20,7 @@ import {
   AIConfidenceLevel,
 } from '@archsync/shared';
 import { useAnalyzeArchitectureMutation } from '../../store/api/aiApi';
+import { SafeMarkdown } from '../ai/SafeMarkdown';
 
 export interface AIAssistantPanelProps {
   projectId?: string;
@@ -28,6 +30,7 @@ export interface AIAssistantPanelProps {
   onAnalyze?: (customPrompt?: string) => Promise<void>;
   onClose: () => void;
   onSelectNode?: (nodeId: string) => void;
+  onSelectEdge?: (edgeId: string) => void;
 }
 
 const QUICK_ACTIONS = [
@@ -37,6 +40,54 @@ const QUICK_ACTIONS = [
   'Security & Isolation Boundaries',
 ];
 
+/**
+ * Gracefully normalizes structured or semi-structured AI response data,
+ * preventing crashes or raw JSON dumps when the model returns markdown or partial fields.
+ */
+export function normalizeAIResponse(data: unknown): AIAnalysisResponse | null {
+  if (!data) return null;
+  if (typeof data === 'string') {
+    return {
+      summary: data,
+      findings: [],
+      recommendations: [],
+      risks: [],
+      assumptions: [],
+      confidence: 'MEDIUM',
+      analyzedAt: new Date().toISOString(),
+    };
+  }
+  if (typeof data === 'object') {
+    const d = data as Record<string, unknown>;
+    const summary =
+      typeof d.summary === 'string'
+        ? d.summary
+        : typeof d.message === 'string'
+        ? d.message
+        : '';
+    const findings = Array.isArray(d.findings) ? d.findings : [];
+    const recommendations = Array.isArray(d.recommendations) ? d.recommendations : [];
+    const risks = Array.isArray(d.risks) ? d.risks : [];
+    const assumptions = Array.isArray(d.assumptions) ? d.assumptions.map(String) : [];
+    const confidence = (['LOW', 'MEDIUM', 'HIGH'].includes(String(d.confidence))
+      ? d.confidence
+      : 'MEDIUM') as AIConfidenceLevel;
+    const analyzedAt =
+      typeof d.analyzedAt === 'string' ? d.analyzedAt : new Date().toISOString();
+
+    return {
+      summary: summary || 'Architecture analysis received.',
+      findings,
+      recommendations,
+      risks,
+      assumptions,
+      confidence,
+      analyzedAt,
+    };
+  }
+  return null;
+}
+
 export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   projectId = '',
   isLoading: externalLoading,
@@ -45,18 +96,21 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   onAnalyze: externalAnalyze,
   onClose,
   onSelectNode,
+  onSelectEdge,
 }) => {
   const [internalAnalyze, { data: mutationData, isLoading: internalLoading, error: mutationError }] =
     useAnalyzeArchitectureMutation();
   const [internalErrorMsg, setInternalErrorMsg] = useState<string | null>(null);
 
   const isLoading = externalLoading ?? internalLoading;
-  const response =
+  const rawResponse =
     externalResponse !== undefined
       ? externalResponse
       : mutationData && mutationData.success
       ? mutationData.data
       : null;
+  const response = normalizeAIResponse(rawResponse);
+
   const errorMessage =
     externalError ??
     internalErrorMsg ??
@@ -132,7 +186,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       case 'INFO':
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-[#eae6ed]/15 px-2 py-0.5 text-[10px] font-bold text-[#eae6ed] border border-[#eae6ed]/30 font-mono">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#226192]/10 px-2 py-0.5 text-[10px] font-bold text-[#226192] border border-[#226192]/30 font-mono">
             <Info className="h-3 w-3 shrink-0" />
             INFO
           </span>
@@ -157,7 +211,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
       case 'LOW':
       default:
         return (
-          <span className="inline-flex items-center gap-1 rounded-md bg-[#eae6ed]/15 px-2 py-0.5 text-[10px] font-bold text-[#eae6ed] border border-[#eae6ed]/30 font-mono">
+          <span className="inline-flex items-center gap-1 rounded-md bg-[#226192]/10 px-2 py-0.5 text-[10px] font-bold text-[#226192] border border-[#226192]/30 font-mono">
             LOW
           </span>
         );
@@ -182,7 +236,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
   return (
     <div
       data-testid="ai-assistant-panel"
-      className="flex flex-col h-full bg-[#eae6ed] text-[#226192] overflow-hidden select-none"
+      className="flex flex-col h-full bg-[#eae6ed] text-[#226192] overflow-hidden"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-[#226192]/15 bg-[#eae6ed] px-4 py-3 shrink-0">
@@ -208,6 +262,14 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-4">
+        {/* Advisory Guarantee Banner */}
+        <div className="flex items-start gap-2 rounded-md border border-[#226192]/15 bg-[#226192]/5 p-2 text-[11px] text-[#226192]/80">
+          <Info className="h-3.5 w-3.5 text-[#ef8557] shrink-0 mt-0.5" />
+          <span>
+            Advisory-only analysis grounded in your diagram. The AI assistant does not modify your architecture graph.
+          </span>
+        </div>
+
         {/* Analyze Architecture CTA */}
         <div className="rounded-lg border border-[#226192]/15 bg-[#226192]/5 p-3">
           <div className="flex items-center justify-between mb-2">
@@ -304,13 +366,13 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
         {/* AI Response Display */}
         {response && !isLoading && (
           <div data-testid="ai-response-container" className="space-y-4">
-            {/* Summary */}
+            {/* Executive Summary */}
             <div className="rounded-lg border border-[#226192]/15 bg-[#226192]/[0.03] p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-serif font-semibold text-[#226192]">Executive Summary</span>
                 {renderConfidenceBadge(response.confidence)}
               </div>
-              <p className="text-xs text-[#226192] leading-relaxed">{response.summary}</p>
+              <SafeMarkdown content={response.summary} />
             </div>
 
             {/* Findings */}
@@ -331,9 +393,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                         </span>
                         {renderSeverityBadge(finding.severity)}
                       </div>
-                      <p className="text-[11px] text-[#226192]/70 leading-relaxed">
-                        {finding.explanation}
-                      </p>
+                      <SafeMarkdown content={finding.explanation} />
                       {finding.relatedNodeIds && finding.relatedNodeIds.length > 0 && (
                         <div className="flex flex-wrap items-center gap-1 pt-1">
                           <span className="text-[10px] text-[#226192]/70 font-mono">Related nodes:</span>
@@ -347,6 +407,23 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                             >
                               <Box className="h-2.5 w-2.5" />
                               <span>{nodeId}</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      {finding.relatedEdgeIds && finding.relatedEdgeIds.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-1 pt-1">
+                          <span className="text-[10px] text-[#226192]/70 font-mono">Related connections:</span>
+                          {finding.relatedEdgeIds.map((edgeId) => (
+                            <button
+                              key={edgeId}
+                              onClick={() => onSelectEdge?.(edgeId)}
+                              data-testid={`ai-focus-edge-${edgeId}`}
+                              className="inline-flex items-center gap-1 rounded bg-[#eae6ed] px-1.5 py-0.5 text-[10px] font-mono text-[#226192] hover:border-[#ef8557] border border-[#226192]/20 transition-colors"
+                              title={`Focus connection ${edgeId}`}
+                            >
+                              <Link2 className="h-2.5 w-2.5 text-[#ef8557]" />
+                              <span>{edgeId}</span>
                             </button>
                           ))}
                         </div>
@@ -370,16 +447,17 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                       className="rounded-lg border border-[#226192]/15 bg-[#226192]/[0.03] p-2.5 space-y-1.5"
                     >
                       <div className="flex items-center gap-1.5 text-xs font-medium text-[#226192]">
+                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#ef8557]/15 border border-[#ef8557]/30 text-[#ef8557] font-mono text-[10px] font-bold">
+                          {idx + 1}
+                        </span>
                         <Lightbulb className="h-3.5 w-3.5 text-[#ef8557] shrink-0" />
                         <span>{rec.title}</span>
                       </div>
-                      <p className="text-[11px] text-[#226192]/70 leading-relaxed">
-                        {rec.explanation}
-                      </p>
+                      <SafeMarkdown content={rec.explanation} />
                       {rec.tradeoff && (
-                        <div className="rounded bg-[#ef8557]/10 p-1.5 text-[10px] text-[#226192] border border-[#ef8557]/30">
-                          <span className="font-semibold text-[#ef8557]">Tradeoff: </span>
-                          {rec.tradeoff}
+                        <div className="rounded bg-[#ef8557]/10 p-2 text-[11px] text-[#226192] border border-[#ef8557]/30">
+                          <span className="font-semibold text-[#ef8557] block mb-0.5">Tradeoff: </span>
+                          <SafeMarkdown content={rec.tradeoff} />
                         </div>
                       )}
                       {rec.relatedNodeIds && rec.relatedNodeIds.length > 0 && (
@@ -404,7 +482,7 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
               </div>
             )}
 
-            {/* Risks */}
+            {/* Identified Risks */}
             {response.risks && response.risks.length > 0 && (
               <div className="space-y-2">
                 <span className="text-[11px] font-mono font-semibold text-[#226192]/70 uppercase tracking-wider block">
@@ -423,24 +501,26 @@ export const AIAssistantPanel: React.FC<AIAssistantPanelProps> = ({
                         </span>
                         {renderRiskBadge(risk.severity)}
                       </div>
-                      <p className="text-[11px] text-[#226192]/70 leading-relaxed">
-                        {risk.explanation}
-                      </p>
+                      <SafeMarkdown content={risk.explanation} />
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {/* Assumptions */}
+            {/* Architectural Assumptions */}
             {response.assumptions && response.assumptions.length > 0 && (
               <div className="rounded-lg border border-[#226192]/15 bg-[#226192]/[0.03] p-2.5 space-y-1">
                 <span className="text-[10px] font-mono font-semibold text-[#226192]/70 uppercase tracking-wider block">
                   Architectural Assumptions
                 </span>
-                <ul className="list-disc list-inside text-[11px] text-[#226192]/70 space-y-0.5">
+                <ul className="list-disc list-inside text-[11px] text-[#226192]/80 space-y-0.5">
                   {response.assumptions.map((assumption, idx) => (
-                    <li key={idx}>{assumption}</li>
+                    <li key={idx}>
+                      <span className="inline">
+                        <SafeMarkdown content={assumption} className="inline" />
+                      </span>
+                    </li>
                   ))}
                 </ul>
               </div>

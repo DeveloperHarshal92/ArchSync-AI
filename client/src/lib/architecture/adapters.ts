@@ -5,8 +5,11 @@ import {
   ArchitectureViewport,
   ArchitectureNodeType,
   EdgeType,
+  ArchitectureNodeStyle,
+  ArchitectureEdgeStyle,
+  CanvasAppearance,
 } from '@archsync/shared';
-import { Node, Edge, Viewport } from '@xyflow/react';
+import { Node, Edge, Viewport, MarkerType } from '@xyflow/react';
 
 export interface CustomNodeData extends Record<string, unknown> {
   label: string;
@@ -15,6 +18,7 @@ export interface CustomNodeData extends Record<string, unknown> {
   category?: string;
   metadata?: Record<string, unknown>;
   nodeType: ArchitectureNodeType;
+  style?: ArchitectureNodeStyle;
   createdBy?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -22,6 +26,7 @@ export interface CustomNodeData extends Record<string, unknown> {
 
 export interface CustomEdgeData extends Record<string, unknown> {
   edgeType: EdgeType;
+  style?: ArchitectureEdgeStyle;
   metadata?: Record<string, unknown>;
   createdBy?: string;
   createdAt?: string;
@@ -49,6 +54,62 @@ export const generateEdgeId = (source: string, target: string): string => {
 };
 
 /**
+ * Helper to compute React Flow edge properties from domain edge style
+ */
+export const computeEdgeVisuals = (
+  edgeType: EdgeType,
+  animated?: boolean,
+  style?: ArchitectureEdgeStyle
+) => {
+  const strokeColor = style?.strokeColor || '#ef8557';
+  const strokeWidth = style?.strokeWidth ?? 2;
+  const opacity = style?.opacity ?? 1;
+
+  let strokeDasharray: string | undefined = undefined;
+  if (style?.strokeStyle === 'dashed' || (!style?.strokeStyle && edgeType === 'dashed')) {
+    strokeDasharray = '5,5';
+  } else if (style?.strokeStyle === 'dotted') {
+    strokeDasharray = '2,2';
+  }
+
+  let reactFlowType = 'default';
+  if (style?.connectorType === 'straight') {
+    reactFlowType = 'straight';
+  } else if (style?.connectorType === 'smoothstep') {
+    reactFlowType = 'smoothstep';
+  } else if (style?.connectorType === 'curved') {
+    reactFlowType = 'default';
+  }
+
+  const markerEnd =
+    style?.arrowHeadEnd === 'arrow'
+      ? { type: MarkerType.Arrow, color: strokeColor }
+      : style?.arrowHeadEnd === 'arrowclosed'
+      ? { type: MarkerType.ArrowClosed, color: strokeColor }
+      : undefined;
+
+  const markerStart =
+    style?.arrowHeadStart === 'arrow'
+      ? { type: MarkerType.Arrow, color: strokeColor }
+      : style?.arrowHeadStart === 'arrowclosed'
+      ? { type: MarkerType.ArrowClosed, color: strokeColor }
+      : undefined;
+
+  return {
+    reactFlowType,
+    isAnimated: animated ?? edgeType === 'animated',
+    markerEnd,
+    markerStart,
+    edgeStyle: {
+      strokeWidth,
+      stroke: strokeColor,
+      opacity,
+      ...(strokeDasharray ? { strokeDasharray } : {}),
+    },
+  };
+};
+
+/**
  * Converts domain Architecture into React Flow nodes and edges
  */
 export const architectureToReactFlow = (
@@ -69,6 +130,7 @@ export const architectureToReactFlow = (
     data: {
       ...node.data,
       nodeType: node.type,
+      style: node.style,
       createdBy: node.createdBy,
       createdAt: node.createdAt,
       updatedAt: node.updatedAt,
@@ -77,23 +139,21 @@ export const architectureToReactFlow = (
 
   const edges: AppEdge[] = (architecture.edges || []).map((edge) => {
     const edgeType = edge.type || 'default';
-    const isAnimated = edge.animated ?? edgeType === 'animated';
-    const isDashed = edgeType === 'dashed';
+    const visuals = computeEdgeVisuals(edgeType, edge.animated, edge.style);
 
     return {
       id: edge.id,
       source: edge.source,
       target: edge.target,
-      type: 'default',
+      type: visuals.reactFlowType,
       label: edge.label,
-      animated: isAnimated,
-      style: {
-        strokeWidth: 2,
-        stroke: '#ef8557', // Coral Orange
-        ...(isDashed ? { strokeDasharray: '5,5' } : {}),
-      },
+      animated: visuals.isAnimated,
+      markerEnd: visuals.markerEnd,
+      markerStart: visuals.markerStart,
+      style: visuals.edgeStyle,
       data: {
         edgeType,
+        style: edge.style,
         metadata: edge.metadata,
         createdBy: edge.createdBy,
         createdAt: edge.createdAt,
@@ -113,10 +173,11 @@ export const reactFlowToArchitecture = (
   nodes: AppNode[],
   edges: AppEdge[],
   viewport: Viewport,
-  version: number
+  version: number,
+  canvasSettings?: CanvasAppearance
 ): Architecture => {
   const archNodes: ArchitectureNode[] = nodes.map((n) => {
-    const { nodeType, createdBy, createdAt, updatedAt, ...nodeData } = n.data;
+    const { nodeType, createdBy, createdAt, updatedAt, style, ...nodeData } = n.data;
     return {
       id: n.id,
       type: nodeType || 'server',
@@ -133,6 +194,7 @@ export const reactFlowToArchitecture = (
         category: nodeData.category,
         metadata: nodeData.metadata,
       },
+      style: style ? { ...style } : undefined,
       createdBy: createdBy || '',
       createdAt: createdAt || new Date().toISOString(),
       updatedAt: updatedAt || new Date().toISOString(),
@@ -146,8 +208,9 @@ export const reactFlowToArchitecture = (
       source: e.source,
       target: e.target,
       type: (edgeData?.edgeType as EdgeType) || 'default',
-      label: (typeof e.label === 'string' ? e.label : undefined),
+      label: typeof e.label === 'string' ? e.label : undefined,
       animated: Boolean(e.animated),
+      style: edgeData?.style ? { ...edgeData.style } : undefined,
       metadata: edgeData?.metadata,
       createdBy: edgeData?.createdBy || '',
       createdAt: edgeData?.createdAt || new Date().toISOString(),
@@ -166,6 +229,7 @@ export const reactFlowToArchitecture = (
     nodes: archNodes,
     edges: archEdges,
     viewport: archViewport,
+    canvasSettings,
     version,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -173,7 +237,7 @@ export const reactFlowToArchitecture = (
 };
 
 export const appNodeToArchitectureNode = (node: AppNode): ArchitectureNode => {
-  const { nodeType, createdBy, createdAt, updatedAt, ...nodeData } = node.data;
+  const { nodeType, createdBy, createdAt, updatedAt, style, ...nodeData } = node.data;
   return {
     id: node.id,
     type: nodeType || 'server',
@@ -190,6 +254,7 @@ export const appNodeToArchitectureNode = (node: AppNode): ArchitectureNode => {
       category: nodeData.category,
       metadata: nodeData.metadata,
     },
+    style: style ? { ...style } : undefined,
     createdBy: createdBy || '',
     createdAt: createdAt || new Date().toISOString(),
     updatedAt: updatedAt || new Date().toISOString(),
@@ -205,6 +270,7 @@ export const appEdgeToArchitectureEdge = (edge: AppEdge): ArchitectureEdge => {
     type: (edgeData?.edgeType as EdgeType) || 'default',
     label: typeof edge.label === 'string' ? edge.label : undefined,
     animated: Boolean(edge.animated),
+    style: edgeData?.style ? { ...edgeData.style } : undefined,
     metadata: edgeData?.metadata,
     createdBy: edgeData?.createdBy || '',
     createdAt: edgeData?.createdAt || new Date().toISOString(),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Layers, Activity, ShieldCheck, LogOut, FolderGit2, Mail } from 'lucide-react';
+import { Activity, ShieldCheck, LogOut, FolderGit2, Mail } from 'lucide-react';
 import { useGetHealthQuery } from '../../store/api/healthApi';
 import { useGetInvitationsQuery } from '../../store/api/projectApi';
 import { useAuth } from '../../hooks/useAuth';
@@ -40,12 +40,6 @@ export const Header: React.FC = () => {
           aria-label="ArchSync AI — go to home page"
           className="flex items-center gap-3 transition-opacity hover:opacity-90"
         >
-          <div
-            className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#226192] text-[#eae6ed] shadow-sm"
-            aria-hidden="true"
-          >
-            <Layers className="h-5 w-5 text-[#eae6ed]" />
-          </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[#226192]">

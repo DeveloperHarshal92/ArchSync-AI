@@ -29,6 +29,16 @@ export const nodeDataSchema = z.object({
   metadata: z.record(z.unknown()).optional(),
 });
 
+const colorRegex = /^(?:#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})|rgba?\([^)]+\)|transparent)$/;
+
+export const nodeStyleSchema = z.object({
+  fillColor: z.string().trim().regex(colorRegex, 'Invalid fill color format').optional(),
+  borderColor: z.string().trim().regex(colorRegex, 'Invalid border color format').optional(),
+  borderWidth: z.number().finite().min(0, 'Border width must be non-negative').max(20, 'Border width cannot exceed 20').optional(),
+  textColor: z.string().trim().regex(colorRegex, 'Invalid text color format').optional(),
+  opacity: z.number().finite().min(0, 'Opacity must be at least 0').max(1, 'Opacity cannot exceed 1').optional(),
+});
+
 /**
  * Single architecture node validation
  */
@@ -56,9 +66,20 @@ export const architectureNodeSchema = z.object({
     .max(5000, 'Node height cannot exceed 5000')
     .optional(),
   data: nodeDataSchema,
+  style: nodeStyleSchema.optional(),
   createdBy: z.string().optional(),
   createdAt: z.string().optional(),
   updatedAt: z.string().optional(),
+});
+
+export const edgeStyleSchema = z.object({
+  strokeColor: z.string().trim().regex(colorRegex, 'Invalid stroke color format').optional(),
+  strokeWidth: z.number().finite().min(0.5, 'Stroke width must be at least 0.5').max(20, 'Stroke width cannot exceed 20').optional(),
+  opacity: z.number().finite().min(0, 'Opacity must be at least 0').max(1, 'Opacity cannot exceed 1').optional(),
+  strokeStyle: z.enum(['solid', 'dashed', 'dotted']).optional(),
+  connectorType: z.enum(['straight', 'smoothstep', 'curved']).optional(),
+  arrowHeadStart: z.enum(['none', 'arrow', 'arrowclosed']).optional(),
+  arrowHeadEnd: z.enum(['none', 'arrow', 'arrowclosed']).optional(),
 });
 
 /**
@@ -86,6 +107,7 @@ export const architectureEdgeSchema = z
       .optional(),
     label: z.string().trim().max(100, 'Edge label cannot exceed 100 characters').optional(),
     animated: z.boolean().optional(),
+    style: edgeStyleSchema.optional(),
     metadata: z.record(z.unknown()).optional(),
     createdBy: z.string().optional(),
     createdAt: z.string().optional(),
@@ -109,6 +131,14 @@ export const architectureViewportSchema = z.object({
     .max(4, 'Zoom cannot exceed 4'),
 });
 
+export const canvasSettingsSchema = z.object({
+  backgroundColor: z.string().trim().regex(colorRegex, 'Invalid background color format').optional(),
+  gridType: z.enum(['dots', 'lines', 'cross', 'none']).optional(),
+  gridSpacing: z.number().finite().min(5, 'Grid spacing must be at least 5').max(100, 'Grid spacing cannot exceed 100').optional(),
+  gridVisible: z.boolean().optional(),
+  snapToGrid: z.boolean().optional(),
+});
+
 /**
  * Replacement update payload schema
  */
@@ -116,6 +146,7 @@ export const updateArchitectureSchema = z.object({
   nodes: z.array(architectureNodeSchema),
   edges: z.array(architectureEdgeSchema),
   viewport: architectureViewportSchema,
+  canvasSettings: canvasSettingsSchema.optional(),
   version: z
     .number({ required_error: 'Architecture version is required' })
     .int('Version must be an integer')

@@ -14,6 +14,13 @@ export interface IArchitectureDocument extends Document {
   nodes: ArchitectureNode[];
   edges: ArchitectureEdge[];
   viewport: ArchitectureViewport;
+  canvasSettings?: {
+    backgroundColor?: string;
+    gridType?: 'dots' | 'lines' | 'cross' | 'none';
+    gridSpacing?: number;
+    gridVisible?: boolean;
+    snapToGrid?: boolean;
+  };
   version: number;
   createdAt: Date;
   updatedAt: Date;
@@ -39,6 +46,17 @@ const nodePositionSchema = new Schema(
   { _id: false }
 );
 
+const nodeStyleSchema = new Schema(
+  {
+    fillColor: { type: String, trim: true },
+    borderColor: { type: String, trim: true },
+    borderWidth: { type: Number },
+    textColor: { type: String, trim: true },
+    opacity: { type: Number },
+  },
+  { _id: false }
+);
+
 const nodeSchema = new Schema(
   {
     id: { type: String, required: true, trim: true },
@@ -51,9 +69,23 @@ const nodeSchema = new Schema(
     width: { type: Number },
     height: { type: Number },
     data: { type: nodeDataSchema, required: true },
+    style: { type: nodeStyleSchema, required: false },
     createdBy: { type: String, default: '' },
     createdAt: { type: String, default: () => new Date().toISOString() },
     updatedAt: { type: String, default: () => new Date().toISOString() },
+  },
+  { _id: false }
+);
+
+const edgeStyleSchema = new Schema(
+  {
+    strokeColor: { type: String, trim: true },
+    strokeWidth: { type: Number },
+    opacity: { type: Number },
+    strokeStyle: { type: String, enum: ['solid', 'dashed', 'dotted'] },
+    connectorType: { type: String, enum: ['straight', 'smoothstep', 'curved'] },
+    arrowHeadStart: { type: String, enum: ['none', 'arrow', 'arrowclosed'] },
+    arrowHeadEnd: { type: String, enum: ['none', 'arrow', 'arrowclosed'] },
   },
   { _id: false }
 );
@@ -70,6 +102,7 @@ const edgeSchema = new Schema(
     },
     label: { type: String, trim: true },
     animated: { type: Boolean, default: false },
+    style: { type: edgeStyleSchema, required: false },
     metadata: { type: Schema.Types.Mixed, default: {} },
     createdBy: { type: String, default: '' },
     createdAt: { type: String, default: () => new Date().toISOString() },
@@ -83,6 +116,17 @@ const viewportSchema = new Schema(
     x: { type: Number, default: 0 },
     y: { type: Number, default: 0 },
     zoom: { type: Number, default: 1 },
+  },
+  { _id: false }
+);
+
+const canvasSettingsSchema = new Schema(
+  {
+    backgroundColor: { type: String, default: '#eae6ed' },
+    gridType: { type: String, enum: ['dots', 'lines', 'cross', 'none'], default: 'dots' },
+    gridSpacing: { type: Number, default: 20 },
+    gridVisible: { type: Boolean, default: true },
+    snapToGrid: { type: Boolean, default: false },
   },
   { _id: false }
 );
@@ -107,6 +151,16 @@ const architectureSchema = new Schema<IArchitectureDocument>(
     viewport: {
       type: viewportSchema,
       default: () => ({ x: 0, y: 0, zoom: 1 }),
+    },
+    canvasSettings: {
+      type: canvasSettingsSchema,
+      default: () => ({
+        backgroundColor: '#eae6ed',
+        gridType: 'dots',
+        gridSpacing: 20,
+        gridVisible: true,
+        snapToGrid: false,
+      }),
     },
     version: {
       type: Number,
@@ -139,6 +193,15 @@ architectureSchema.methods.toSafeObject = function (): Architecture {
         category: node.data.category,
         metadata: node.data.metadata,
       },
+      style: node.style
+        ? {
+            fillColor: node.style.fillColor,
+            borderColor: node.style.borderColor,
+            borderWidth: node.style.borderWidth !== undefined ? Number(node.style.borderWidth) : undefined,
+            textColor: node.style.textColor,
+            opacity: node.style.opacity !== undefined ? Number(node.style.opacity) : undefined,
+          }
+        : undefined,
       createdBy: node.createdBy || '',
       createdAt: node.createdAt || new Date().toISOString(),
       updatedAt: node.updatedAt || new Date().toISOString(),
@@ -150,6 +213,17 @@ architectureSchema.methods.toSafeObject = function (): Architecture {
       type: edge.type || 'default',
       label: edge.label,
       animated: edge.animated,
+      style: edge.style
+        ? {
+            strokeColor: edge.style.strokeColor,
+            strokeWidth: edge.style.strokeWidth !== undefined ? Number(edge.style.strokeWidth) : undefined,
+            opacity: edge.style.opacity !== undefined ? Number(edge.style.opacity) : undefined,
+            strokeStyle: edge.style.strokeStyle,
+            connectorType: edge.style.connectorType,
+            arrowHeadStart: edge.style.arrowHeadStart,
+            arrowHeadEnd: edge.style.arrowHeadEnd,
+          }
+        : undefined,
       metadata: edge.metadata,
       createdBy: edge.createdBy || '',
       createdAt: edge.createdAt || new Date().toISOString(),
@@ -159,6 +233,13 @@ architectureSchema.methods.toSafeObject = function (): Architecture {
       x: Number(this.viewport?.x ?? 0),
       y: Number(this.viewport?.y ?? 0),
       zoom: Number(this.viewport?.zoom ?? 1),
+    },
+    canvasSettings: {
+      backgroundColor: this.canvasSettings?.backgroundColor || '#eae6ed',
+      gridType: this.canvasSettings?.gridType || 'dots',
+      gridSpacing: Number(this.canvasSettings?.gridSpacing ?? 20),
+      gridVisible: this.canvasSettings?.gridVisible !== false,
+      snapToGrid: Boolean(this.canvasSettings?.snapToGrid),
     },
     version: Number(this.version),
     createdAt: this.createdAt ? this.createdAt.toISOString() : new Date().toISOString(),

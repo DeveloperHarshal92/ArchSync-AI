@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  CheckCircle2,
   Server,
   Layers,
   Code2,
@@ -45,10 +44,6 @@ export const HomePage: React.FC = () => {
     <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 text-[#226192]">
       {/* Hero Section */}
       <div className="text-center">
-        <div className="inline-flex items-center gap-2 rounded-full border border-[#ef8557]/40 bg-[#ef8557]/10 px-3.5 py-1 text-xs font-semibold text-[#226192] mb-6">
-          <CheckCircle2 className="h-3.5 w-3.5 text-[#ef8557]" />
-          <span>F03 Authentication & Backend Complete</span>
-        </div>
         <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-semibold tracking-tight text-[#226192]">
           Real-Time Collaborative{' '}
           <span className="text-[#ef8557]">

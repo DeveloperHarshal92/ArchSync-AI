@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Architecture, EdgeType } from '@archsync/shared';
+import { Architecture, EdgeType, CanvasAppearance } from '@archsync/shared';
 import { Viewport } from '@xyflow/react';
 import { AppNode, AppEdge, reactFlowToArchitecture } from '../lib/architecture/adapters';
 import { useUpdateArchitectureMutation } from '../store/api/architectureApi';
@@ -21,6 +21,7 @@ export interface UseArchitectureAutosaveProps {
   nodes: AppNode[];
   edges: AppEdge[];
   viewport: Viewport;
+  canvasSettings?: CanvasAppearance;
   isEditable: boolean;
   debounceMs?: number;
   isRemoteChangeRef?: React.MutableRefObject<boolean>;
@@ -33,7 +34,8 @@ export interface UseArchitectureAutosaveProps {
 export function createArchitectureHash(
   nodes: AppNode[],
   edges: AppEdge[],
-  viewport?: { x: number; y: number; zoom: number }
+  viewport?: { x: number; y: number; zoom: number },
+  canvasSettings?: CanvasAppearance
 ): string {
   const simplifiedNodes = nodes
     .map((n) => ({
@@ -45,6 +47,7 @@ export function createArchitectureHash(
       description: n.data.description || '',
       technology: n.data.technology || '',
       category: n.data.category || '',
+      style: n.data.style || undefined,
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
@@ -56,6 +59,7 @@ export function createArchitectureHash(
       type: e.data?.edgeType || e.type || 'default',
       label: typeof e.label === 'string' ? e.label : '',
       animated: Boolean(e.animated),
+      style: e.data?.style || undefined,
     }))
     .sort((a, b) => a.id.localeCompare(b.id));
 
@@ -63,7 +67,12 @@ export function createArchitectureHash(
     ? `${Math.round(viewport.x)}:${Math.round(viewport.y)}:${viewport.zoom.toFixed(2)}`
     : '0:0:1';
 
-  return JSON.stringify({ nodes: simplifiedNodes, edges: simplifiedEdges, viewport: vp });
+  return JSON.stringify({
+    nodes: simplifiedNodes,
+    edges: simplifiedEdges,
+    viewport: vp,
+    canvasSettings: canvasSettings || null,
+  });
 }
 
 export function useArchitectureAutosave({
@@ -72,6 +81,7 @@ export function useArchitectureAutosave({
   nodes,
   edges,
   viewport,
+  canvasSettings,
   isEditable,
   debounceMs = 1000,
   isRemoteChangeRef,
@@ -87,22 +97,27 @@ export function useArchitectureAutosave({
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastSavedHashRef = useRef<string | null>(null);
   const isHydratedRef = useRef<boolean>(false);
+  const lastHydratedProjectIdRef = useRef<string | null>(null);
   const currentProjectIdRef = useRef<string>(projectId);
-  const saveSequenceRef = useRef<number>(0);
+  currentProjectIdRef.current = projectId;
+
+  const isSavingRef = useRef<boolean>(false);
+  const queuedSaveRef = useRef<boolean>(false);
   const persistenceStatusRef = useRef(persistenceStatus);
   persistenceStatusRef.current = persistenceStatus;
 
   // Keep latest graph references for the debounce timer callback
-  const latestGraphRef = useRef({ nodes, edges, viewport, currentVersion });
-  latestGraphRef.current = { nodes, edges, viewport, currentVersion };
+  const latestGraphRef = useRef({ nodes, edges, viewport, canvasSettings, currentVersion });
+  latestGraphRef.current = { nodes, edges, viewport, canvasSettings, currentVersion };
 
   // Manual baseline hash synchronization for external/remote updates
   const syncBaselineHash = useCallback(
-    (newNodes: AppNode[], newEdges: AppEdge[], newVp?: Viewport) => {
+    (newNodes: AppNode[], newEdges: AppEdge[], newVp?: Viewport, newCanvas?: CanvasAppearance) => {
       lastSavedHashRef.current = createArchitectureHash(
         newNodes,
         newEdges,
-        newVp || latestGraphRef.current.viewport
+        newVp || latestGraphRef.current.viewport,
+        newCanvas || latestGraphRef.current.canvasSettings
       );
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current);
@@ -114,7 +129,12 @@ export function useArchitectureAutosave({
 
   // 1. Initial Hydration & Project Switch Synchronization
   useEffect(() => {
-    currentProjectIdRef.current = projectId;
+    // Only re-initialize if switching to a new project or not yet hydrated for this project
+    if (lastHydratedProjectIdRef.current === projectId && isHydratedRef.current) {
+      return;
+    }
+
+    lastHydratedProjectIdRef.current = projectId;
     isHydratedRef.current = false;
 
     // Cancel any pending timer from previous project
@@ -125,7 +145,6 @@ export function useArchitectureAutosave({
 
     let hydrationTimer: NodeJS.Timeout | null = null;
 
-    // Set initial baseline from server snapshot
     if (initialArchitecture) {
       const initialNodes = initialArchitecture.nodes.map((n) => ({
         id: n.id,
@@ -137,6 +156,7 @@ export function useArchitectureAutosave({
           technology: n.data.technology,
           category: n.data.category,
           nodeType: n.type,
+          style: n.style,
         },
       }));
 
@@ -149,11 +169,13 @@ export function useArchitectureAutosave({
         animated: Boolean(e.animated),
         data: {
           edgeType: (e.type as EdgeType) || 'data-flow',
+          style: e.style,
         },
       }));
 
       const initialVp = initialArchitecture.viewport || { x: 0, y: 0, zoom: 1 };
-      lastSavedHashRef.current = createArchitectureHash(initialNodes, initialEdges, initialVp);
+      const initialCanvas = initialArchitecture.canvasSettings;
+      lastSavedHashRef.current = createArchitectureHash(initialNodes, initialEdges, initialVp, initialCanvas);
 
       // Hydration must NOT mark the canvas dirty or fire saves
       dispatch(
@@ -177,24 +199,37 @@ export function useArchitectureAutosave({
     };
   }, [projectId, initialArchitecture, dispatch]);
 
-  // 2. Core Persistence Execution
+  // 2. Core Persistence Execution with In-Flight Queue & Atomic Concurrency
   const executeSave = useCallback(async () => {
     if (!isEditable) return;
     if (hasVersionConflict) return;
 
-    const targetProjectId = currentProjectIdRef.current;
-    const { nodes: currentNodes, edges: currentEdges, viewport: currentVp, currentVersion: versionToSave } =
-      latestGraphRef.current;
-
-    const currentHash = createArchitectureHash(currentNodes, currentEdges, currentVp);
-
-    // If current graph matches last saved state, no-op
-    if (lastSavedHashRef.current === currentHash) {
-      dispatch(setPersistenceStatus('saved'));
+    // If already saving, queue a save to run as soon as in-flight save completes
+    if (isSavingRef.current) {
+      queuedSaveRef.current = true;
       return;
     }
 
-    const sequence = ++saveSequenceRef.current;
+    const targetProjectId = currentProjectIdRef.current;
+    const {
+      nodes: currentNodes,
+      edges: currentEdges,
+      viewport: currentVp,
+      canvasSettings: currentCanvas,
+      currentVersion: versionToSave,
+    } = latestGraphRef.current;
+
+    const currentHash = createArchitectureHash(currentNodes, currentEdges, currentVp, currentCanvas);
+
+    // If current graph matches last saved state and no queued change, no-op
+    if (lastSavedHashRef.current === currentHash) {
+      if (persistenceStatusRef.current !== 'saved') {
+        dispatch(setPersistenceStatus('saved'));
+      }
+      return;
+    }
+
+    isSavingRef.current = true;
     dispatch(setPersistenceStatus('saving'));
 
     try {
@@ -203,7 +238,8 @@ export function useArchitectureAutosave({
         currentNodes,
         currentEdges,
         currentVp,
-        versionToSave
+        versionToSave,
+        currentCanvas
       );
 
       const response = await updateArchitecture({
@@ -212,12 +248,13 @@ export function useArchitectureAutosave({
           nodes: domainArchitecture.nodes,
           edges: domainArchitecture.edges,
           viewport: domainArchitecture.viewport,
+          canvasSettings: domainArchitecture.canvasSettings,
           version: versionToSave,
         },
       }).unwrap();
 
-      // Guard: Discard if project changed or newer save sequence already started
-      if (currentProjectIdRef.current !== targetProjectId || saveSequenceRef.current !== sequence) {
+      // Guard: Discard if project changed during save
+      if (currentProjectIdRef.current !== targetProjectId) {
         return;
       }
 
@@ -228,14 +265,37 @@ export function useArchitectureAutosave({
       const nextVersion = response.data.architecture.version;
       lastSavedHashRef.current = currentHash;
 
+      // Update Redux state with authoritative nextVersion
       dispatch(
         setPersistenceSuccess({
           version: nextVersion,
           savedAt: response.data.architecture.updatedAt,
         })
       );
+
+      // Check if subsequent edits arrived while save was in flight
+      const latestHashNow = createArchitectureHash(
+        latestGraphRef.current.nodes,
+        latestGraphRef.current.edges,
+        latestGraphRef.current.viewport,
+        latestGraphRef.current.canvasSettings
+      );
+
+      if (latestHashNow !== currentHash || queuedSaveRef.current) {
+        queuedSaveRef.current = false;
+        dispatch(setPersistenceDirty());
+        // Schedule follow-up save with the newly updated nextVersion
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+        }
+        debounceTimerRef.current = setTimeout(() => {
+          executeSave();
+        }, 100);
+      } else {
+        dispatch(setPersistenceStatus('saved'));
+      }
     } catch (err: unknown) {
-      if (currentProjectIdRef.current !== targetProjectId || saveSequenceRef.current !== sequence) {
+      if (currentProjectIdRef.current !== targetProjectId) {
         return;
       }
 
@@ -253,6 +313,8 @@ export function useArchitectureAutosave({
           isConflict,
         })
       );
+    } finally {
+      isSavingRef.current = false;
     }
   }, [isEditable, hasVersionConflict, updateArchitecture, dispatch]);
 
@@ -263,7 +325,7 @@ export function useArchitectureAutosave({
       return;
     }
 
-    const currentHash = createArchitectureHash(nodes, edges, viewport);
+    const currentHash = createArchitectureHash(nodes, edges, viewport, canvasSettings);
 
     // If marked as remote-origin change, update baseline and do NOT trigger autosave
     if (isRemoteChangeRef?.current) {
@@ -291,7 +353,18 @@ export function useArchitectureAutosave({
         clearTimeout(debounceTimerRef.current);
       }
     };
-  }, [nodes, edges, viewport, isEditable, hasVersionConflict, debounceMs, executeSave, dispatch, isRemoteChangeRef]);
+  }, [
+    nodes,
+    edges,
+    viewport,
+    canvasSettings,
+    isEditable,
+    hasVersionConflict,
+    debounceMs,
+    executeSave,
+    dispatch,
+    isRemoteChangeRef,
+  ]);
 
   // 4. Navigation & Unload Protection
   useEffect(() => {

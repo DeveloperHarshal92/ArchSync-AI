@@ -93,10 +93,6 @@ export const RegisterPage: React.FC = () => {
 
           {/* Top Brand Tag */}
           <div className="relative z-10">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-[#ef8557]/40 bg-[#ef8557]/10 px-3.5 py-1 text-xs font-semibold text-[#226192]">
-              <span className="flex h-1.5 w-1.5 rounded-full bg-[#ef8557]" />
-              <span>SYSTEM DESIGN COLLABORATION</span>
-            </div>
             <h2 className="mt-6 font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[#226192] leading-snug">
               Engineering-First <br />
               <span className="text-[#ef8557]">Cloud System Architecture.</span>
@@ -111,9 +107,8 @@ export const RegisterPage: React.FC = () => {
             <div className="flex items-center justify-between pb-3 border-b border-[#226192]/15 text-[11px] font-mono text-[#226192]/70">
               <span className="flex items-center gap-1.5 text-[#ef8557] font-semibold">
                 <Layers className="h-3.5 w-3.5" />
-                <span>MICROSERVICES MESH // BLUEPRINT</span>
+                <span>MICROSERVICES MESH</span>
               </span>
-              <span className="text-[#226192] font-medium">TOPOLOGY // SPECIFICATION</span>
             </div>
 
             <svg
@@ -205,9 +200,6 @@ export const RegisterPage: React.FC = () => {
           <div className="max-w-sm w-full mx-auto">
             {/* Header Title */}
             <div>
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#226192]/10 border border-[#226192]/20 text-[#226192] shadow-sm">
-                <Layers className="h-5 w-5" />
-              </div>
               <h1 className="mt-4 font-serif text-3xl font-semibold tracking-tight text-[#226192]">
                 Create Your Account
               </h1>

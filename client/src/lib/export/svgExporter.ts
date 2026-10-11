@@ -66,7 +66,8 @@ function truncateText(text: string, maxLength: number): string {
  */
 function routeEdge(
   source: { x: number; y: number; w: number; h: number },
-  target: { x: number; y: number; w: number; h: number }
+  target: { x: number; y: number; w: number; h: number },
+  connectorType?: string
 ): { pathData: string; midX: number; midY: number } {
   const scx = source.x + source.w / 2;
   const scy = source.y + source.h / 2;
@@ -131,7 +132,15 @@ function routeEdge(
   const midX = (sx + tx) / 2;
   const midY = (sy + ty) / 2;
 
-  const pathData = `M ${Math.round(sx)} ${Math.round(sy)} C ${Math.round(c1x)} ${Math.round(c1y)}, ${Math.round(c2x)} ${Math.round(c2y)}, ${Math.round(tx)} ${Math.round(ty)}`;
+  let pathData: string;
+  if (connectorType === 'straight') {
+    pathData = `M ${Math.round(sx)} ${Math.round(sy)} L ${Math.round(tx)} ${Math.round(ty)}`;
+  } else if (connectorType === 'smoothstep') {
+    pathData = `M ${Math.round(sx)} ${Math.round(sy)} L ${Math.round(midX)} ${Math.round(sy)} L ${Math.round(midX)} ${Math.round(ty)} L ${Math.round(tx)} ${Math.round(ty)}`;
+  } else {
+    pathData = `M ${Math.round(sx)} ${Math.round(sy)} C ${Math.round(c1x)} ${Math.round(c1y)}, ${Math.round(c2x)} ${Math.round(c2y)}, ${Math.round(tx)} ${Math.round(ty)}`;
+  }
+
   return { pathData, midX, midY };
 }
 
@@ -146,25 +155,29 @@ export function buildArchitectureSvg(
   const edges = architecture.edges || [];
   const padding = options.padding ?? 60;
   const projectName = options.projectName || 'Architecture Diagram';
+  const canvasBg = architecture.canvasSettings?.backgroundColor || '#eae6ed';
+  const showGrid = architecture.canvasSettings?.gridVisible ?? true;
+  const gridType = architecture.canvasSettings?.gridType || 'dots';
+  const gridSpacing = architecture.canvasSettings?.gridSpacing || 20;
 
   // 1. Handle Empty Diagram Gracefully
   if (nodes.length === 0) {
     const width = 800;
     const height = 500;
     const svgString = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background-color: #226192; font-family: Montserrat, system-ui, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="background-color: ${canvasBg}; font-family: Montserrat, system-ui, sans-serif;">
   <defs>
-    <pattern id="empty-grid-dots" width="20" height="20" patternUnits="userSpaceOnUse">
-      <circle cx="2" cy="2" r="1" fill="#eae6ed" opacity="0.2" />
+    <pattern id="empty-grid-dots" width="${gridSpacing}" height="${gridSpacing}" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1" fill="#226192" opacity="0.2" />
     </pattern>
   </defs>
-  <rect width="${width}" height="${height}" fill="#226192" />
-  <rect width="${width}" height="${height}" fill="url(#empty-grid-dots)" />
-  <rect x="60" y="60" width="${width - 120}" height="${height - 120}" rx="20" fill="#226192" stroke="#eae6ed" stroke-opacity="0.3" stroke-width="2" stroke-dasharray="6,6" />
-  <circle cx="${width / 2}" cy="${height / 2 - 30}" r="32" fill="#eae6ed" fill-opacity="0.1" />
+  <rect width="${width}" height="${height}" fill="${canvasBg}" />
+  ${showGrid && gridType !== 'none' ? `<rect width="${width}" height="${height}" fill="url(#empty-grid-dots)" />` : ''}
+  <rect x="60" y="60" width="${width - 120}" height="${height - 120}" rx="20" fill="${canvasBg}" stroke="#226192" stroke-opacity="0.3" stroke-width="2" stroke-dasharray="6,6" />
+  <circle cx="${width / 2}" cy="${height / 2 - 30}" r="32" fill="#226192" fill-opacity="0.1" />
   <text x="${width / 2}" y="${height / 2 - 24}" fill="#ef8557" font-size="20" font-weight="700" text-anchor="middle">∅</text>
-  <text x="${width / 2}" y="${height / 2 + 25}" fill="#eae6ed" font-size="16" font-weight="700" text-anchor="middle">${escapeXml(projectName)}</text>
-  <text x="${width / 2}" y="${height / 2 + 50}" fill="#eae6ed" fill-opacity="0.7" font-size="12" text-anchor="middle">Empty Diagram — No components or connections added yet</text>
+  <text x="${width / 2}" y="${height / 2 + 25}" fill="#226192" font-size="16" font-weight="700" text-anchor="middle">${escapeXml(projectName)}</text>
+  <text x="${width / 2}" y="${height / 2 + 50}" fill="#226192" fill-opacity="0.7" font-size="12" text-anchor="middle">Empty Diagram — No components or connections added yet</text>
 </svg>`;
 
     return { svgString, width, height };
@@ -203,22 +216,24 @@ export function buildArchitectureSvg(
   // XML & Root SVG tag
   parts.push(`<?xml version="1.0" encoding="UTF-8"?>`);
   parts.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${boxX} ${boxY} ${width} ${height}" width="${width}" height="${height}" style="background-color: #eae6ed; font-family: Montserrat, system-ui, sans-serif;">`
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${boxX} ${boxY} ${width} ${height}" width="${width}" height="${height}" style="background-color: ${canvasBg}; font-family: Montserrat, system-ui, sans-serif;">`
   );
 
-  // Defs: Marker Arrow & Grid Pattern
+  // Defs: Markers & Grid Pattern
   parts.push(`  <defs>`);
   parts.push(`    <marker id="arch-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">`);
   parts.push(`      <path d="M 0 1 L 10 5 L 0 9 z" fill="#ef8557" />`);
   parts.push(`    </marker>`);
-  parts.push(`    <pattern id="arch-grid-dots" width="20" height="20" patternUnits="userSpaceOnUse">`);
+  parts.push(`    <pattern id="arch-grid-dots" width="${gridSpacing}" height="${gridSpacing}" patternUnits="userSpaceOnUse">`);
   parts.push(`      <circle cx="2" cy="2" r="1" fill="#226192" opacity="0.15" />`);
   parts.push(`    </pattern>`);
   parts.push(`  </defs>`);
 
   // Background rects
-  parts.push(`  <rect x="${boxX}" y="${boxY}" width="${width}" height="${height}" fill="#eae6ed" />`);
-  parts.push(`  <rect x="${boxX}" y="${boxY}" width="${width}" height="${height}" fill="url(#arch-grid-dots)" />`);
+  parts.push(`  <rect x="${boxX}" y="${boxY}" width="${width}" height="${height}" fill="${canvasBg}" />`);
+  if (showGrid && gridType !== 'none') {
+    parts.push(`  <rect x="${boxX}" y="${boxY}" width="${width}" height="${height}" fill="url(#arch-grid-dots)" />`);
+  }
 
   // 4. Render Edges (rendered beneath nodes)
   parts.push(`  <g id="architecture-edges">`);
@@ -227,13 +242,28 @@ export function buildArchitectureSvg(
     const target = nodeMap.get(edge.target);
     if (!source || !target) continue;
 
-    const { pathData, midX, midY } = routeEdge(source, target);
-    const isDashed = edge.type === 'dashed' || edge.animated;
-    const strokeDash = isDashed ? ` stroke-dasharray="6,4"` : '';
+    const connectorType = edge.style?.connectorType;
+    const { pathData, midX, midY } = routeEdge(source, target, connectorType);
+
+    const strokeColor = edge.style?.strokeColor || '#226192';
+    const strokeWidth = edge.style?.strokeWidth || 2;
+    const edgeOpacity = edge.style?.opacity ?? 0.85;
+
+    let strokeDash = '';
+    if (edge.style?.strokeStyle === 'dashed') {
+      strokeDash = ' stroke-dasharray="6,4"';
+    } else if (edge.style?.strokeStyle === 'dotted') {
+      strokeDash = ' stroke-dasharray="2,3"';
+    } else if (!edge.style?.strokeStyle && (edge.type === 'dashed' || edge.animated)) {
+      strokeDash = ' stroke-dasharray="6,4"';
+    }
+
+    const endArrow = edge.style?.arrowHeadEnd !== 'none' ? ' marker-end="url(#arch-arrow)"' : '';
+    const startArrow = edge.style?.arrowHeadStart && edge.style.arrowHeadStart !== 'none' ? ' marker-start="url(#arch-arrow)"' : '';
 
     parts.push(`    <g id="edge-${escapeXml(edge.id)}">`);
     parts.push(
-      `      <path d="${pathData}" fill="none" stroke="#226192" stroke-width="2"${strokeDash} marker-end="url(#arch-arrow)" opacity="0.85" />`
+      `      <path d="${pathData}" fill="none" stroke="${strokeColor}" stroke-width="${strokeWidth}"${strokeDash}${startArrow}${endArrow} opacity="${edgeOpacity}" />`
     );
 
     // Optional Edge Label
@@ -241,10 +271,10 @@ export function buildArchitectureSvg(
       const labelText = escapeXml(truncateText(edge.label.trim(), 28));
       const labelWidth = Math.max(labelText.length * 7 + 16, 40);
       parts.push(
-        `      <rect x="${Math.round(midX - labelWidth / 2)}" y="${Math.round(midY - 10)}" width="${labelWidth}" height="20" rx="4" fill="#eae6ed" stroke="#226192" stroke-opacity="0.3" stroke-width="1" />`
+        `      <rect x="${Math.round(midX - labelWidth / 2)}" y="${Math.round(midY - 10)}" width="${labelWidth}" height="20" rx="4" fill="${canvasBg}" stroke="${strokeColor}" stroke-opacity="0.3" stroke-width="1" />`
       );
       parts.push(
-        `      <text x="${Math.round(midX)}" y="${Math.round(midY + 4)}" fill="#226192" font-size="10" font-weight="500" text-anchor="middle">${labelText}</text>`
+        `      <text x="${Math.round(midX)}" y="${Math.round(midY + 4)}" fill="${strokeColor}" font-size="10" font-weight="500" text-anchor="middle">${labelText}</text>`
       );
     }
     parts.push(`    </g>`);
@@ -261,10 +291,16 @@ export function buildArchitectureSvg(
     const description = node.data?.description ? escapeXml(truncateText(node.data.description, 32)) : '';
     const technology = node.data?.technology ? escapeXml(truncateText(node.data.technology, 18)) : '';
 
-    parts.push(`    <g id="node-${escapeXml(node.id)}">`);
+    const fillColor = node.style?.fillColor || '#eae6ed';
+    const borderColor = node.style?.borderColor || '#226192';
+    const borderWidth = node.style?.borderWidth ?? 1.5;
+    const textColor = node.style?.textColor || '#226192';
+    const nodeOpacity = node.style?.opacity ?? 1;
+
+    parts.push(`    <g id="node-${escapeXml(node.id)}" opacity="${nodeOpacity}">`);
     // Node Card Rectangle
     parts.push(
-      `      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="#eae6ed" stroke="#226192" stroke-opacity="0.25" stroke-width="1.5" />`
+      `      <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="10" fill="${fillColor}" stroke="${borderColor}" stroke-opacity="0.85" stroke-width="${borderWidth}" />`
     );
 
     // Header Pill for Type
@@ -279,24 +315,24 @@ export function buildArchitectureSvg(
     // Category on the right side of header
     if (category) {
       parts.push(
-        `      <text x="${x + w - 12}" y="${y + 22}" fill="#226192" fill-opacity="0.6" font-size="9" font-weight="500" text-anchor="end">${category}</text>`
+        `      <text x="${x + w - 12}" y="${y + 22}" fill="${textColor}" fill-opacity="0.6" font-size="9" font-weight="500" text-anchor="end">${category}</text>`
       );
     }
 
     // Divider Line
     parts.push(
-      `      <line x1="${x}" y1="${y + 34}" x2="${x + w}" y2="${y + 34}" stroke="#226192" stroke-opacity="0.15" stroke-width="1" />`
+      `      <line x1="${x}" y1="${y + 34}" x2="${x + w}" y2="${y + 34}" stroke="${borderColor}" stroke-opacity="0.25" stroke-width="1" />`
     );
 
     // Node Title / Label
     parts.push(
-      `      <text x="${x + 12}" y="${y + 54}" fill="#226192" font-size="13" font-weight="600">${label}</text>`
+      `      <text x="${x + 12}" y="${y + 54}" fill="${textColor}" font-size="13" font-weight="600">${label}</text>`
     );
 
     // Optional Description
     if (description) {
       parts.push(
-        `      <text x="${x + 12}" y="${y + 72}" fill="#226192" fill-opacity="0.7" font-size="11">${description}</text>`
+        `      <text x="${x + 12}" y="${y + 72}" fill="${textColor}" fill-opacity="0.75" font-size="11">${description}</text>`
       );
     }
 
@@ -305,10 +341,10 @@ export function buildArchitectureSvg(
       const techY = description ? y + 82 : y + 66;
       const techWidth = Math.max(technology.length * 6 + 12, 40);
       parts.push(
-        `      <rect x="${x + 12}" y="${techY}" width="${techWidth}" height="18" rx="4" fill="#226192" fill-opacity="0.08" stroke="#226192" stroke-opacity="0.25" stroke-width="1" />`
+        `      <rect x="${x + 12}" y="${techY}" width="${techWidth}" height="18" rx="4" fill="${textColor}" fill-opacity="0.08" stroke="${borderColor}" stroke-opacity="0.3" stroke-width="1" />`
       );
       parts.push(
-        `      <text x="${x + 12 + techWidth / 2}" y="${techY + 12}" fill="#226192" font-size="9" font-weight="500" text-anchor="middle">${technology}</text>`
+        `      <text x="${x + 12 + techWidth / 2}" y="${techY + 12}" fill="${textColor}" font-size="9" font-weight="500" text-anchor="middle">${technology}</text>`
       );
     }
 

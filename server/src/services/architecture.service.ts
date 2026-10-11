@@ -36,6 +36,13 @@ export class ArchitectureService {
         nodes: [],
         edges: [],
         viewport: { x: 0, y: 0, zoom: 1 },
+        canvasSettings: {
+          backgroundColor: '#eae6ed',
+          gridType: 'dots',
+          gridSpacing: 20,
+          gridVisible: true,
+          snapToGrid: false,
+        },
         version: 1,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -116,6 +123,7 @@ export class ArchitectureService {
             nodes: preparedNodes,
             edges: preparedEdges,
             viewport: payload.viewport,
+            ...(payload.canvasSettings ? { canvasSettings: payload.canvasSettings } : {}),
           },
           $inc: { version: 1 },
         },
@@ -158,6 +166,7 @@ export class ArchitectureService {
           nodes: preparedNodes,
           edges: preparedEdges,
           viewport: payload.viewport,
+          ...(payload.canvasSettings ? { canvasSettings: payload.canvasSettings } : {}),
           version: 2, // Incremented after first save
         });
 

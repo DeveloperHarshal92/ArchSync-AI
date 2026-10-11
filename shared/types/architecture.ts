@@ -108,6 +108,14 @@ export interface ArchitectureNodePosition {
   y: number;
 }
 
+export interface ArchitectureNodeStyle {
+  fillColor?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  textColor?: string;
+  opacity?: number;
+}
+
 export interface ArchitectureNode {
   id: string;
   type: ArchitectureNodeType;
@@ -115,6 +123,7 @@ export interface ArchitectureNode {
   width?: number;
   height?: number;
   data: ArchitectureNodeData;
+  style?: ArchitectureNodeStyle;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -123,6 +132,20 @@ export interface ArchitectureNode {
 export type EdgeType = 'default' | 'animated' | 'dashed';
 export const ARCHITECTURE_EDGE_TYPES: EdgeType[] = ['default', 'animated', 'dashed'];
 
+export type EdgeStrokeStyle = 'solid' | 'dashed' | 'dotted';
+export type ConnectorType = 'straight' | 'smoothstep' | 'curved';
+export type ArrowheadType = 'none' | 'arrow' | 'arrowclosed';
+
+export interface ArchitectureEdgeStyle {
+  strokeColor?: string;
+  strokeWidth?: number;
+  opacity?: number;
+  strokeStyle?: EdgeStrokeStyle;
+  connectorType?: ConnectorType;
+  arrowHeadStart?: ArrowheadType;
+  arrowHeadEnd?: ArrowheadType;
+}
+
 export interface ArchitectureEdge {
   id: string;
   source: string;
@@ -130,6 +153,7 @@ export interface ArchitectureEdge {
   type?: EdgeType;
   label?: string;
   animated?: boolean;
+  style?: ArchitectureEdgeStyle;
   metadata?: Record<string, unknown>;
   createdBy: string;
   createdAt: string;
@@ -142,11 +166,22 @@ export interface ArchitectureViewport {
   zoom: number;
 }
 
+export type CanvasGridType = 'dots' | 'lines' | 'cross' | 'none';
+
+export interface CanvasAppearance {
+  backgroundColor?: string;
+  gridType?: CanvasGridType;
+  gridSpacing?: number;
+  gridVisible?: boolean;
+  snapToGrid?: boolean;
+}
+
 export interface Architecture {
   projectId: string;
   nodes: ArchitectureNode[];
   edges: ArchitectureEdge[];
   viewport: ArchitectureViewport;
+  canvasSettings?: CanvasAppearance;
   version: number;
   createdAt: string;
   updatedAt: string;
@@ -185,6 +220,7 @@ export interface UpdateArchitectureRequest {
     width?: number;
     height?: number;
     data: ArchitectureNodeData;
+    style?: ArchitectureNodeStyle;
     createdBy?: string;
     createdAt?: string;
     updatedAt?: string;
@@ -196,12 +232,14 @@ export interface UpdateArchitectureRequest {
     type?: EdgeType;
     label?: string;
     animated?: boolean;
+    style?: ArchitectureEdgeStyle;
     metadata?: Record<string, unknown>;
     createdBy?: string;
     createdAt?: string;
     updatedAt?: string;
   }>;
   viewport: ArchitectureViewport;
+  canvasSettings?: CanvasAppearance;
   version: number;
 }
 

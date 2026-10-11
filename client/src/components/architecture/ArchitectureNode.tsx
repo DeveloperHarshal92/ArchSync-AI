@@ -8,8 +8,24 @@ export const ArchitectureNodeComponent: React.FC<NodeProps<AppNode>> = memo(
     const visual = getNodeVisual(data.nodeType);
     const IconComponent = visual.icon;
 
+    const customStyle = data.style;
+    const hasCustomFill = Boolean(customStyle?.fillColor);
+    const hasCustomBorder = Boolean(customStyle?.borderColor);
+    const hasCustomBorderWidth = customStyle?.borderWidth !== undefined;
+    const hasCustomTextColor = Boolean(customStyle?.textColor);
+    const hasCustomOpacity = customStyle?.opacity !== undefined;
+
+    const dynamicContainerStyle: React.CSSProperties = {
+      ...(hasCustomFill ? { backgroundColor: customStyle!.fillColor } : {}),
+      ...(hasCustomBorder && !selected ? { borderColor: customStyle!.borderColor } : {}),
+      ...(hasCustomBorderWidth ? { borderWidth: `${customStyle!.borderWidth}px` } : {}),
+      ...(hasCustomOpacity ? { opacity: customStyle!.opacity } : {}),
+      ...(hasCustomTextColor ? { color: customStyle!.textColor } : {}),
+    };
+
     return (
       <div
+        style={dynamicContainerStyle}
         className={`group relative min-w-[210px] max-w-[260px] rounded-lg border transition-all duration-150 ${
           selected
             ? 'border-[#ef8557] bg-[#eae6ed] shadow-lg ring-2 ring-[#ef8557]'
@@ -58,7 +74,7 @@ export const ArchitectureNodeComponent: React.FC<NodeProps<AppNode>> = memo(
           </div>
 
           {data.category && (
-            <span className="text-[10px] font-mono text-[#226192]/60">
+            <span className="text-[10px] font-mono opacity-60">
               {data.category}
             </span>
           )}
@@ -67,11 +83,17 @@ export const ArchitectureNodeComponent: React.FC<NodeProps<AppNode>> = memo(
         {/* Node Body */}
         <div className="p-3.5 space-y-2">
           <div>
-            <h4 className="font-serif text-base font-medium text-[#226192] tracking-tight break-words line-clamp-2">
+            <h4
+              style={hasCustomTextColor ? { color: customStyle!.textColor } : {}}
+              className="font-serif text-base font-medium tracking-tight break-words line-clamp-2"
+            >
               {data.label || 'Untitled Component'}
             </h4>
             {data.description && (
-              <p className="mt-1 text-xs text-[#226192]/70 leading-snug line-clamp-2">
+              <p
+                style={hasCustomTextColor ? { color: customStyle!.textColor, opacity: 0.8 } : {}}
+                className="mt-1 text-xs opacity-70 leading-snug line-clamp-2"
+              >
                 {data.description}
               </p>
             )}
@@ -80,7 +102,7 @@ export const ArchitectureNodeComponent: React.FC<NodeProps<AppNode>> = memo(
           {/* Technology tag if specified */}
           {data.technology && (
             <div className="pt-1">
-              <span className="inline-flex items-center rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-0.5 text-[10px] font-mono font-medium text-[#226192]">
+              <span className="inline-flex items-center rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-0.5 text-[10px] font-mono font-medium opacity-90">
                 {data.technology}
               </span>
             </div>

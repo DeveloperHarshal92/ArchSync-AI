@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   FolderGit2,
-  Plus,
   Search,
   Calendar,
   Edit2,
   Trash2,
-  ArrowRight,
   AlertCircle,
   Loader2,
   Layers,
@@ -210,8 +208,7 @@ export const ProjectsPage: React.FC = () => {
           id="create-project-btn"
           className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#ef8557] hover:bg-[#ef8557]/90 active:bg-[#ef8557]/80 px-4 py-2.5 text-xs sm:text-sm font-semibold text-[#226192] shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#ef8557] shrink-0"
         >
-          <Plus className="h-4 w-4 text-[#226192]" aria-hidden="true" />
-          <span>New Project</span>
+          <span className='text-[#226192]'>New Project</span>
         </button>
       </div>
 
@@ -326,8 +323,7 @@ export const ProjectsPage: React.FC = () => {
               onClick={handleOpenCreateModal}
               className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[#ef8557] hover:bg-[#ef8557]/90 px-4 py-2 text-xs font-semibold text-[#226192] shadow-sm"
             >
-              <Plus className="h-4 w-4 text-[#226192]" />
-              <span>Create First Project</span>
+              <span className='text-[#226192]'>Create First Project</span>
             </button>
           )}
         </div>
@@ -415,7 +411,6 @@ export const ProjectsPage: React.FC = () => {
                     className="inline-flex items-center gap-1 text-xs font-semibold text-[#ef8557] hover:underline transition-colors"
                   >
                     <span>Open Studio</span>
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
                   </Link>
                 </div>
               </div>

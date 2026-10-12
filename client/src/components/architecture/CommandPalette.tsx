@@ -112,7 +112,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-[#226192]/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4 bg-black/60 dark:bg-[#090907]/80 backdrop-blur-md"
       onClick={onClose}
       role="presentation"
     >
@@ -120,13 +120,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         role="dialog"
         aria-modal="true"
         aria-labelledby="command-palette-title"
-        className="w-full max-w-xl rounded-xl border border-[#226192]/20 bg-[#eae6ed] shadow-2xl overflow-hidden flex flex-col text-[#226192]"
+        className="w-full max-w-xl rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl overflow-hidden flex flex-col text-[var(--color-text)]"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
         {/* Search Header */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-[#226192]/15 bg-[#eae6ed]">
-          <Search className="h-4 w-4 text-[#ef8557] shrink-0" aria-hidden="true" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+          <Search className="h-4 w-4 text-[var(--color-accent)] shrink-0" aria-hidden="true" />
           <h2 id="command-palette-title" className="sr-only">
             Command Palette
           </h2>
@@ -139,16 +139,16 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             placeholder="Search commands, tools, or components... (e.g. 'Align', 'Duplicate')"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="flex-1 bg-transparent text-sm text-[#226192] placeholder-[#226192]/40 focus:outline-none"
+            className="flex-1 bg-transparent text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:outline-none"
           />
-          <kbd className="hidden sm:inline-flex items-center gap-1 rounded bg-[#226192]/10 px-1.5 py-0.5 text-[10px] font-mono text-[#226192]/70 border border-[#226192]/15">
+          <kbd className="hidden sm:inline-flex items-center gap-1 rounded bg-[var(--color-surface-raised)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-accent)] border border-[var(--color-border)]">
             Esc
           </kbd>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close command palette"
-            className="rounded p-1 text-[#226192]/60 hover:text-[#226192] hover:bg-[#226192]/5 transition-colors"
+            className="rounded p-1 text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -159,10 +159,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           id="command-palette-results"
           ref={listRef}
           role="listbox"
-          className="max-h-96 overflow-y-auto p-2 divide-y divide-[#226192]/10"
+          className="max-h-96 overflow-y-auto p-2 divide-y divide-[var(--color-border)]"
         >
           {filteredActions.length === 0 ? (
-            <div className="py-8 text-center text-xs text-[#226192]/60">
+            <div className="py-8 text-center text-xs text-[var(--color-text-muted)]">
               No matching commands or actions found for &quot;{query}&quot;.
             </div>
           ) : (
@@ -172,7 +172,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
               return (
                 <div key={key} className="py-1.5 first:pt-0 last:pb-0">
-                  <div className="px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider text-[#226192]/60">
+                  <div className="px-2.5 py-1 text-[10px] font-mono font-semibold uppercase tracking-wider text-[var(--color-accent)]">
                     {categoryLabel}
                   </div>
                   <div className="space-y-0.5">
@@ -195,17 +195,17 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             }
                           }}
                           onMouseEnter={() => setSelectedIndex(globalIndex)}
-                          className={`w-full flex items-center justify-between gap-3 px-2.5 py-2 rounded-lg text-left text-xs transition-colors ${
+                          className={`w-full flex items-center justify-between gap-3 px-2.5 py-2 rounded-xl text-left text-xs transition-colors ${
                             isSelected
-                              ? 'bg-[#226192] text-[#eae6ed]'
-                              : 'text-[#226192] hover:bg-[#226192]/5'
+                              ? 'bg-[var(--color-accent)] text-white dark:text-[#090907]'
+                              : 'text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]'
                           } ${action.disabled ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
                           <div className="flex items-center gap-2.5 min-w-0">
                             {action.icon && (
                               <span
                                 className={`shrink-0 ${
-                                  isSelected ? 'text-[#ef8557]' : 'text-[#226192]/70'
+                                  isSelected ? 'text-white dark:text-[#090907]' : 'text-[var(--color-accent)]'
                                 }`}
                               >
                                 {action.icon}
@@ -216,7 +216,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                               {action.description && (
                                 <span
                                   className={`text-[10px] block truncate ${
-                                    isSelected ? 'text-[#eae6ed]/80' : 'text-[#226192]/60'
+                                    isSelected ? 'opacity-80' : 'text-[var(--color-text-muted)]'
                                   }`}
                                 >
                                   {action.description}
@@ -229,8 +229,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                             <kbd
                               className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-mono border ${
                                 isSelected
-                                  ? 'bg-[#eae6ed]/15 text-[#eae6ed] border-[#eae6ed]/20'
-                                  : 'bg-[#226192]/10 text-[#226192]/80 border-[#226192]/15'
+                                  ? 'bg-black/20 text-white dark:text-[#090907] border-black/30'
+                                  : 'bg-[var(--color-surface-raised)] text-[var(--color-accent)] border-[var(--color-border)]'
                               }`}
                             >
                               {action.shortcut}
@@ -247,7 +247,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-4 py-2 border-t border-[#226192]/15 bg-[#eae6ed] flex items-center justify-between text-[11px] font-mono text-[#226192]/60">
+        <div className="px-4 py-2.5 border-t border-[var(--color-border)] bg-[var(--color-surface-raised)] flex items-center justify-between text-[11px] font-mono text-[var(--color-text-muted)]">
           <div className="flex items-center gap-2">
             <span>↑↓ Navigate</span>
             <span>•</span>
@@ -255,9 +255,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <span>•</span>
             <span>Esc Dismiss</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Command className="h-3 w-3 text-[#ef8557]" />
-            <span>ArchSync Palette</span>
+          <div className="flex items-center gap-1 text-[var(--color-accent)]">
+            <Command className="h-3 w-3" />
+            <span>ArchSync Command</span>
           </div>
         </div>
       </div>

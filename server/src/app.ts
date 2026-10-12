@@ -4,6 +4,7 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import { apiV1Router } from './routes';
+import { requestLogger } from './middleware/requestLogger';
 import { notFoundHandler } from './middleware/notFoundHandler';
 import { errorHandler } from './middleware/errorHandler';
 
@@ -29,6 +30,9 @@ export function createApp(): Application {
 
   // Security headers via Helmet
   app.use(helmet());
+
+  // HTTP request logging via Morgan
+  app.use(requestLogger);
 
   // CORS configuration matching RULES.md Section 6 & 8 and F15 requirements
   const allowedOrigins = getAllowedOrigins();

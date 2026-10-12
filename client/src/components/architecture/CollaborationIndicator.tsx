@@ -12,10 +12,10 @@ import {
  * Avatar indicators use calibrated opacities of Warm Ivory and Coral Orange.
  */
 const AVATAR_COLORS = [
-  'bg-[#ef8557]/20 text-[#ef8557] border-[#ef8557]/40',
-  'bg-[#226192]/15 text-[#226192] border-[#226192]/30',
-  'bg-[#ef8557]/30 text-[#ef8557] border-[#ef8557]/50',
-  'bg-[#226192]/25 text-[#226192] border-[#226192]/40',
+  'bg-[#B99D73]/25 text-[#D6B887] border-[#B99D73]/50',
+  'bg-[#3B82F6]/25 text-blue-300 border-[#3B82F6]/50',
+  'bg-[#10B981]/25 text-emerald-300 border-[#10B981]/50',
+  'bg-amber-600/25 text-amber-300 border-amber-600/50',
 ];
 
 function getAvatarColor(userId: string): string {
@@ -35,32 +35,32 @@ export const CollaborationIndicator: React.FC = () => {
 
   const statusConfig = {
     connected: {
-      color: 'bg-[#226192]',
-      textColor: 'text-[#226192]',
+      color: 'bg-emerald-500',
+      textColor: 'text-emerald-400',
       label: 'Live',
       icon: Wifi,
     },
     connecting: {
-      color: 'bg-[#ef8557] animate-pulse',
-      textColor: 'text-[#ef8557]',
+      color: 'bg-[#B99D73] animate-pulse',
+      textColor: 'text-[#D6B887]',
       label: 'Connecting...',
       icon: RefreshCw,
     },
     reconnecting: {
-      color: 'bg-[#ef8557] animate-pulse',
-      textColor: 'text-[#ef8557]',
+      color: 'bg-[#B99D73] animate-pulse',
+      textColor: 'text-[#D6B887]',
       label: 'Reconnecting...',
       icon: RefreshCw,
     },
     disconnected: {
-      color: 'bg-[#226192]/40',
-      textColor: 'text-[#226192]/60',
+      color: 'bg-stone-500',
+      textColor: 'text-stone-400',
       label: 'Offline',
       icon: WifiOff,
     },
     error: {
-      color: 'bg-[#ef8557]',
-      textColor: 'text-[#ef8557]',
+      color: 'bg-red-500',
+      textColor: 'text-red-400',
       label: 'Connection Error',
       icon: AlertTriangle,
     },
@@ -72,7 +72,7 @@ export const CollaborationIndicator: React.FC = () => {
     <div className="flex items-center gap-3">
       {/* 1. Connection Status Badge */}
       <div
-        className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2.5 py-1 text-xs font-mono"
+        className="flex items-center gap-1.5 rounded-md border border-[#B99D73]/20 bg-[#11110F] px-2.5 py-1 text-xs font-mono"
         title={error ? `${error.code}: ${error.message}` : `Status: ${statusConfig.label}`}
       >
         <StatusIcon className={`h-3.5 w-3.5 ${statusConfig.textColor}`} />
@@ -81,7 +81,7 @@ export const CollaborationIndicator: React.FC = () => {
 
       {/* 2. Active Collaborators Avatars & Count */}
       {connectionState === 'connected' && collaborators.length > 0 && (
-        <div className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2.5 py-1 font-mono">
+        <div className="flex items-center gap-1.5 rounded-md border border-[#B99D73]/20 bg-[#11110F] px-2.5 py-1 font-mono">
           <div className="flex -space-x-1.5 overflow-hidden">
             {collaborators.slice(0, 4).map((c) => {
               const initials = c.name
@@ -106,8 +106,8 @@ export const CollaborationIndicator: React.FC = () => {
             })}
           </div>
 
-          <span className="text-xs text-[#226192]/70 flex items-center gap-1 pl-1">
-            <Users className="h-3 w-3 text-[#ef8557]" />
+          <span className="text-xs text-[#B9B1A5] flex items-center gap-1 pl-1">
+            <Users className="h-3 w-3 text-[#B99D73]" />
             <span>{collaborators.length}</span>
           </span>
         </div>

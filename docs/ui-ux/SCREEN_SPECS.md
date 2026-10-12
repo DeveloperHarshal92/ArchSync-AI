@@ -1,194 +1,434 @@
-# ArchSync AI — Screen Specifications & Visual Implementation Blueprints
+# ArchSync AI — Screen Specifications & Interaction Blueprints
 
 **Document:** `docs/ui-ux/SCREEN_SPECS.md`  
-**Phase:** Phase 1 — UI/UX Discovery & Design Architecture  
-**Role:** Principal Product Designer & Design Systems Engineer  
-**Scope:** Screen-by-screen architectural layouts, component wireframe structures, responsive behaviors, and tool recommendations  
+**Version:** 3.0.0  
+**Authority:** Follows `DESIGN.md` and `UI_UX_PRD.md`
 
----
+## 1. Implementation priorities
 
-## 1. Implementation Sequencing & Screen Priority
+Implement the redesign in the following order:
 
-To maximize development efficiency and minimize architectural risk, screen redesigns must follow an **inside-out** priority sequence:
+1. Shared design tokens, buttons, inputs, dialogs, and navigation.
+2. Architecture studio.
+3. Project catalog and dashboard.
+4. Authentication.
+5. Invitations, settings, and project details.
+6. Landing page and supporting public pages.
+7. Responsive polish, accessibility, and regression testing.
+
+Preserve existing functionality throughout. If dependencies require a different order, document the reason rather than skipping the shared foundations.
+
+## 2. Global application structure
+
+### Public application shell
+
+Use a dedicated public shell for the landing page and other public content.
+
+Header:
+- Brand mark and ArchSync AI name.
+- Product and Features links that navigate to valid destinations.
+- Documentation link when available.
+- Sign in link.
+- Primary Get Started action.
+
+Footer:
+- Product links.
+- Documentation and support links when implemented.
+- Company links only when valid.
+- Privacy and terms links only when available.
+
+Interaction:
+- Header navigation scrolls to the relevant section or navigates to a valid route.
+- Mobile navigation opens an accessible menu.
+- Menus close with Escape and after navigation.
+- Primary actions preserve the expected authentication and redirect behavior.
+
+### Authenticated application shell
+
+Use a separate shell for dashboard, projects, invitations, and settings.
+
+- Compact application navigation.
+- Current workspace or project context where supported.
+- Search only if it performs a real search.
+- Notifications and account controls only when implemented.
+- Clear active-route indication.
+- A consistent content container.
+- No marketing hero, marketing footer, or oversized promotional banner.
+
+### Studio shell
+
+The studio has its own viewport-filling layout. It must not inherit the standard document-page layout.
+
+## 3. Landing page (`/`)
+
+### Desktop composition
+
+Use an asymmetric editorial hero with two main regions:
+
+**Left region**
+- Small uppercase product descriptor.
+- Headline: “Design the systems behind what comes next.”
+- Brief explanation of collaborative software architecture design.
+- Primary CTA: “Start Building Free”.
+- Secondary CTA: “Watch Demo” only when a demo exists.
+- Compact capability indicators for architecture design, AI assistance, and collaboration.
+
+**Right region**
+- Large product-editor preview.
+- A readable diagram showing a client, API gateway or load balancer, services, and storage.
+- Optional contextual AI insight panel within the preview.
+- The preview must not overpower the main headline or obscure navigation.
+
+Use a real application screenshot where possible. Otherwise, build a faithful static mockup as an explicitly illustrative visual.
+
+### Below the hero
+
+Use a varied sequence of sections:
+
+1. Architecture modeling: component placement and connections.
+2. Product workflow: how a diagram moves from creation to validation.
+3. Editor showcase: a large, detailed product screenshot.
+4. Collaboration: presence, shared work, and permissions.
+5. AI analysis: recommendations and validation findings.
+6. Final CTA and footer.
+
+Avoid repeating the same three-card structure for every section. Use alternating text/image compositions, compact feature lists, and a larger editor showcase.
+
+### Interaction states
+
+- CTA buttons navigate to working destinations.
+- The demo opens a real video, dialog, or route if implemented.
+- Product previews do not pretend to be interactive when they are images.
+- Reduced-motion users receive a stable, readable page.
+- Mobile content stacks in logical reading order.
+
+## 4. Login (`/login`)
+
+### Layout
+
+Use a restrained split-screen layout at wide widths.
+
+- Brand and concise product context in one region.
+- A focused login form in the other.
+- Product imagery may show a cropped architecture diagram or editor preview.
+- Avoid full-screen building photographs.
+
+At narrow widths, use a single-column form and reduce or remove decorative imagery.
+
+### Form behavior
+
+Fields:
+- Email.
+- Password.
+- Remember-me option only if supported.
+- Forgot-password link only if a working recovery flow exists.
+
+Controls:
+- Sign in.
+- Password visibility toggle.
+- Link to registration.
+
+Behavior:
+- Validate required fields.
+- Show inline validation errors.
+- Disable duplicate submission while loading.
+- Display authentication failures without exposing sensitive server details.
+- Preserve the intended redirect destination.
+- Restore keyboard focus appropriately after errors or dialogs.
+
+## 5. Registration (`/register`)
+
+Use the same shell, typography, spacing, and form styling as login.
+
+Fields must match the existing registration contract. Do not add name, confirmation-password, or terms fields unless the application actually supports them.
+
+Behavior:
+- Validate required fields.
+- Enforce existing password requirements.
+- Show field-specific errors.
+- Prevent duplicate submissions.
+- Display success and failure states accurately.
+- Navigate to the intended post-registration destination.
+
+## 6. Dashboard (`/dashboard`)
+
+### Layout
+
+Header region:
+- Page title and short explanation.
+- New Project action.
+- Workspace controls only when supported.
+
+Primary content:
+- Useful project summaries or recent projects.
+- Pending invitations when available.
+- Recent activity only when real activity data exists.
+- Optional compact metrics derived from actual API data.
+
+Secondary content:
+- Templates or getting-started actions only if implemented.
+
+### Interaction
+
+- New Project opens a properly labelled dialog or existing creation flow.
+- Project cards navigate to the correct project.
+- Search and filters work against real data.
+- Loading uses a stable skeleton or progress state.
+- Empty state explains the next useful action.
+- Errors provide a retry path where appropriate.
+
+Do not show fabricated counts, invented collaborators, or fake recent activity.
+
+## 7. Project catalog (`/projects`)
+
+### Layout
+
+Include:
+- Page title.
+- New Project action.
+- Search and sorting controls where supported.
+- Project list or grid.
+- Useful metadata and diagram previews.
+- Contextual project actions.
+
+Project items should prioritize:
+1. Project name.
+2. Short description.
+3. Diagram preview.
+4. Last-modified information when available.
+5. Access or status metadata when available.
+
+Avoid using unrelated building photographs as thumbnails.
+
+### Interactions
+
+- Search filters the actual project collection.
+- Sorting produces the advertised order.
+- Clicking a project opens its intended route.
+- Context menus expose only permitted actions.
+- Deletion requires confirmation.
+- Successful mutations update the visible list.
+- Failed mutations retain relevant user context and show an error.
+
+## 8. Project details
+
+If a separate project overview route exists, use it to present:
+
+- Project title and description.
+- Diagram summary or preview.
+- Collaborators and access information when available.
+- Relevant project actions.
+- Entry to the architecture editor.
+
+Do not duplicate the entire editor inside the overview page.
+
+If the existing application uses `/projects/:projectId` directly as the editor, preserve that routing behavior.
+
+## 9. Architecture studio (`/projects/:projectId`)
+
+### Desktop layout
+
+Target a 48px top toolbar, a flexible canvas, a 240px component palette, and an approximately 340px inspector. Treat these as design targets, not fixed dimensions that must cause overflow on smaller screens.
 
 ```text
-Priority 1: Architecture Studio Workspace (The Core Product)
-   ↓
-Priority 2: Project Catalog & Dashboard (The Management Hub)
-   ↓
-Priority 3: Authentication (Login & Registration)
-   ↓
-Priority 4: Invitations & Team Access Management
+┌──────────────────────────────────────────────────────────────┐
+│ Studio toolbar: Project | Save state | Presence | Actions    │
+├──────────────┬──────────────────────────────┬────────────────┤
+│ Components   │                              │ Properties     │
+│ Search       │                              │ Analysis       │
+│ Categories   │       Graph canvas           │ Validation     │
+│              │                              │ AI Assistant   │
+│ Node types   │       Connections            │                │
+│              │                              │ Contextual data│
+└──────────────┴──────────────────────────────┴────────────────┘
 ```
 
-- **Why Studio First?** ArchSync AI's primary value proposition lives inside the interactive canvas. Establishing the unified studio top bar, collapsible categorized palette, and docked drawer eliminates 80% of user friction immediately.
-- **Why Auth Third?** Authentication logic is already fully functional with cookies and tests; upgrading auth to a split-screen layout is a self-contained visual enhancement.
+### Toolbar
 
----
+Include the controls already supported by the application:
 
-## 2. Screen 1: Architecture Studio Workspace (`/projects/:projectId`)
+- Back to projects.
+- Project name.
+- Save status.
+- Collaborator presence.
+- Undo/redo when implemented.
+- Validation.
+- AI assistant.
+- Share.
+- Export.
 
-### 2.1 Layout Architecture (Unified Studio Cockpit)
+Avoid putting every possible command into the toolbar. Use grouped menus for secondary actions.
 
-Replace the current three-tier stacked header with a single, dedicated **Studio Top Bar**, locked strictly to `100dvh` without page footers or body scrollbars.
+### Component palette
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ STUDIO TOP BAR (48px height)                                                                     │
-│ [◄ Projects] | [Project Name] (v2) | [Role: Editor] | [Autosaved ●] | [Avatars] | [Validate] [AI] [Export]│
-├─────────────────┬──────────────────────────────────────────────────────────────┬─────────────────┤
-│ COMPONENT       │ INTERACTIVE ARCHITECTURAL CANVAS                             │ CONTEXT DRAWER  │
-│ PALETTE         │                                                              │ (320px - 384px) │
-│ (240px wide)    │ - React Flow Infinite Canvas with subtle dot grid            │                 │
-│                 │ - Centered Node Topology with Directional Flow Edges         │ [Node Inspector]│
-│ [Search Nodes]  │ - Cardinal Port Handles (Top/Right/Bottom/Left)              │  or             │
-│                 │ - Remote Collaborator Multi-Cursors with Name Tags           │ [Validation]    │
-│ ▼ Compute (2)   │ - In-Canvas Floating Minimap & Zoom Controls (Bottom Right)   │  or             │
-│ ▼ Storage (2)   │ - In-Canvas Empty State Prompt (if 0 nodes)                  │ [AI Co-Pilot]   │
-│ ▼ Network (1)   │                                                              │                 │
-│ ▼ Cloud (2)     │                                                              │                 │
-├─────────────────┴──────────────────────────────────────────────────────────────┴─────────────────┤
-│ TELEMETRY STATUS BAR (24px height): Latency: 24ms | Nodes: 6 | Edges: 8 | Zoom: 100% | Socket: Active   │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+Group components by their actual semantic categories, such as:
 
-### 2.2 Detailed Section Specifications
+- Compute.
+- Networking.
+- Storage.
+- Messaging.
+- Integration.
+- Client.
 
-1. **Studio Top Bar (48px fixed height):**
-   - **Left Zone:** Back link (`ArrowLeft` + `Projects`), breadcrumb divider, editable project title (inline input for `OWNER`/`EDITOR`), current version badge (`v1`, `v2`).
-   - **Center Zone:** Live persistence indicator (green dot = "Saved", pulsing cyan = "Saving", red = "Conflict") + team member modal trigger with count pill.
-   - **Right Zone:** Active peer avatars stack, "Validate Architecture" button (with issue badge counter), "AI Co-Pilot" trigger, and "Export" dropdown menu.
-2. **Component Palette (240px fixed width, collapsible to 48px icon rail):**
-   - **Search Input:** Compact 32px search box with clear button (`Esc` to clear).
-   - **Category Accordions:** Foldable sections with badge counts:
-     - `Compute` (`Server`, `Microservice`)
-     - `Storage` (`Database`, `Cache`)
-     - `Networking` (`API Gateway`)
-     - `Messaging` (`Message Queue`)
-     - `Integration` (`External API`)
-     - `Client & Edge` (`Client`, `Web App`, `Mobile App`, `Cloud Service`)
-   - **Compact Node Tiles:** Crisp icon with category-tinted badge, bold title, and subtle drag grip handle.
-3. **Canvas Viewport (`100%` remaining width & height):**
-   - Pure `#0a0f1d` deep background with `#334155` subtle dot grid (`gap: 20px, size: 1.2px`).
-   - Floating zoom & fit-to-screen controls (`Controls`) positioned bottom-left.
-   - Floating interactive minimap (`MiniMap`) positioned bottom-right with node color indicators.
-4. **Docked Context Drawer (Right Side, 320px–384px):**
-   - Slides smoothly over canvas or docks cleanly.
-   - Houses `NodeDetailsPanel`, `ValidationPanel`, or `AIAssistantPanel`.
-   - Never stacks multiple panels side-by-side on screens below 1600px width.
+Use categories supported by the existing node model.
 
----
+Required interactions:
+- Search filters the component list.
+- Categories expand and collapse.
+- Selecting or dragging a component follows existing placement behavior.
+- Empty search results provide a clear message.
+- Keyboard users can reach and activate components.
 
-## 3. Screen 2: Project Catalog (`/projects`) & Dashboard (`/dashboard`)
+### Canvas
 
-### 3.1 Dashboard Page (`/dashboard`) Layout
+Provide:
+- Spatial reference grid.
+- Nodes with semantic icons and readable labels.
+- Connection handles and visible connection paths.
+- Selection indicators.
+- Pan and zoom.
+- Fit-to-view and minimap where supported.
+- Empty and loading states.
+- Clear visual feedback for invalid operations.
 
-Inspired by modern engineering telemetry platforms (Neowise reference screenshot):
+Use actual graph data. Do not create a second static diagram that appears editable while leaving the real graph unchanged.
 
-```
-┌──────────────────────────────────────────────────────────────────────────────────────────────────┐
-│ GLOBAL HEADER: ArchSync AI Logo | Projects | Invites (1) | User Avatar Menu                      │
-├──────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ MAIN CONTENT (max-w-6xl mx-auto, px-6 py-8)                                                      │
-│                                                                                                  │
-│ 1. Welcome Banner & Quick Action Bar:                                                            │
-│    "Welcome back, [Architect Name]" | Role: [Admin/User] | [+ Create New Architecture]          │
-│                                                                                                  │
-│ 2. Telemetry & Summary Bento Grid:                                                               │
-│    ┌───────────────────────────┬───────────────────────────┬───────────────────────────┐         │
-│    │ TOTAL ARCHITECTURES       │ ACTIVE COLLABORATORS      │ PENDING INVITATIONS       │         │
-│    │ 12 Active Projects        │ 8 Engineers across teams  │ 2 Access requests         │         │
-│    │ [Donut: 8 Owner, 4 Shared]│ [Recent collaborator list]│ [Review Invites Button]   │         │
-│    └───────────────────────────┴───────────────────────────┴───────────────────────────┘         │
-│                                                                                                  │
-│ 3. Recent Architectures Rail:                                                                    │
-│    - Card 1: E-Commerce Microservices (Edited 2h ago by Sarah • 14 nodes • Valid Graph)         │
-│    - Card 2: Payment Gateway Ingress (Edited yesterday by You • 8 nodes • 1 Warning)            │
-│    - Card 3: Realtime Event Pipeline (Edited 3d ago • 22 nodes • Valid Graph)                   │
-└──────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
+### Property inspector
 
-### 3.2 Projects Catalog Page (`/projects`) Layout
+Show the selected component's supported fields, such as:
+- Label.
+- Description.
+- Type.
+- Technology metadata.
+- Other existing properties.
 
-1. **Toolbar Header:**
-   - Page title: "Architecture Projects".
-   - Search bar (`w-72` with instant filter).
-   - View toggle: **Grid View** (visual cards) vs **Table View** (dense list with sortable columns: Name, Nodes, Role, Last Updated, Actions).
-   - Primary CTA: "+ New Project" button (`.btn-primary`).
-2. **Project Card Anatomy (Grid View):**
-   - **Header:** Category icon with cyan/blue accent, project title, role badge (`OWNER`/`EDITOR`/`VIEWER`), and kebab menu (Rename, Duplicate, Delete).
-   - **Body:** Description (2-line clamp) + architectural metadata chip row (e.g. `12 Components`, `v3`).
-   - **Footer:** Creation/update timestamp, collaborator avatar stack, and "Open Workspace →" action.
+Behavior:
+- Inputs reflect the selected node.
+- Changes update the actual application state.
+- Validation errors appear beside relevant fields.
+- Unsaved changes are handled according to existing save semantics.
+- The inspector adapts when no node is selected.
 
----
+### Validation panel
 
-## 4. Screen 3: Authentication (Login `/login` & Register `/register`)
+Display:
+- Overall result.
+- Issue severity.
+- A concise explanation.
+- Affected node or connection.
+- Navigation to the affected graph element when supported.
 
-Inspired by high-end SaaS split-screen layouts (ChatConnect Pro benchmark):
+Clicking a finding should preserve the current project and move focus to the relevant element. The panel must distinguish structural validation from AI recommendations.
 
-```
-┌──────────────────────────────────────────────────────┬───────────────────────────────────────────┐
-│ LEFT HERO ZONE (55% width, hidden on mobile)         │ RIGHT AUTH CARD (45% width, centered)     │
-│                                                      │                                           │
-│ [ArchSync AI Logo]                                   │ [Welcome Back / Create Account]           │
-│                                                      │ Enter your credentials to access studio.  │
-│ "Architect Distributed Systems                       │                                           │
-│  With Intelligent Precision."                        │ Email Address                             │
-│                                                      │ [ name@company.com ]                      │
-│ - Real-time multi-user canvas modeling               │                                           │
-│ - Deterministic architectural graph validation       │ Password                                  │
-│ - Advisory AI co-pilot for scalability & security    │ [ ••••••••••••                 (Eye) ]    │
-│                                                      │                                           │
-│ [Realistic Architecture Blueprint Diagram Graphic]   │ [ Sign In to Studio → ]  (.btn-primary)   │
-│                                                      │                                           │
-│ Trusted by engineering teams designing cloud systems │ Don't have an account? Register free      │
-└──────────────────────────────────────────────────────┴───────────────────────────────────────────┘
-```
+### AI assistant panel
 
-- **Clean Inputs:** Inset hardware-style inputs with clear focus ring (`--focus-ring-color`).
-- **Submission Feedback:** High-contrast solid cyan action button (`.btn-primary`) with inline spinner during network flight.
-- **Error Presentation:** High-contrast rose banner (`border-rose-500/30 bg-rose-500/10 text-rose-300`) with clear explanation.
+Provide:
+- A clear explanation of its scope.
+- Supported analysis actions.
+- A query field if conversational input is implemented.
+- Loading and failure states.
+- Findings with rationale and next steps.
+- Links to relevant nodes when supported.
 
----
+Any proposed modification to the graph must be explicitly reviewed and approved by the user before application.
 
-## 5. Screen 4: Project Invitations & Access Inbox (`/invitations`)
+### Save and conflict states
 
-1. **Information Architecture:**
-   - Unified inbox showing pending invitations from team owners.
-   - Clear project metadata: Project name, Owner name & email, Granted Role (`EDITOR` or `VIEWER`), and Timestamp.
-2. **Action Controls:**
-   - 2-button action cluster per row:
-     - **Accept:** `.btn-primary` (Cyan 600) with instant optimism and redirect option.
-     - **Decline:** Ghost button (`border-slate-800 text-slate-400 hover:text-rose-400`).
-3. **Empty State:**
-   - Composed "All Caught Up" state with clean envelope icon and direct link back to `/projects`.
+Display accurate states for:
+- Saving.
+- Saved.
+- Save failed.
+- Conflict.
+- Offline or unavailable service, where detectable.
 
----
+Do not optimistically claim permanent persistence before server confirmation.
 
-## 6. Recommended Google Stitch Design Sequence
+### Permission states
 
-When using Google Stitch MCP to generate design references and screen comps, execute in this order:
+For viewers or other restricted roles:
+- Preserve visibility of the diagram.
+- Disable editing controls that the role cannot use.
+- Explain the read-only state.
+- Keep permitted navigation and viewing functions available.
 
-1. **`stitch_screen_01_architecture_studio`**:
-   - Prompt: High-density dark engineering diagram studio, 48px unified top bar, left 240px categorized palette (Compute, Storage, Network), interactive dot-grid canvas with connected cloud nodes, right docked property inspector, midnight slate `#0a0f1d` with cyan `#06b6d4` accents.
-2. **`stitch_screen_02_projects_catalog`**:
-   - Prompt: Engineering project dashboard, dark theme `#0f172a`, search bar, grid/list view switcher, project cards with component count pills, member avatar stacks, role badges (Owner, Editor), clean cyan primary button.
-3. **`stitch_screen_03_auth_split_pane`**:
-   - Prompt: B2B developer tool login screen, split layout, left half dark architectural blueprint graphic with headline, right half sleek high-contrast authentication form with cyan action button.
-4. **`stitch_screen_04_ai_copilot_drawer`**:
-   - Prompt: Slide-out AI architectural advisory drawer, dark theme, query suggestions pills, structured findings cards with severity badges (High, Medium), related node buttons, markdown typography.
+The server remains the authority for permissions.
 
----
+## 10. Mobile studio
 
-## 7. Recommended 21st.dev Component References
+At widths below 768px:
 
-To maintain speed and avoid reinventing standard accessible patterns, reference these 21st.dev components:
+- Keep the canvas as the main workspace.
+- Collapse the palette and inspector into accessible drawers.
+- Use a compact toolbar with clearly grouped actions.
+- Ensure drawers close through Escape and an explicit close control.
+- Trap focus only while a modal dialog is active.
+- Return focus to the opening control after closing a drawer or dialog.
+- Prevent background content from scrolling when an appropriate modal drawer is open.
+- Preserve the user's canvas position when switching panels.
 
-| Component Need | 21st.dev Reference Archetype | Applicable Page / Area |
-| :--- | :--- | :--- |
-| **Categorized Palette Accordion** | Minimal Collapsible Sidebar / Bento Tree | Architecture Canvas Left Palette |
-| **Interactive Inspector Drawer** | Docked Sliding Panel with Tabbed Header | Architecture Canvas Right Panel |
-| **Split-Pane Auth Container** | Minimalist High-Contrast Auth Split Layout | `/login` and `/register` |
-| **Project Card Grid** | Machined Engineering Card with Micro-Badges | `/projects` Catalog Grid |
-| **Collaborator Avatar Stack** | Overlapping Facepile with Tooltip Status | Studio Top Bar & Project Cards |
-| **Telemetry Status Pill** | Tabular Monospace Latency & Health Indicator | Canvas Top Bar & Header |
+Do not force desktop columns into a narrow viewport.
+
+## 11. Invitations (`/invitations`)
+
+Provide:
+- Invitation list.
+- Sender or project context.
+- Role information.
+- Invitation status.
+- Accept, decline, resend, or revoke actions only where permitted and implemented.
+
+Every mutation must show pending, success, and failure feedback. Refresh or update the relevant data after successful actions.
+
+Empty states should explain that there are no pending invitations, rather than displaying a blank page.
+
+## 12. Settings and profile
+
+Use a consistent authenticated shell with clearly labelled sections.
+
+- Profile.
+- Preferences.
+- Team or workspace settings where implemented.
+- Integrations where implemented.
+- Security-related settings where implemented.
+
+Do not expose controls that have no working behavior. Preserve existing security-sensitive flows.
+
+## 13. Dialogs, menus, and notifications
+
+Dialogs:
+- Have a descriptive title.
+- Use the correct semantic role.
+- Support Escape where appropriate.
+- Restore focus on close.
+- Prevent accidental dismissal of critical confirmations.
+
+Menus:
+- Have visible active and focus states.
+- Close after selection where appropriate.
+- Support keyboard navigation.
+
+Notifications:
+- Communicate a specific event.
+- Avoid repetitive success toasts for minor actions.
+- Remain visible long enough to understand.
+- Use accessible announcements for important asynchronous results.
+
+## 14. Global responsive behavior
+
+- Desktop: full navigation and multi-panel layouts.
+- Tablet: compact navigation and reduced panel width.
+- Mobile: stacked public pages, focused forms, and drawer-based workspace panels.
+
+Do not hide primary actions without providing a clear alternative.
+
+## 15. Completion checklist
+
+- [ ] Every required route has a defined layout.
+- [ ] Navigation destinations are valid.
+- [ ] Product imagery represents software architecture.
+- [ ] Every visible control has an implemented action.
+- [ ] Loading, empty, success, and error states are defined.
+- [ ] Role restrictions are reflected in the UI.
+- [ ] Keyboard and mobile interactions are supported.
+- [ ] Existing API contracts and product behavior remain unchanged.
+- [ ] The final application has been inspected in a browser.

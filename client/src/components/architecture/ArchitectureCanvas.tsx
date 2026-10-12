@@ -82,6 +82,8 @@ import { useValidateArchitectureMutation } from '../../store/api/architectureApi
 import { ArchitectureValidationResult } from '@archsync/shared';
 import { CommandPalette, CommandPaletteAction } from './CommandPalette';
 import { PanelResizeHandle } from './PanelResizeHandle';
+import { useTheme } from '../../context/ThemeContext';
+import { ThemeToggle } from '../common/ThemeToggle';
 import {
   Sliders,
   ShieldCheck,
@@ -138,6 +140,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
   const detailsPanelOpen = useAppSelector(selectDetailsPanelOpen);
   const validationPanelOpen = useAppSelector(selectValidationPanelOpen);
   const aiPanelOpen = useAppSelector(selectAiPanelOpen);
+  const { resolvedTheme } = useTheme();
 
   const isAutosavePending = persistenceStatus === 'dirty' || persistenceStatus === 'saving';
 
@@ -204,7 +207,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
   const [canvasSettings, setCanvasSettings] = useState<CanvasAppearance>(
     initialArchitecture.canvasSettings || {
-      backgroundColor: '#eae6ed',
+      backgroundColor: '#090907',
       gridType: 'dots',
       gridSpacing: 20,
       gridVisible: true,
@@ -1375,13 +1378,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
   return (
     <div
-      className="relative flex flex-col h-full w-full overflow-hidden bg-[#eae6ed] select-none text-[#226192]"
+      className="relative flex flex-col h-full w-full overflow-hidden bg-[var(--color-bg)] select-none text-[var(--color-text)] transition-colors duration-200"
       role="region"
       aria-label="Architecture canvas workspace"
     >
       {/* 1. Unified Studio Top Bar (48px / h-12) */}
       <header
-        className="flex h-12 w-full shrink-0 items-center justify-between border-b border-[#226192]/15 bg-[#eae6ed]/95 px-3 backdrop-blur-md z-30 select-none text-[#226192]"
+        className="flex h-12 w-full shrink-0 items-center justify-between border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 px-3 backdrop-blur-md z-30 select-none text-[var(--color-text)] transition-colors"
         role="banner"
         aria-label="ArchSync AI studio header"
       >
@@ -1389,7 +1392,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <Link
             to="/projects"
-            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]"
+            className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)]"
             title="Back to All Projects"
             aria-label="Back to All Projects"
           >
@@ -1397,7 +1400,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             <span className="hidden sm:inline">Projects</span>
           </Link>
 
-          <div className="h-4 w-px bg-[#226192]/20 mx-0.5" aria-hidden="true" />
+          <div className="h-4 w-px bg-[var(--color-border)] mx-0.5" aria-hidden="true" />
 
           {/* Project Name & Inline Editing */}
           {isEditingTitle ? (
@@ -1414,14 +1417,14 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                   }
                 }}
                 onBlur={handleTitleSubmit}
-                className="rounded border border-[#ef8557] bg-[#eae6ed] px-2 py-0.5 text-xs font-semibold text-[#226192] focus:outline-none focus:ring-1 focus:ring-[#ef8557]"
+                className="rounded border border-[var(--color-accent)] bg-[var(--color-surface-raised)] px-2 py-0.5 text-xs font-semibold text-[var(--color-text)] focus:outline-none focus:ring-1 focus:ring-[var(--color-focus)]"
                 aria-label="Edit project name"
               />
             </form>
           ) : (
             <div className="flex items-center gap-1.5 truncate">
               <h1
-                className="font-serif text-sm sm:text-base font-semibold text-[#226192] tracking-tight truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]"
+                className="font-serif text-sm sm:text-base font-semibold text-[var(--color-text)] tracking-tight truncate max-w-[120px] sm:max-w-[200px] md:max-w-[300px]"
                 title={projectName || 'Untitled Architecture'}
               >
                 {projectName || 'Untitled Architecture'}
@@ -1430,7 +1433,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsEditingTitle(true)}
-                  className="rounded p-1 text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]"
+                  className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)]"
                   title="Rename project"
                   aria-label="Rename project"
                 >
@@ -1442,7 +1445,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
 
           {/* Version badge */}
           <span
-            className="hidden md:inline-flex items-center gap-1 rounded bg-[#eae6ed] border border-[#226192]/20 px-1.5 py-0.5 text-[10px] font-mono text-[#ef8557]"
+            className="hidden md:inline-flex items-center gap-1 rounded bg-[var(--color-surface-raised)] border border-[var(--color-border)] px-1.5 py-0.5 text-[10px] font-mono text-[var(--color-accent)] font-semibold"
             title={`Architecture Version ${currentVersion}`}
           >
             v{currentVersion}
@@ -1453,10 +1456,10 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             <span
               className={`hidden lg:inline-flex items-center gap-1 rounded border px-2 py-0.2 text-[10px] font-mono font-semibold uppercase ${
                 currentUserRole === 'OWNER'
-                  ? 'border-[#ef8557]/40 bg-[#ef8557]/15 text-[#ef8557]'
+                  ? 'border-[var(--color-accent)]/50 bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
                   : currentUserRole === 'EDITOR'
-                  ? 'border-[#226192]/40 bg-[#226192]/10 text-[#226192]'
-                  : 'border-[#226192]/20 bg-[#eae6ed] text-[#226192]/70'
+                  ? 'border-status-success/40 bg-status-success/10 text-status-success'
+                  : 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)]'
               }`}
             >
               <ShieldCheck className="h-2.5 w-2.5" />
@@ -1474,13 +1477,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
               type="button"
               onClick={onOpenMembersModal}
               aria-label={`Project members: ${membersCount ?? 0} collaborators`}
-              className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2.5 py-1 text-xs text-[#226192] hover:border-[#226192]/40 hover:bg-[#226192]/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]"
+              className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs text-[var(--color-text)] hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-raised)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)] shadow-sm"
               title="Manage project members and access"
             >
-              <Users className="h-3.5 w-3.5 text-[#ef8557]" aria-hidden="true" />
+              <Users className="h-3.5 w-3.5 text-[var(--color-accent)]" aria-hidden="true" />
               <span className="font-medium">Team</span>
               {membersCount !== undefined && (
-                <span className="rounded bg-[#226192]/10 border border-[#226192]/20 px-1.5 py-0.2 text-[10px] font-mono font-semibold text-[#226192]">
+                <span className="rounded bg-[var(--color-surface-raised)] border border-[var(--color-border)] px-1.5 py-0.2 text-[10px] font-mono font-semibold text-[var(--color-accent)]">
                   {membersCount}
                 </span>
               )}
@@ -1488,7 +1491,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           )}
         </div>
 
-        {/* Right Zone: Collaboration Indicator, Validate, AI Assistant, Export Menu, Properties toggle, Mobile toggle */}
+        {/* Right Zone: Collaboration Indicator, Validate, AI Assistant, Export Menu, Theme Toggle, Command Palette, Properties, Mobile */}
         <div
           className="flex items-center gap-1.5 sm:gap-2"
           role="toolbar"
@@ -1496,7 +1499,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         >
           <CollaborationIndicator />
 
-          <div className="hidden sm:block h-4 w-px bg-[#226192]/20" aria-hidden="true" />
+          <div className="hidden sm:block h-4 w-px bg-[var(--color-border)]" aria-hidden="true" />
 
           {/* Validate Button */}
           <button
@@ -1505,21 +1508,21 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             data-testid="canvas-validate-btn"
             aria-label={`Validate architecture${validationResult && validationResult.issues.length > 0 ? ` — ${validationResult.issues.length} issue${validationResult.issues.length > 1 ? 's' : ''} found` : ''}`}
             aria-busy={isValidating}
-            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557] ${
+            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)] ${
               validationPanelOpen
-                ? 'border-[#ef8557] bg-[#226192] text-[#eae6ed]'
-                : 'border-[#226192]/20 bg-[#eae6ed] text-[#226192] hover:bg-[#226192]/5'
+                ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/20 text-[var(--color-accent)] font-semibold'
+                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] hover:border-[var(--color-accent)]'
             }`}
           >
             <ShieldCheck
               className={`h-3.5 w-3.5 ${
                 isValidating
-                  ? 'animate-spin text-[#ef8557]'
+                  ? 'animate-spin text-[var(--color-accent)]'
                   : validationResult && !validationResult.valid
-                  ? 'text-[#ef8557]'
+                  ? 'text-status-danger'
                   : validationResult && validationResult.issues.length > 0
-                  ? 'text-[#ef8557]'
-                  : 'text-[#226192]'
+                  ? 'text-status-warning'
+                  : 'text-status-success'
               }`}
               aria-hidden="true"
             />
@@ -1527,7 +1530,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             {validationResult && validationResult.issues.length > 0 && (
               <span
                 aria-hidden="true"
-                className="rounded px-1.5 py-0.2 text-[10px] font-mono font-bold bg-[#ef8557]/20 text-[#ef8557]"
+                className="rounded px-1.5 py-0.2 text-[10px] font-mono font-bold bg-[var(--color-accent)]/20 text-[var(--color-accent)]"
               >
                 {validationResult.issues.length}
               </span>
@@ -1550,13 +1553,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             aria-label={aiPanelOpen ? 'Close AI Architecture Assistant panel' : 'Open AI Architecture Assistant panel'}
             aria-expanded={aiPanelOpen}
             aria-controls="canvas-ai-panel"
-            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557] ${
+            className={`flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)] ${
               aiPanelOpen
-                ? 'border-[#ef8557] bg-[#ef8557]/15 text-[#226192]'
-                : 'border-[#226192]/20 bg-[#eae6ed] text-[#226192] hover:bg-[#226192]/5'
+                ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/20 text-[var(--color-accent)] font-semibold'
+                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] hover:border-[var(--color-accent)]'
             }`}
           >
-            <Sparkles className="h-3.5 w-3.5 text-[#ef8557]" aria-hidden="true" />
+            <Sparkles className="h-3.5 w-3.5 text-[var(--color-accent)]" aria-hidden="true" />
             <span className="hidden md:inline">AI Co-Pilot</span>
           </button>
 
@@ -1568,17 +1571,20 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             isAutosavePending={isAutosavePending}
           />
 
+          {/* Theme Toggle (Light / Dark / System) */}
+          <ThemeToggle variant="compact" />
+
           {/* Command Palette Button */}
           <button
             type="button"
             onClick={() => setCommandPaletteOpen(true)}
             data-testid="canvas-command-palette-btn"
             aria-label="Open command palette (Ctrl+K)"
-            className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2.5 py-1 text-xs font-medium text-[#226192] hover:bg-[#226192]/5 transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]"
+            className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2.5 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] hover:border-[var(--color-accent)] transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)] shadow-sm"
           >
-            <Command className="h-3.5 w-3.5 text-[#ef8557]" aria-hidden="true" />
+            <Command className="h-3.5 w-3.5 text-[var(--color-accent)]" aria-hidden="true" />
             <span className="hidden sm:inline">Commands</span>
-            <kbd className="hidden lg:inline text-[10px] bg-[#226192]/10 px-1 py-0.5 rounded border border-[#226192]/15 font-mono text-[#226192]/70">
+            <kbd className="hidden lg:inline text-[10px] bg-[var(--color-surface-raised)] px-1 py-0.5 rounded border border-[var(--color-border)] font-mono text-[var(--color-text-muted)]">
               Ctrl+K
             </kbd>
           </button>
@@ -1598,13 +1604,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             aria-label={detailsPanelOpen ? 'Close properties panel' : 'Open node properties panel'}
             aria-expanded={detailsPanelOpen}
             aria-controls="canvas-details-panel"
-            className={`hidden md:flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557] ${
+            className={`hidden md:flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)] shadow-sm ${
               detailsPanelOpen
-                ? 'border-[#ef8557] bg-[#226192] text-[#eae6ed]'
-                : 'border-[#226192]/20 bg-[#eae6ed] text-[#226192] hover:bg-[#226192]/5'
+                ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/20 text-[var(--color-accent)] font-semibold'
+                : 'border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] hover:border-[var(--color-accent)]'
             }`}
           >
-            <Sliders className="h-3.5 w-3.5 text-[#ef8557]" aria-hidden="true" />
+            <Sliders className="h-3.5 w-3.5 text-[var(--color-accent)]" aria-hidden="true" />
             <span className="hidden lg:inline">Properties</span>
           </button>
 
@@ -1612,7 +1618,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           <button
             type="button"
             onClick={() => setMobilePanelOpen((prev) => !prev)}
-            className="flex items-center gap-1.5 rounded-md border border-[#226192]/20 bg-[#eae6ed] px-2 py-1 text-xs font-medium text-[#226192] hover:bg-[#226192]/5 md:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]"
+            className="flex items-center gap-1.5 rounded-md border border-[var(--color-border)] bg-[var(--color-surface)] px-2 py-1 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-raised)] md:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)]"
             aria-label={mobilePanelOpen ? 'Close side panel' : 'Open side panel'}
             aria-expanded={mobilePanelOpen}
             aria-controls={mobilePanelId}
@@ -1656,7 +1662,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         <div
           ref={canvasContainerRef}
           onMouseMove={handleCanvasMouseMove}
-          className="relative flex-1 h-full w-full bg-[#eae6ed] min-w-0"
+          className="relative flex-1 h-full w-full bg-[var(--color-canvas-bg)] min-w-0"
         >
           {/* Ephemeral Collaborator Remote Cursors Overlay */}
           <RemoteCursorsOverlay />
@@ -1688,7 +1694,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             maxZoom={4}
             proOptions={{ hideAttribution: true }}
             className="archsync-canvas"
-            style={{ backgroundColor: canvasSettings.backgroundColor || '#eae6ed' }}
+            style={{ backgroundColor: canvasSettings.backgroundColor || 'var(--color-canvas-bg)' }}
           >
             {/* Visual alignment guides overlay */}
             <AlignmentGuidesOverlay guides={guides} />
@@ -1704,13 +1710,13 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
                 }
                 gap={canvasSettings.gridSpacing || 20}
                 size={canvasSettings.gridType === 'lines' ? 1 : 1.2}
-                color="rgba(34, 97, 146, 0.15)"
+                color={resolvedTheme === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(185, 157, 115, 0.15)'}
               />
             )}
 
             <Controls
               showInteractive={isEditable}
-              className="!rounded-lg !border !border-[#226192]/20 !bg-[#eae6ed]/95 !fill-[#226192] text-[#226192] shadow-sm"
+              className="!rounded-lg !border !border-[var(--color-border)] !bg-[var(--color-surface)]/95 !fill-[var(--color-accent)] text-[var(--color-text)] shadow-sm"
             />
 
             <MiniMap
@@ -1718,10 +1724,10 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
               pannable
               nodeColor={(n) => {
                 const type = (n.data as unknown as CustomNodeData)?.nodeType;
-                return type ? getNodeVisual(type).accentColor : '#226192';
+                return type ? getNodeVisual(type).accentColor : 'var(--color-accent)';
               }}
-              maskColor="rgba(34, 97, 146, 0.15)"
-              className="!rounded-lg !border !border-[#226192]/20 !bg-[#eae6ed]/95 shadow-sm"
+              maskColor={resolvedTheme === 'light' ? 'rgba(0, 0, 0, 0.05)' : 'rgba(185, 157, 115, 0.12)'}
+              className="!rounded-lg !border !border-[var(--color-border)] !bg-[var(--color-surface)]/95 shadow-sm"
             />
           </ReactFlow>
         </div>
@@ -1744,7 +1750,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           <aside
             id="canvas-ai-panel"
             style={{ width: `${panelWidths.right}px` }}
-            className="hidden md:block shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
+            className="hidden md:block shrink-0 h-full border-l border-[var(--color-border)] bg-[var(--color-surface)] z-20 transition-colors"
             aria-label="AI Architecture Assistant panel"
           >
             <AIAssistantPanel
@@ -1757,7 +1763,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
         ) : validationPanelOpen ? (
           <aside
             style={{ width: `${panelWidths.right}px` }}
-            className="hidden md:block shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
+            className="hidden md:block shrink-0 h-full border-l border-[var(--color-border)] bg-[var(--color-surface)] z-20 transition-colors"
             aria-label="Architecture validation results panel"
           >
             <ValidationPanel
@@ -1773,7 +1779,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
           <aside
             id="canvas-details-panel"
             style={{ width: `${panelWidths.right}px` }}
-            className="hidden md:block shrink-0 h-full border-l border-[#226192]/15 bg-[#eae6ed] z-20"
+            className="hidden md:block shrink-0 h-full border-l border-[var(--color-border)] bg-[var(--color-surface)] z-20 transition-colors"
             aria-label="Node and edge properties panel"
           >
             <NodeDetailsPanel
@@ -1807,7 +1813,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
             />
             <div
               id={mobilePanelId}
-              className="absolute inset-y-0 right-0 z-50 w-80 max-w-[90vw] h-full border-l border-[#226192]/15 bg-[#eae6ed] md:hidden"
+              className="absolute inset-y-0 right-0 z-50 w-80 max-w-[90vw] h-full border-l border-[var(--color-border)] bg-[var(--color-surface)] md:hidden transition-colors"
               role="dialog"
               aria-modal="true"
               aria-label="Canvas side panel"
@@ -1815,7 +1821,7 @@ const InnerArchitectureCanvas: React.FC<ArchitectureCanvasProps> = ({
               <button
                 type="button"
                 onClick={() => setMobilePanelOpen(false)}
-                className="absolute top-3 right-3 z-10 rounded-md p-1.5 text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192]"
+                className="absolute top-3 right-3 z-10 rounded-md p-1.5 text-[#B9B1A5] hover:bg-[#141310] hover:text-[#F2EEE7]"
                 aria-label="Close side panel"
               >
                 <X className="h-4 w-4" aria-hidden="true" />

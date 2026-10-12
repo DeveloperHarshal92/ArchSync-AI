@@ -101,74 +101,65 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
     }
   };
 
-  const filteredCatalog = useMemo(() => {
-    const q = searchQuery.toLowerCase().trim();
-    if (!q) return NODE_CATALOG;
-
-    return Object.entries(NODE_CATALOG).reduce(
-      (acc, [type, meta]) => {
-        const matchesLabel = meta.label.toLowerCase().includes(q);
-        const matchesDesc = meta.description.toLowerCase().includes(q);
-        const matchesType = type.toLowerCase().includes(q);
-        const matchesCategory = (meta.category || '').toLowerCase().includes(q);
-
-        if (matchesLabel || matchesDesc || matchesType || matchesCategory) {
-          acc[type as ArchitectureNodeType] = meta;
-        }
-        return acc;
-      },
-      {} as typeof NODE_CATALOG
-    );
-  }, [searchQuery]);
-
+  // Group catalog items by defined categories
   const categorizedItems = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
     return PALETTE_CATEGORIES.map((cat) => {
       const items = cat.types
-        .filter((type) => Boolean(filteredCatalog[type]))
         .map((type) => ({
-          ...filteredCatalog[type],
-        }));
+          type,
+          label: NODE_CATALOG[type]?.label || type,
+          description: NODE_CATALOG[type]?.description || '',
+        }))
+        .filter((item) => {
+          if (!query) return true;
+          return (
+            item.label.toLowerCase().includes(query) ||
+            item.description.toLowerCase().includes(query) ||
+            item.type.toLowerCase().includes(query)
+          );
+        });
 
       return {
         ...cat,
         items,
       };
     });
-  }, [filteredCatalog]);
+  }, [searchQuery]);
 
-  const totalMatchingItems = useMemo(() => {
-    return Object.keys(filteredCatalog).length;
-  }, [filteredCatalog]);
+  const totalMatchingItems = categorizedItems.reduce((acc, cat) => acc + cat.items.length, 0);
 
   return (
     <aside
-      className={`flex h-full w-full flex-col border-r border-[#226192]/15 bg-[#eae6ed] text-[#226192] select-none backdrop-blur-md ${className}`}
-      aria-label="Component palette"
+      className={`flex h-full w-full flex-col border-r border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)] transition-colors select-none ${className}`}
+      aria-label="Component library"
+      id="component-palette"
     >
-      {/* 1. Header & Search Bar */}
-      <div className="border-b border-[#226192]/15 p-3 shrink-0">
+      {/* 1. Header with Catalog Title & Search */}
+      <div className="border-b border-[var(--color-border)] p-3 bg-[var(--color-surface)] shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-[#226192] font-mono text-[11px] font-semibold uppercase tracking-wider">
-            <Layers className="h-3.5 w-3.5 text-[#ef8557]" aria-hidden="true" />
-            <span>Node Catalog</span>
+          <div className="flex items-center gap-1.5 text-[var(--color-accent)] font-mono text-[11px] font-semibold uppercase tracking-wider">
+            <Layers className="h-3.5 w-3.5 text-[var(--color-accent)]" aria-hidden="true" />
+            <span>Component Library</span>
           </div>
-          <span className="rounded bg-[#226192]/5 border border-[#226192]/15 px-2 py-0.5 text-[10px] font-mono text-[#226192]/70">
+          <span className="rounded bg-[var(--color-surface-raised)] border border-[var(--color-border)] px-2 py-0.5 text-[10px] font-mono text-[var(--color-text-muted)]">
             {totalMatchingItems} items
           </span>
         </div>
 
         {/* Read-Only Notice for Viewers */}
         {!isEditable && (
-          <div className="mt-2 flex items-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 p-2 text-[11px] text-[#ef8557]">
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-status-warning/40 bg-status-warning/10 p-2 text-[11px] text-status-warning font-medium">
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-            <span>Viewer mode: Node placement disabled.</span>
+            <span>Viewer mode: Read-only canvas.</span>
           </div>
         )}
 
         {/* Search Input */}
         <div className="relative mt-2.5">
           <div
-            className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[#226192]/60"
+            className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2.5 text-[var(--color-text-muted)]"
             aria-hidden="true"
           >
             <Search className="h-3.5 w-3.5" />
@@ -179,17 +170,17 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
           <input
             id="palette-search"
             type="search"
-            placeholder="Search nodes (e.g. redis, api)..."
+            placeholder="Search components..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             aria-label="Search components"
-            className="w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] py-1.5 pl-8 pr-7 text-xs text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] transition-colors"
+            className="w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] py-1.5 pl-8 pr-7 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:outline-none transition-colors shadow-sm"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
               aria-label="Clear search query"
-              className="absolute inset-y-0 right-0 flex items-center pr-2 text-[#226192]/60 hover:text-[#226192]"
+              className="absolute inset-y-0 right-0 flex items-center pr-2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
             >
               <X className="h-3.5 w-3.5" />
             </button>
@@ -199,16 +190,16 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
 
       {/* 2. Categorized Accordion List */}
       <div
-        className="flex-1 overflow-y-auto p-2 space-y-2.5"
+        className="flex-1 overflow-y-auto p-2 space-y-2"
         role="region"
         aria-label="Categorized component catalog"
       >
         {totalMatchingItems === 0 ? (
-          <div className="py-8 px-4 text-center text-xs text-[#226192]/70" role="status">
+          <div className="py-8 px-4 text-center text-xs text-[var(--color-text-muted)]" role="status">
             No components matching &quot;{searchQuery}&quot;
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-2 block mx-auto text-[11px] text-[#ef8557] hover:underline font-mono"
+              className="mt-2 block mx-auto text-[11px] text-[var(--color-accent)] hover:underline font-mono"
             >
               Clear filter
             </button>
@@ -221,7 +212,7 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
             return (
               <div
                 key={category.id}
-                className="rounded-md border border-[#226192]/15 bg-[#226192]/[0.03] overflow-hidden transition-colors"
+                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] overflow-hidden transition-colors"
               >
                 {/* Accordion Category Header */}
                 <button
@@ -229,18 +220,18 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
                   onClick={() => toggleCategory(category.id)}
                   aria-expanded={isExpanded}
                   aria-controls={`category-panel-${category.id}`}
-                  className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-xs font-medium text-[#226192] hover:bg-[#226192]/5 transition-colors"
+                  className="flex w-full items-center justify-between px-2.5 py-1.5 text-left text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
                 >
-                  <span className="flex items-center gap-1.5 font-mono text-xs">
+                  <span className="flex items-center gap-1.5 font-mono text-xs text-[var(--color-text)] font-semibold">
                     <ChevronDown
-                      className={`h-3.5 w-3.5 text-[#226192]/70 transition-transform duration-200 ${
+                      className={`h-3.5 w-3.5 text-[var(--color-accent)] transition-transform duration-200 ${
                         isExpanded ? 'rotate-0' : '-rotate-90'
                       }`}
                       aria-hidden="true"
                     />
                     <span>{category.name}</span>
                   </span>
-                  <span className="rounded bg-[#226192]/10 border border-[#226192]/15 px-1.5 py-0.2 text-[10px] font-mono text-[#226192]/70">
+                  <span className="rounded bg-[var(--color-surface)] border border-[var(--color-border)] px-1.5 py-0.2 text-[10px] font-mono text-[var(--color-text-muted)]">
                     {category.items.length}
                   </span>
                 </button>
@@ -272,21 +263,21 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
                               ? `Drag onto canvas or press Enter/Space to place ${item.label}`
                               : `${item.label} (Viewer: read-only)`
                           }
-                          className={`group flex items-center justify-between gap-2 rounded border px-2 py-1.5 text-xs transition-all select-none ${
+                          className={`group flex items-center justify-between gap-2 rounded-lg border px-2.5 py-2 text-xs transition-all select-none shadow-sm ${
                             isEditable
-                              ? 'cursor-grab border-[#226192]/20 bg-[#eae6ed] hover:border-[#226192]/40 hover:bg-[#226192]/[0.04] active:cursor-grabbing focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#ef8557]'
-                              : 'cursor-not-allowed opacity-60 border-[#226192]/10 bg-[#eae6ed]'
+                              ? 'cursor-grab border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-accent)] hover:shadow active:cursor-grabbing focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[var(--color-focus)]'
+                              : 'cursor-not-allowed opacity-50 border-[var(--color-border)] bg-[var(--color-surface-raised)]'
                           }`}
                         >
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2.5 min-w-0">
                             <div
-                              className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border ${visual.badgeBg} ${visual.badgeBorder} ${visual.badgeText}`}
+                              className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-accent)] group-hover:border-[var(--color-accent)] transition-colors"
                               aria-hidden="true"
                             >
                               <Icon className="h-3.5 w-3.5" />
                             </div>
                             <div className="truncate">
-                              <span className="font-medium text-[#226192] group-hover:text-[#ef8557] transition-colors truncate block text-[11px]">
+                              <span className="font-medium text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors truncate block text-[11px]">
                                 {item.label}
                               </span>
                             </div>
@@ -294,7 +285,7 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
 
                           {isEditable && (
                             <div
-                              className="text-[#226192]/40 group-hover:text-[#226192]/80 transition-colors shrink-0"
+                              className="text-[var(--color-text-muted)]/40 group-hover:text-[var(--color-accent)] transition-colors shrink-0"
                               aria-hidden="true"
                             >
                               <GripVertical className="h-3 w-3" />
@@ -312,7 +303,7 @@ export const ComponentPalette: React.FC<ComponentPaletteProps> = ({
       </div>
 
       {/* 3. Footer Keyboard Hint */}
-      <div className="border-t border-[#226192]/15 px-3 py-2 text-[10px] font-mono text-[#226192]/60 bg-[#eae6ed] shrink-0">
+      <div className="border-t border-[var(--color-border)] px-3 py-2 text-[10px] font-mono text-[var(--color-text-muted)] bg-[var(--color-surface)] shrink-0">
         <span className="block truncate">
           {isEditable
             ? 'Tip: Drag or press Enter to add node.'

@@ -11,8 +11,29 @@
       rel="stylesheet"
     />
     <title>ArchSync AI — Real-Time Collaborative Architecture Workspace</title>
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('archsync-theme');
+          var theme = stored || 'dark';
+          var resolved = theme;
+          if (theme === 'system') {
+            resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          if (resolved === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+          }
+          document.documentElement.setAttribute('data-theme', resolved);
+          document.documentElement.style.colorScheme = resolved;
+        } catch (e) {}
+      })();
+    </script>
   </head>
-  <body class="bg-[#eae6ed] text-[#226192] antialiased selection:bg-[#ef8557]/30 selection:text-[#226192] font-sans">
+  <body class="bg-[var(--color-bg)] text-[var(--color-text)] antialiased font-sans transition-colors duration-200">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

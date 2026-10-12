@@ -117,15 +117,15 @@ export const PanelResizeHandle: React.FC<PanelResizeHandleProps> = ({
       onPointerDown={handlePointerDown}
       onKeyDown={handleKeyDown}
       className={`group relative z-30 flex w-2 shrink-0 cursor-col-resize items-center justify-center transition-colors focus:outline-none ${
-        isDragging ? 'bg-[#ef8557]' : 'hover:bg-[#ef8557]/40'
+        isDragging ? 'bg-[#B99D73]' : 'hover:bg-[#B99D73]/30'
       }`}
     >
       {/* Central visual indicator bar */}
       <div
         className={`h-8 w-1 rounded-full transition-colors ${
           isDragging
-            ? 'bg-[#eae6ed]'
-            : 'bg-[#226192]/20 group-hover:bg-[#ef8557] group-focus-visible:bg-[#ef8557]'
+            ? 'bg-[#F2EEE7]'
+            : 'bg-[rgba(185,157,115,0.3)] group-hover:bg-[#B99D73] group-focus-visible:bg-[#D6B887]'
         }`}
       />
     </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '../../context/ThemeContext';
 import { CustomNodeData, AppNode, AppEdge } from '../../lib/architecture/adapters';
 import { getNodeVisual } from '../../lib/architecture/nodeIcons';
 import {
@@ -54,16 +55,17 @@ export interface NodeDetailsPanelProps {
   onClose?: () => void;
 }
 
-// Approved 3-color palette variations
+// Canonical Architectural Palette
 const APPROVED_COLORS = [
-  { label: 'Warm Ivory', value: '#eae6ed' },
-  { label: 'Editorial Blue (Solid)', value: '#226192' },
-  { label: 'Editorial Blue (10%)', value: 'rgba(34, 97, 146, 0.1)' },
-  { label: 'Editorial Blue (25%)', value: 'rgba(34, 97, 146, 0.25)' },
-  { label: 'Editorial Blue (60%)', value: 'rgba(34, 97, 146, 0.6)' },
-  { label: 'Coral Orange (Solid)', value: '#ef8557' },
-  { label: 'Coral Orange (15%)', value: 'rgba(239, 133, 87, 0.15)' },
-  { label: 'Coral Orange (40%)', value: 'rgba(239, 133, 87, 0.4)' },
+  { label: 'Deep Surface', value: '#11110F' },
+  { label: 'Clean Surface', value: '#FFFFFF' },
+  { label: 'Architectural Bronze', value: '#B99D73' },
+  { label: 'Coral Accent', value: '#EB7844' },
+  { label: 'Warm Amber Highlight', value: '#D6B887' },
+  { label: 'Service Blue', value: '#3B82F6' },
+  { label: 'Emerald Gateway', value: '#10B981' },
+  { label: 'Storage Amber', value: '#F59E0B' },
+  { label: 'Crimson Endpoint', value: '#EF4444' },
 ];
 
 export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
@@ -84,19 +86,20 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
   onBatchUpdateNodeStyle,
   onClose,
 }) => {
+  const { resolvedTheme } = useTheme();
   const isMultiSelection = selectedNodes.length > 1;
 
   // 1. MULTI-SELECTION VIEW
   if (isMultiSelection) {
     return (
       <aside
-        className="flex h-full w-full flex-col border-l border-[#226192]/15 bg-[#eae6ed] p-4 text-[#226192] overflow-y-auto"
+        className="flex h-full w-full flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-[var(--color-text)] overflow-y-auto"
         aria-label="Multi-element alignment and styling inspector"
       >
-        <div className="flex items-center justify-between pb-3 border-b border-[#226192]/15">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-[#ef8557]" />
-            <h3 className="font-serif text-base font-medium text-[#226192]">
+            <Sliders className="h-4 w-4 text-[var(--color-accent)]" />
+            <h3 className="font-serif text-base font-medium text-[var(--color-text)]">
               {selectedNodes.length} Components Selected
             </h3>
           </div>
@@ -105,7 +108,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               type="button"
               onClick={onClose}
               aria-label="Close inspector"
-              className="rounded p-1 text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors"
+              className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -113,7 +116,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
         </div>
 
         {!isEditable && (
-          <div className="mt-3 flex items-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 p-2 text-[11px] text-[#ef8557]">
+          <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-[#D6B887]">
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
             <span>Read-Only mode. Alignment and styling cannot be modified.</span>
           </div>
@@ -122,7 +125,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
         <div className="mt-4 space-y-5">
           {/* Alignment Tools */}
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[#226192] mb-2">
+            <label className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] mb-2">
               Align Components
             </label>
             <div className="grid grid-cols-3 gap-1.5" role="group" aria-label="Horizontal and vertical alignment actions">
@@ -132,7 +135,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 onClick={() => onAlignNodes?.('left')}
                 title="Align Left"
                 aria-label="Align selected components left"
-                className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
               >
                 <AlignLeft className="h-3.5 w-3.5" />
                 <span>Left</span>
@@ -143,7 +146,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 onClick={() => onAlignNodes?.('center')}
                 title="Align Center"
                 aria-label="Align selected components center horizontally"
-                className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
               >
                 <AlignCenter className="h-3.5 w-3.5" />
                 <span>Center</span>
@@ -154,7 +157,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 onClick={() => onAlignNodes?.('right')}
                 title="Align Right"
                 aria-label="Align selected components right"
-                className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
               >
                 <AlignRight className="h-3.5 w-3.5" />
                 <span>Right</span>
@@ -166,7 +169,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 onClick={() => onAlignNodes?.('top')}
                 title="Align Top"
                 aria-label="Align selected components top"
-                className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
               >
                 <span>Top</span>
               </button>
@@ -176,7 +179,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 onClick={() => onAlignNodes?.('middle')}
                 title="Align Middle"
                 aria-label="Align selected components middle vertically"
-                className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
               >
                 <span>Middle</span>
               </button>
@@ -186,7 +189,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 onClick={() => onAlignNodes?.('bottom')}
                 title="Align Bottom"
                 aria-label="Align selected components bottom"
-                className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
               >
                 <span>Bottom</span>
               </button>
@@ -196,7 +199,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
           {/* Distribution Tools */}
           {selectedNodes.length >= 3 && (
             <div>
-              <label className="block text-xs font-mono font-semibold uppercase text-[#226192] mb-2">
+              <label className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] mb-2">
                 Distribute Spacing
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -205,7 +208,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                   disabled={!isEditable}
                   onClick={() => onDistributeNodes?.('horizontal')}
                   aria-label="Distribute components horizontally"
-                  className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2.5 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2.5 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
                 >
                   <AlignHorizontalSpaceAround className="h-3.5 w-3.5" />
                   <span>Horizontally</span>
@@ -215,7 +218,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                   disabled={!isEditable}
                   onClick={() => onDistributeNodes?.('vertical')}
                   aria-label="Distribute components vertically"
-                  className="flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#226192]/5 px-2.5 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/10 disabled:opacity-50"
+                  className="flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2.5 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] hover:border-[var(--color-border-strong)] disabled:opacity-50"
                 >
                   <AlignVerticalSpaceAround className="h-3.5 w-3.5" />
                   <span>Vertically</span>
@@ -226,7 +229,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
           {/* Batch Styling */}
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[#226192] mb-1.5">
+            <label className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] mb-1.5">
               Batch Fill Color
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -243,7 +246,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                   }
                   title={c.label}
                   aria-label={`Set fill color to ${c.label}`}
-                  className="h-6 w-6 rounded border border-[#226192]/30 shadow-xs focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50"
+                  className="h-6 w-6 rounded border border-[var(--color-border)] shadow-xs focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   style={{ backgroundColor: c.value }}
                 />
               ))}
@@ -251,7 +254,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
           </div>
 
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[#226192] mb-1.5">
+            <label className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] mb-1.5">
               Batch Border Color
             </label>
             <div className="flex flex-wrap gap-1.5">
@@ -268,7 +271,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                   }
                   title={c.label}
                   aria-label={`Set border color to ${c.label}`}
-                  className="h-6 w-6 rounded border border-[#226192]/30 shadow-xs focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50"
+                  className="h-6 w-6 rounded border border-[var(--color-border)] shadow-xs focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50"
                   style={{ backgroundColor: c.value }}
                 />
               ))}
@@ -276,7 +279,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
           </div>
 
           {/* Batch Reset */}
-          <div className="pt-3 border-t border-[#226192]/15">
+          <div className="pt-3 border-t border-[var(--color-border)]">
             <button
               type="button"
               disabled={!isEditable}
@@ -293,7 +296,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 )
               }
               aria-label="Reset styles for all selected components"
-              className="w-full flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/5 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)] disabled:opacity-50"
             >
               <RotateCcw className="h-3 w-3" />
               <span>Reset Selected Styles</span>
@@ -309,7 +312,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
     const edgeType = (selectedEdge.data?.edgeType as EdgeType) || 'default';
     const edgeStyle = selectedEdge.data?.style;
     const isAnimated = selectedEdge.animated ?? edgeType === 'animated';
-    const currentStroke = edgeStyle?.strokeColor || '#ef8557';
+    const currentStroke = edgeStyle?.strokeColor || '#B99D73';
     const currentWidth = edgeStyle?.strokeWidth ?? 2;
     const currentOpacity = edgeStyle?.opacity ?? 1;
     const currentLineStyle: EdgeStrokeStyle =
@@ -332,7 +335,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
         edgeType: 'default',
         animated: false,
         style: {
-          strokeColor: '#ef8557',
+          strokeColor: '#B99D73',
           strokeWidth: 2,
           opacity: 1,
           strokeStyle: 'solid',
@@ -345,20 +348,20 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
     return (
       <aside
-        className="flex h-full w-full flex-col border-l border-[#226192]/15 bg-[#eae6ed] p-4 text-[#226192] overflow-y-auto"
+        className="flex h-full w-full flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-[var(--color-text)] overflow-y-auto"
         aria-label="Connection styling and routing inspector"
       >
-        <div className="flex items-center justify-between pb-3 border-b border-[#226192]/15">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
-            <GitBranch className="h-4 w-4 text-[#ef8557]" />
-            <h3 className="font-serif text-base font-medium text-[#226192]">Connector Inspector</h3>
+            <GitBranch className="h-4 w-4 text-[var(--color-accent)]" />
+            <h3 className="font-serif text-base font-medium text-[var(--color-text)]">Connector Inspector</h3>
           </div>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Close connector inspector"
-              className="rounded p-1 text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors"
+              className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -366,7 +369,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
         </div>
 
         {!isEditable && (
-          <div className="mt-3 flex items-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 p-2 text-[11px] text-[#ef8557]">
+          <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-[#D6B887]">
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
             <span>Read-Only mode. Edge properties cannot be edited.</span>
           </div>
@@ -374,20 +377,20 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
         <div className="mt-4 flex-1 space-y-4">
           {/* Source & Target summary */}
-          <div className="rounded-md border border-[#226192]/20 bg-[#226192]/5 p-2.5 space-y-1 text-xs">
+          <div className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-2.5 space-y-1 text-xs">
             <div className="flex justify-between">
-              <span className="text-[#226192]/70">Source:</span>
-              <span className="font-mono text-[#ef8557] truncate max-w-[150px]">{selectedEdge.source}</span>
+              <span className="text-[var(--color-text-muted)]">Source:</span>
+              <span className="font-mono text-[var(--color-accent)] truncate max-w-[150px]">{selectedEdge.source}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-[#226192]/70">Target:</span>
-              <span className="font-mono text-[#ef8557] truncate max-w-[150px]">{selectedEdge.target}</span>
+              <span className="text-[var(--color-text-muted)]">Target:</span>
+              <span className="font-mono text-[var(--color-accent)] truncate max-w-[150px]">{selectedEdge.target}</span>
             </div>
           </div>
 
           {/* Connection Label */}
           <div>
-            <label htmlFor="edge-label-input" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+            <label htmlFor="edge-label-input" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
               Connection Label
             </label>
             <input
@@ -397,13 +400,13 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               placeholder="e.g. HTTPS, gRPC, Pub/Sub..."
               value={typeof selectedEdge.label === 'string' ? selectedEdge.label : ''}
               onChange={(e) => onUpdateEdgeData(selectedEdge.id, { label: e.target.value })}
-              className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50"
+              className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50"
             />
           </div>
 
-          {/* Connector Type (Straight, Smooth-step, Curved) */}
+          {/* Connector Type */}
           <div>
-            <label htmlFor="edge-connector-select" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+            <label htmlFor="edge-connector-select" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
               Connector Route Type
             </label>
             <select
@@ -411,7 +414,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               disabled={!isEditable}
               value={currentConnector}
               onChange={(e) => updateStyle({ connectorType: e.target.value as ConnectorType })}
-              className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50 font-mono"
+              className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50 font-mono"
             >
               <option value="smoothstep">Smooth-Step (Orthogonal)</option>
               <option value="straight">Straight Line</option>
@@ -419,9 +422,9 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
             </select>
           </div>
 
-          {/* Stroke Style: Solid, Dashed, Dotted */}
+          {/* Stroke Style */}
           <div>
-            <label htmlFor="edge-stroke-style-select" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+            <label htmlFor="edge-stroke-style-select" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
               Line Pattern
             </label>
             <select
@@ -435,7 +438,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                   edgeType: styleVal === 'dashed' ? 'dashed' : 'default',
                 });
               }}
-              className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50 font-mono"
+              className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50 font-mono"
             >
               <option value="solid">Solid Line</option>
               <option value="dashed">Dashed (5px)</option>
@@ -445,7 +448,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
           {/* Stroke Color */}
           <div>
-            <label className="block text-xs font-mono font-semibold uppercase text-[#226192] mb-1.5">
+            <label className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] mb-1.5">
               Stroke Color
             </label>
             <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Edge stroke color">
@@ -457,13 +460,13 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                   onClick={() => updateStyle({ strokeColor: c.value })}
                   title={c.label}
                   aria-label={`Set stroke color to ${c.label}`}
-                  className={`h-6 w-6 rounded border shadow-xs transition-transform focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 flex items-center justify-center ${
-                    currentStroke === c.value ? 'ring-2 ring-[#ef8557] scale-110' : 'border-[#226192]/30'
+                  className={`h-6 w-6 rounded border shadow-xs transition-transform focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50 flex items-center justify-center ${
+                    currentStroke === c.value ? 'ring-2 ring-[var(--color-accent)] scale-110' : 'border-[var(--color-border)]'
                   }`}
                   style={{ backgroundColor: c.value }}
                 >
                   {currentStroke === c.value && (
-                    <Check className="h-3 w-3 text-[#226192] drop-shadow" />
+                    <Check className="h-3 w-3 text-white dark:text-[#11110F] drop-shadow" />
                   )}
                 </button>
               ))}
@@ -473,10 +476,10 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
           {/* Stroke Width */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label htmlFor="edge-width-range" className="text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="edge-width-range" className="text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 Stroke Width
               </label>
-              <span className="text-xs font-mono text-[#226192]/70">{currentWidth}px</span>
+              <span className="text-xs font-mono text-[var(--color-accent)]">{currentWidth}px</span>
             </div>
             <input
               id="edge-width-range"
@@ -487,17 +490,17 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               disabled={!isEditable}
               value={currentWidth}
               onChange={(e) => updateStyle({ strokeWidth: Number(e.target.value) })}
-              className="w-full accent-[#ef8557] disabled:opacity-50"
+              className="w-full accent-[var(--color-accent)] disabled:opacity-50"
             />
           </div>
 
           {/* Opacity */}
           <div>
             <div className="flex justify-between items-center mb-1">
-              <label htmlFor="edge-opacity-range" className="text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="edge-opacity-range" className="text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 Opacity
               </label>
-              <span className="text-xs font-mono text-[#226192]/70">{Math.round(currentOpacity * 100)}%</span>
+              <span className="text-xs font-mono text-[var(--color-accent)]">{Math.round(currentOpacity * 100)}%</span>
             </div>
             <input
               id="edge-opacity-range"
@@ -508,14 +511,14 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               disabled={!isEditable}
               value={currentOpacity}
               onChange={(e) => updateStyle({ opacity: Number(e.target.value) })}
-              className="w-full accent-[#ef8557] disabled:opacity-50"
+              className="w-full accent-[var(--color-accent)] disabled:opacity-50"
             />
           </div>
 
-          {/* Arrowhead Configuration (Start & End) */}
+          {/* Arrowhead Configuration */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label htmlFor="arrow-start-select" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="arrow-start-select" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 Start Arrow
               </label>
               <select
@@ -523,7 +526,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 disabled={!isEditable}
                 value={currentArrowStart}
                 onChange={(e) => updateStyle({ arrowHeadStart: e.target.value as ArrowheadType })}
-                className="mt-1 w-full rounded border border-[#226192]/20 bg-[#eae6ed] px-2 py-1 text-xs text-[#226192] focus:border-[#ef8557] focus:outline-none disabled:opacity-50 font-mono"
+                className="mt-1 w-full rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none disabled:opacity-50 font-mono"
               >
                 <option value="none">None</option>
                 <option value="arrow">Open Arrow</option>
@@ -531,7 +534,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               </select>
             </div>
             <div>
-              <label htmlFor="arrow-end-select" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="arrow-end-select" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 End Arrow
               </label>
               <select
@@ -539,7 +542,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 disabled={!isEditable}
                 value={currentArrowEnd}
                 onChange={(e) => updateStyle({ arrowHeadEnd: e.target.value as ArrowheadType })}
-                className="mt-1 w-full rounded border border-[#226192]/20 bg-[#eae6ed] px-2 py-1 text-xs text-[#226192] focus:border-[#ef8557] focus:outline-none disabled:opacity-50 font-mono"
+                className="mt-1 w-full rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-1 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none disabled:opacity-50 font-mono"
               >
                 <option value="none">None</option>
                 <option value="arrow">Open Arrow</option>
@@ -550,7 +553,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
           {/* Animate Data Flow */}
           <div className="flex items-center justify-between pt-1">
-            <label htmlFor="edge-animate-checkbox" className="text-xs font-mono font-semibold uppercase text-[#226192]">
+            <label htmlFor="edge-animate-checkbox" className="text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
               Animate Data Flow
             </label>
             <input
@@ -559,7 +562,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               disabled={!isEditable}
               checked={isAnimated}
               onChange={(e) => onUpdateEdgeData(selectedEdge.id, { animated: e.target.checked })}
-              className="h-4 w-4 rounded border-[#226192]/30 bg-[#eae6ed] text-[#ef8557] focus:ring-[#ef8557] accent-[#ef8557] disabled:opacity-50"
+              className="h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-accent)] focus:ring-[var(--color-accent)] accent-[var(--color-accent)] disabled:opacity-50"
             />
           </div>
 
@@ -570,7 +573,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 type="button"
                 onClick={handleResetStyle}
                 aria-label="Reset connector to default style"
-                className="w-full flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/5"
+                className="w-full flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)]"
               >
                 <RotateCcw className="h-3 w-3" />
                 <span>Reset Connector Style</span>
@@ -580,12 +583,12 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
           {/* Delete Edge Action */}
           {isEditable && (
-            <div className="pt-4 border-t border-[#226192]/15">
+            <div className="pt-4 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={() => onDeleteEdge(selectedEdge.id)}
                 aria-label="Delete connection"
-                className="w-full flex items-center justify-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 px-4 py-2 text-xs font-medium text-[#ef8557] hover:bg-[#ef8557]/25 hover:text-[#226192] transition-colors focus:ring-2 focus:ring-[#ef8557]"
+                className="w-full flex items-center justify-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-600 dark:text-red-300 hover:bg-red-500/20 transition-colors focus:ring-2 focus:ring-red-400"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Delete Connection</span>
@@ -602,10 +605,10 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
     const visual = getNodeVisual(selectedNode.data.nodeType);
     const IconComponent = visual.icon;
     const nodeStyle = selectedNode.data.style;
-    const currentFill = nodeStyle?.fillColor || '#eae6ed';
-    const currentBorder = nodeStyle?.borderColor || 'rgba(34, 97, 146, 0.22)';
+    const currentFill = nodeStyle?.fillColor || '#141310';
+    const currentBorder = nodeStyle?.borderColor || 'rgba(185, 157, 115, 0.25)';
     const currentBorderWidth = nodeStyle?.borderWidth ?? 1;
-    const currentTextColor = nodeStyle?.textColor || '#226192';
+    const currentTextColor = nodeStyle?.textColor || '#F2EEE7';
     const currentOpacity = nodeStyle?.opacity ?? 1;
 
     const updateStyle = (styleUpdates: Partial<ArchitectureNodeStyle>) => {
@@ -631,20 +634,20 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
     return (
       <aside
-        className="flex h-full w-full flex-col border-l border-[#226192]/15 bg-[#eae6ed] p-4 text-[#226192] overflow-y-auto"
+        className="flex h-full w-full flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-[var(--color-text)] overflow-y-auto"
         aria-label="Component properties and style inspector"
       >
-        <div className="flex items-center justify-between pb-3 border-b border-[#226192]/15">
+        <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
           <div className="flex items-center gap-2">
-            <Sliders className="h-4 w-4 text-[#ef8557]" />
-            <h3 className="font-serif text-base font-medium text-[#226192]">Component Inspector</h3>
+            <Sliders className="h-4 w-4 text-[var(--color-accent)]" />
+            <h3 className="font-serif text-base font-medium text-[var(--color-text)]">Component Inspector</h3>
           </div>
           {onClose && (
             <button
               type="button"
               onClick={onClose}
               aria-label="Close component inspector"
-              className="rounded p-1 text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors"
+              className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors"
             >
               <X className="h-4 w-4" />
             </button>
@@ -652,7 +655,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
         </div>
 
         {!isEditable && (
-          <div className="mt-3 flex items-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 p-2 text-[11px] text-[#ef8557]">
+          <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-[#D6B887]">
             <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
             <span>Read-Only mode. Component properties cannot be edited.</span>
           </div>
@@ -660,7 +663,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
         <div className="mt-4 flex-1 space-y-4">
           {/* Header Card */}
-          <div className="flex items-center gap-3 rounded-md border border-[#226192]/20 bg-[#226192]/5 p-3">
+          <div className="flex items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] p-3">
             <div
               className={`flex h-9 w-9 items-center justify-center rounded border ${visual.badgeBg} ${visual.badgeBorder} ${visual.badgeText}`}
             >
@@ -672,7 +675,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               >
                 {selectedNode.data.nodeType}
               </span>
-              <p className="mt-1 font-mono text-[10px] text-[#226192]/70 truncate max-w-[170px]">
+              <p className="mt-1 font-mono text-[10px] text-[var(--color-text-muted)] truncate max-w-[170px]">
                 {selectedNode.id}
               </p>
             </div>
@@ -680,7 +683,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
           {/* Label Input */}
           <div>
-            <label htmlFor="node-name-input" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+            <label htmlFor="node-name-input" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
               Component Name *
             </label>
             <input
@@ -691,20 +694,20 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
               placeholder="e.g. Auth Service"
               value={selectedNode.data.label || ''}
               onChange={(e) => onUpdateNodeData(selectedNode.id, { label: e.target.value })}
-              className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50"
+              className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50"
             />
           </div>
 
           {/* Styling Controls Section */}
-          <div className="space-y-3 pt-2 border-t border-[#226192]/15">
-            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[#226192] flex items-center gap-1.5">
-              <Palette className="h-3.5 w-3.5 text-[#ef8557]" />
+          <div className="space-y-3 pt-2 border-t border-[var(--color-border)]">
+            <h4 className="text-xs font-mono font-bold uppercase tracking-wider text-[var(--color-text)] flex items-center gap-1.5">
+              <Palette className="h-3.5 w-3.5 text-[var(--color-accent)]" />
               <span>Visual Appearance</span>
             </h4>
 
             {/* Fill Color */}
             <div>
-              <label className="block text-[11px] font-mono font-medium text-[#226192]/80 mb-1">
+              <label className="block text-[11px] font-mono font-medium text-[var(--color-text-muted)] mb-1">
                 Fill Background
               </label>
               <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Component fill color">
@@ -716,13 +719,13 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                     onClick={() => updateStyle({ fillColor: c.value })}
                     title={c.label}
                     aria-label={`Set fill color to ${c.label}`}
-                    className={`h-6 w-6 rounded border shadow-xs transition-transform focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 flex items-center justify-center ${
-                      currentFill === c.value ? 'ring-2 ring-[#ef8557] scale-110' : 'border-[#226192]/30'
+                    className={`h-6 w-6 rounded border shadow-xs transition-transform focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50 flex items-center justify-center ${
+                      currentFill === c.value ? 'ring-2 ring-[var(--color-accent)] scale-110' : 'border-[var(--color-border)]'
                     }`}
                     style={{ backgroundColor: c.value }}
                   >
                     {currentFill === c.value && (
-                      <Check className="h-3 w-3 text-[#226192] drop-shadow" />
+                      <Check className="h-3 w-3 text-white dark:text-[#11110F] drop-shadow" />
                     )}
                   </button>
                 ))}
@@ -731,7 +734,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
             {/* Border Color */}
             <div>
-              <label className="block text-[11px] font-mono font-medium text-[#226192]/80 mb-1">
+              <label className="block text-[11px] font-mono font-medium text-[var(--color-text-muted)] mb-1">
                 Border Color
               </label>
               <div className="flex flex-wrap gap-1.5" role="radiogroup" aria-label="Component border color">
@@ -743,13 +746,13 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                     onClick={() => updateStyle({ borderColor: c.value })}
                     title={c.label}
                     aria-label={`Set border color to ${c.label}`}
-                    className={`h-6 w-6 rounded border shadow-xs transition-transform focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 flex items-center justify-center ${
-                      currentBorder === c.value ? 'ring-2 ring-[#ef8557] scale-110' : 'border-[#226192]/30'
+                    className={`h-6 w-6 rounded border shadow-xs transition-transform focus:outline-none focus:ring-2 focus:ring-[var(--color-accent)] disabled:opacity-50 flex items-center justify-center ${
+                      currentBorder === c.value ? 'ring-2 ring-[var(--color-accent)] scale-110' : 'border-[var(--color-border)]'
                     }`}
                     style={{ backgroundColor: c.value }}
                   >
                     {currentBorder === c.value && (
-                      <Check className="h-3 w-3 text-[#226192] drop-shadow" />
+                      <Check className="h-3 w-3 text-white dark:text-[#11110F] drop-shadow" />
                     )}
                   </button>
                 ))}
@@ -759,10 +762,10 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
             {/* Border Width */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label htmlFor="node-border-width-range" className="text-[11px] font-mono font-medium text-[#226192]/80">
+                <label htmlFor="node-border-width-range" className="text-[11px] font-mono font-medium text-[var(--color-text-muted)]">
                   Border Width
                 </label>
-                <span className="text-xs font-mono text-[#226192]/70">{currentBorderWidth}px</span>
+                <span className="text-xs font-mono text-[var(--color-accent)]">{currentBorderWidth}px</span>
               </div>
               <input
                 id="node-border-width-range"
@@ -773,39 +776,39 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 disabled={!isEditable}
                 value={currentBorderWidth}
                 onChange={(e) => updateStyle({ borderWidth: Number(e.target.value) })}
-                className="w-full accent-[#ef8557] disabled:opacity-50"
+                className="w-full accent-[var(--color-accent)] disabled:opacity-50"
               />
             </div>
 
             {/* Text Color */}
             <div>
-              <label className="block text-[11px] font-mono font-medium text-[#226192]/80 mb-1">
+              <label className="block text-[11px] font-mono font-medium text-[var(--color-text-muted)] mb-1">
                 Text Color
               </label>
               <div className="flex gap-2">
                 <button
                   type="button"
                   disabled={!isEditable}
-                  onClick={() => updateStyle({ textColor: '#226192' })}
+                  onClick={() => updateStyle({ textColor: resolvedTheme === 'light' ? '#18181B' : '#F2EEE7' })}
                   className={`flex-1 rounded border px-2 py-1 text-xs font-mono ${
-                    currentTextColor === '#226192'
-                      ? 'border-[#ef8557] bg-[#226192]/10 text-[#226192] font-semibold'
-                      : 'border-[#226192]/20 text-[#226192]/70'
+                    currentTextColor === (resolvedTheme === 'light' ? '#18181B' : '#F2EEE7')
+                      ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/20 text-[var(--color-text)] font-semibold'
+                      : 'border-[var(--color-border)] text-[var(--color-text-muted)]'
                   }`}
                 >
-                  Editorial Blue
+                  Architectural Default
                 </button>
                 <button
                   type="button"
                   disabled={!isEditable}
-                  onClick={() => updateStyle({ textColor: '#ef8557' })}
+                  onClick={() => updateStyle({ textColor: '#B99D73' })}
                   className={`flex-1 rounded border px-2 py-1 text-xs font-mono ${
-                    currentTextColor === '#ef8557'
-                      ? 'border-[#ef8557] bg-[#ef8557]/15 text-[#ef8557] font-semibold'
-                      : 'border-[#226192]/20 text-[#226192]/70'
+                    currentTextColor === '#B99D73'
+                      ? 'border-[#B99D73] bg-[#B99D73]/25 text-[#B99D73] font-semibold'
+                      : 'border-[var(--color-border)] text-[var(--color-text-muted)]'
                   }`}
                 >
-                  Coral Orange
+                  Warm Bronze
                 </button>
               </div>
             </div>
@@ -813,10 +816,10 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
             {/* Opacity */}
             <div>
               <div className="flex justify-between items-center mb-1">
-                <label htmlFor="node-opacity-range" className="text-[11px] font-mono font-medium text-[#226192]/80">
+                <label htmlFor="node-opacity-range" className="text-[11px] font-mono font-medium text-[var(--color-text-muted)]">
                   Opacity
                 </label>
-                <span className="text-xs font-mono text-[#226192]/70">{Math.round(currentOpacity * 100)}%</span>
+                <span className="text-xs font-mono text-[var(--color-accent)]">{Math.round(currentOpacity * 100)}%</span>
               </div>
               <input
                 id="node-opacity-range"
@@ -827,7 +830,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 disabled={!isEditable}
                 value={currentOpacity}
                 onChange={(e) => updateStyle({ opacity: Number(e.target.value) })}
-                className="w-full accent-[#ef8557] disabled:opacity-50"
+                className="w-full accent-[var(--color-accent)] disabled:opacity-50"
               />
             </div>
 
@@ -837,7 +840,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 type="button"
                 onClick={handleResetStyle}
                 aria-label="Reset component to default style"
-                className="w-full flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#eae6ed] px-3 py-1 text-xs text-[#226192] hover:bg-[#226192]/5"
+                className="w-full flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)]"
               >
                 <RotateCcw className="h-3 w-3" />
                 <span>Reset Style to Default</span>
@@ -846,9 +849,9 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
           </div>
 
           {/* Technology & Category Section */}
-          <div className="space-y-3 pt-2 border-t border-[#226192]/15">
+          <div className="space-y-3 pt-2 border-t border-[var(--color-border)]">
             <div>
-              <label htmlFor="node-tech-input" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="node-tech-input" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 Technology Stack
               </label>
               <input
@@ -858,12 +861,12 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 placeholder="e.g. Node.js, PostgreSQL, Redis..."
                 value={selectedNode.data.technology || ''}
                 onChange={(e) => onUpdateNodeData(selectedNode.id, { technology: e.target.value })}
-                className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50"
+                className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label htmlFor="node-category-input" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="node-category-input" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 Category
               </label>
               <input
@@ -873,12 +876,12 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 placeholder="e.g. Core, Storage, Edge..."
                 value={selectedNode.data.category || ''}
                 onChange={(e) => onUpdateNodeData(selectedNode.id, { category: e.target.value })}
-                className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50"
+                className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50"
               />
             </div>
 
             <div>
-              <label htmlFor="node-desc-textarea" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+              <label htmlFor="node-desc-textarea" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
                 Description
               </label>
               <textarea
@@ -888,19 +891,19 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 placeholder="Responsibilities, endpoints, data stores..."
                 value={selectedNode.data.description || ''}
                 onChange={(e) => onUpdateNodeData(selectedNode.id, { description: e.target.value })}
-                className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] placeholder-[#226192]/40 focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50 resize-none"
+                className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50 resize-none"
               />
             </div>
           </div>
 
           {/* Delete Node Action */}
           {isEditable && (
-            <div className="pt-4 border-t border-[#226192]/15">
+            <div className="pt-4 border-t border-[var(--color-border)]">
               <button
                 type="button"
                 onClick={() => onDeleteNode(selectedNode.id)}
                 aria-label="Delete component"
-                className="w-full flex items-center justify-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 px-4 py-2 text-xs font-medium text-[#ef8557] hover:bg-[#ef8557]/25 hover:text-[#226192] transition-colors focus:ring-2 focus:ring-[#ef8557]"
+                className="w-full flex items-center justify-center gap-2 rounded-md border border-red-500/40 bg-red-500/10 px-4 py-2 text-xs font-medium text-red-600 dark:text-red-300 hover:bg-red-500/20 transition-colors focus:ring-2 focus:ring-red-400"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Delete Component</span>
@@ -917,24 +920,38 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
   const currentGridSpacing = canvasSettings?.gridSpacing ?? 20;
   const isGridVisible = canvasSettings?.gridVisible !== false;
   const isSnapToGrid = Boolean(canvasSettings?.snapToGrid);
-  const currentBgColor = canvasSettings?.backgroundColor || '#eae6ed';
+  const defaultBg = resolvedTheme === 'light' ? '#F8F7F4' : '#090907';
+  const currentBgColor = canvasSettings?.backgroundColor || defaultBg;
+
+  const bgOptions =
+    resolvedTheme === 'light'
+      ? [
+          { label: 'Ivory Studio', value: '#F8F7F4' },
+          { label: 'Pure White', value: '#FFFFFF' },
+          { label: 'Warm Ash', value: '#EBE8E0' },
+        ]
+      : [
+          { label: 'Deep Architectural', value: '#090907' },
+          { label: 'Surface Obsidian', value: '#11110F' },
+          { label: 'Warm Charcoal', value: '#141310' },
+        ];
 
   return (
     <aside
-      className="flex h-full w-full flex-col border-l border-[#226192]/15 bg-[#eae6ed] p-4 text-[#226192] overflow-y-auto"
+      className="flex h-full w-full flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] p-4 text-[var(--color-text)] overflow-y-auto"
       aria-label="Canvas appearance and grid settings inspector"
     >
-      <div className="flex items-center justify-between pb-3 border-b border-[#226192]/15">
+      <div className="flex items-center justify-between pb-3 border-b border-[var(--color-border)]">
         <div className="flex items-center gap-2">
-          <Grid className="h-4 w-4 text-[#ef8557]" />
-          <h3 className="font-serif text-base font-medium text-[#226192]">Canvas Appearance</h3>
+          <Grid className="h-4 w-4 text-[var(--color-accent)]" />
+          <h3 className="font-serif text-base font-medium text-[var(--color-text)]">Canvas Appearance</h3>
         </div>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
             aria-label="Close canvas settings"
-            className="rounded p-1 text-[#226192]/70 hover:bg-[#226192]/5 hover:text-[#226192] transition-colors"
+            className="rounded p-1 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors"
           >
             <X className="h-4 w-4" />
           </button>
@@ -942,7 +959,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
       </div>
 
       {!isEditable && (
-        <div className="mt-3 flex items-center gap-2 rounded-md border border-[#ef8557]/40 bg-[#ef8557]/15 p-2 text-[11px] text-[#ef8557]">
+        <div className="mt-3 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 p-2 text-[11px] text-amber-700 dark:text-[#D6B887]">
           <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
           <span>Read-Only mode. Canvas settings cannot be modified.</span>
         </div>
@@ -951,15 +968,11 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
       <div className="mt-4 space-y-4">
         {/* Canvas Background Color */}
         <div>
-          <label className="block text-xs font-mono font-semibold uppercase text-[#226192] mb-1.5">
+          <label className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] mb-1.5">
             Canvas Background
           </label>
           <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Canvas background color">
-            {[
-              { label: 'Warm Ivory (Solid)', value: '#eae6ed' },
-              { label: 'Warm Ivory (Tinted Blue)', value: 'rgba(234, 230, 237, 0.95)' },
-              { label: 'Subtle Slate Ivory', value: 'rgba(34, 97, 146, 0.05)' },
-            ].map((c) => (
+            {bgOptions.map((c) => (
               <button
                 key={c.value}
                 type="button"
@@ -969,11 +982,11 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 aria-label={`Set canvas background to ${c.label}`}
                 className={`h-7 px-3 rounded border text-xs font-mono transition-colors disabled:opacity-50 flex items-center gap-1.5 ${
                   currentBgColor === c.value
-                    ? 'border-[#ef8557] bg-[#ef8557]/15 font-semibold text-[#226192]'
-                    : 'border-[#226192]/20 text-[#226192]/70 hover:bg-[#226192]/5'
+                    ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/20 font-semibold text-[var(--color-text)]'
+                    : 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] hover:bg-[var(--color-surface-elevated)]'
                 }`}
               >
-                <span className="h-3 w-3 rounded-full border border-[#226192]/30" style={{ backgroundColor: c.value }} />
+                <span className="h-3 w-3 rounded-full border border-[var(--color-border)]" style={{ backgroundColor: c.value }} />
                 <span>{c.label.split(' ')[0]}</span>
               </button>
             ))}
@@ -982,7 +995,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
 
         {/* Grid Type: Dotted, Lines, Cross, None */}
         <div>
-          <label htmlFor="canvas-grid-type-select" className="block text-xs font-mono font-semibold uppercase text-[#226192]">
+          <label htmlFor="canvas-grid-type-select" className="block text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
             Grid Style
           </label>
           <select
@@ -994,7 +1007,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
                 gridType: e.target.value as 'dots' | 'lines' | 'cross' | 'none',
               })
             }
-            className="mt-1 w-full rounded-md border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] focus:border-[#ef8557] focus:outline-none focus:ring-1 focus:ring-[#ef8557] disabled:opacity-50 font-mono"
+            className="mt-1 w-full rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)] disabled:opacity-50 font-mono"
           >
             <option value="dots">Dotted Grid (Default)</option>
             <option value="lines">Line Grid</option>
@@ -1006,10 +1019,10 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
         {/* Grid Spacing */}
         <div>
           <div className="flex justify-between items-center mb-1">
-            <label htmlFor="canvas-grid-spacing-range" className="text-xs font-mono font-semibold uppercase text-[#226192]">
+            <label htmlFor="canvas-grid-spacing-range" className="text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
               Grid Spacing
             </label>
-            <span className="text-xs font-mono text-[#226192]/70">{currentGridSpacing}px</span>
+            <span className="text-xs font-mono text-[var(--color-accent)]">{currentGridSpacing}px</span>
           </div>
           <input
             id="canvas-grid-spacing-range"
@@ -1020,13 +1033,13 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
             disabled={!isEditable}
             value={currentGridSpacing}
             onChange={(e) => onUpdateCanvasSettings?.({ gridSpacing: Number(e.target.value) })}
-            className="w-full accent-[#ef8557] disabled:opacity-50"
+            className="w-full accent-[var(--color-accent)] disabled:opacity-50"
           />
         </div>
 
         {/* Grid Visibility Toggle */}
         <div className="flex items-center justify-between pt-1">
-          <label htmlFor="canvas-grid-visible-toggle" className="text-xs font-mono font-semibold uppercase text-[#226192]">
+          <label htmlFor="canvas-grid-visible-toggle" className="text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)]">
             Show Grid Pattern
           </label>
           <input
@@ -1035,17 +1048,17 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
             disabled={!isEditable}
             checked={isGridVisible}
             onChange={(e) => onUpdateCanvasSettings?.({ gridVisible: e.target.checked })}
-            className="h-4 w-4 rounded border-[#226192]/30 bg-[#eae6ed] text-[#ef8557] focus:ring-[#ef8557] accent-[#ef8557] disabled:opacity-50"
+            className="h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-accent)] focus:ring-[var(--color-accent)] accent-[var(--color-accent)] disabled:opacity-50"
           />
         </div>
 
         {/* Snap to Grid Toggle */}
         <div className="flex items-center justify-between pt-1">
           <div>
-            <label htmlFor="canvas-snap-grid-toggle" className="text-xs font-mono font-semibold uppercase text-[#226192] block">
+            <label htmlFor="canvas-snap-grid-toggle" className="text-xs font-mono font-semibold uppercase text-[var(--color-text-muted)] block">
               Snap to Grid
             </label>
-            <span className="text-[10px] text-[#226192]/60">Align node movement to grid units</span>
+            <span className="text-[10px] text-[var(--color-text-muted)]/70">Align node movement to grid units</span>
           </div>
           <input
             id="canvas-snap-grid-toggle"
@@ -1053,18 +1066,18 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
             disabled={!isEditable}
             checked={isSnapToGrid}
             onChange={(e) => onUpdateCanvasSettings?.({ snapToGrid: e.target.checked })}
-            className="h-4 w-4 rounded border-[#226192]/30 bg-[#eae6ed] text-[#ef8557] focus:ring-[#ef8557] accent-[#ef8557] disabled:opacity-50"
+            className="h-4 w-4 rounded border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-accent)] focus:ring-[var(--color-accent)] accent-[var(--color-accent)] disabled:opacity-50"
           />
         </div>
 
         {/* Reset Canvas Appearance Defaults */}
         {isEditable && (
-          <div className="pt-3 border-t border-[#226192]/15">
+          <div className="pt-3 border-t border-[var(--color-border)]">
             <button
               type="button"
               onClick={onResetCanvasSettings}
               aria-label="Reset canvas appearance to defaults"
-              className="w-full flex items-center justify-center gap-1.5 rounded border border-[#226192]/20 bg-[#eae6ed] px-3 py-1.5 text-xs text-[#226192] hover:bg-[#226192]/5"
+              className="w-full flex items-center justify-center gap-1.5 rounded border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-elevated)]"
             >
               <RotateCcw className="h-3 w-3" />
               <span>Reset Canvas Defaults</span>

@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: 'class',
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
@@ -9,85 +10,83 @@ export default {
         mono: ['"JetBrains Mono"', 'ui-monospace', 'monospace'],
       },
       colors: {
-        // Strict Brand Identity Tokens (Warm Ivory, Deep Editorial Blue, Coral Orange)
-        'warm-ivory': '#eae6ed',
-        'editorial-blue': '#226192',
-        coral: '#ef8557',
+        // Semantic CSS variable-based tokens that adapt dynamically
+        theme: {
+          bg: 'var(--color-bg)',
+          surface: 'var(--color-surface)',
+          'surface-raised': 'var(--color-surface-raised)',
+          'surface-card': 'var(--color-surface-card)',
+          text: 'var(--color-text)',
+          muted: 'var(--color-text-muted)',
+          border: 'var(--color-border)',
+          accent: 'var(--color-accent)',
+          'accent-hover': 'var(--color-accent-hover)',
+          'accent-deep': 'var(--color-accent-deep)',
+          focus: 'var(--color-focus)',
+          technical: 'var(--color-technical)',
+        },
 
-        // Semantic surface tokens derived exclusively from the 3 approved colors
+        // Coral accent tokens for Light Theme (from reference images)
+        coral: {
+          DEFAULT: '#EB7844',
+          hover: '#D96634',
+          light: '#F08C5D',
+          subtle: '#FFF5F0',
+          border: 'rgba(235, 120, 68, 0.25)',
+        },
+
+        // Canonical Dark Architectural Tokens
+        arch: {
+          bg: '#090907',
+          surface: '#11110F',
+          raised: '#191814',
+          card: '#141310',
+          text: '#F2EEE7',
+          muted: '#B9B1A5',
+          border: 'rgba(185, 157, 115, 0.22)',
+          accent: '#B99D73',
+          'accent-deep': '#6C5636',
+          focus: '#D6B887',
+        },
+
+        // Primary palette aliases
+        bronze: {
+          DEFAULT: '#B99D73',
+          light: '#D6B887',
+          deep: '#6C5636',
+          muted: 'rgba(185, 157, 115, 0.22)',
+        },
+
         canvas: {
-          DEFAULT: '#eae6ed',
-          dot: 'rgba(34, 97, 146, 0.15)',
+          DEFAULT: 'var(--color-canvas-bg)',
+          dot: 'var(--color-canvas-dot)',
         },
         surface: {
-          DEFAULT: '#eae6ed',
-          base: '#eae6ed',
-          deep: '#eae6ed',
-          raised: 'rgba(34, 97, 146, 0.05)',
-          elevated: 'rgba(34, 97, 146, 0.08)',
-          subtle: 'rgba(34, 97, 146, 0.025)',
+          DEFAULT: 'var(--color-surface)',
+          base: 'var(--color-bg)',
+          deep: 'var(--color-bg)',
+          raised: 'var(--color-surface-raised)',
+          elevated: 'var(--color-surface-raised)',
+          subtle: 'var(--color-surface-subtle)',
         },
         stroke: {
-          DEFAULT: 'rgba(34, 97, 146, 0.20)',
-          structural: 'rgba(34, 97, 146, 0.20)',
-          subtle: 'rgba(34, 97, 146, 0.10)',
-          hover: 'rgba(34, 97, 146, 0.35)',
+          DEFAULT: 'var(--color-border)',
+          structural: 'var(--color-border)',
+          subtle: 'var(--color-border-subtle)',
+          hover: 'var(--color-accent)',
         },
         status: {
-          success: '#226192',
-          warning: '#ef8557',
-          danger: '#ef8557',
+          success: '#10B981',
+          warning: '#F59E0B',
+          danger: '#EF4444',
+          info: '#3B82F6',
         },
         brand: {
-          DEFAULT: '#226192',
-          action: '#226192',
-          'action-hover': 'rgba(34, 97, 146, 0.88)',
-          focus: '#ef8557',
-          accent: '#ef8557',
-        },
-
-        // Backward-compatibility aliases mapped strictly to approved palette opacities
-        slate: {
-          50: '#226192',
-          100: '#226192',
-          200: 'rgba(34, 97, 146, 0.90)',
-          300: 'rgba(34, 97, 146, 0.75)',
-          400: 'rgba(34, 97, 146, 0.60)',
-          500: 'rgba(34, 97, 146, 0.45)',
-          600: 'rgba(34, 97, 146, 0.30)',
-          700: 'rgba(34, 97, 146, 0.20)',
-          800: 'rgba(34, 97, 146, 0.10)',
-          900: '#eae6ed',
-          950: '#eae6ed',
-        },
-        cyan: {
-          DEFAULT: '#ef8557',
-          300: '#ef8557',
-          400: '#ef8557',
-          500: '#ef8557',
-          600: '#ef8557',
-          700: '#226192',
-        },
-        emerald: {
-          DEFAULT: '#eae6ed',
-          200: '#eae6ed',
-          300: '#eae6ed',
-          400: '#eae6ed',
-          500: '#eae6ed',
-        },
-        rose: {
-          DEFAULT: '#ef8557',
-          200: '#ef8557',
-          300: '#ef8557',
-          400: '#ef8557',
-          500: '#ef8557',
-          600: '#ef8557',
-        },
-        amber: {
-          DEFAULT: '#ef8557',
-          300: '#ef8557',
-          400: '#ef8557',
-          500: '#ef8557',
+          DEFAULT: 'var(--color-accent)',
+          action: 'var(--color-accent)',
+          'action-hover': 'var(--color-accent-hover)',
+          focus: 'var(--color-focus)',
+          accent: 'var(--color-accent)',
         },
       },
       transitionTimingFunction: {

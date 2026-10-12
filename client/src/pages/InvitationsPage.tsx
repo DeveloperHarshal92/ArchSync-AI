@@ -109,27 +109,27 @@ export const InvitationsPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 text-[#226192]">
+    <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 text-[var(--color-text)] bg-[var(--color-bg)] transition-colors duration-200">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[#226192]/15">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[var(--color-border)]">
         <div>
-          <div className="flex items-center gap-2 text-[#ef8557] font-mono text-xs uppercase tracking-widest font-semibold">
+          <div className="flex items-center gap-2 text-[var(--color-accent)] font-mono text-xs uppercase tracking-widest font-semibold">
             <Mail className="h-4 w-4" />
             <span>Collaboration & Access Management</span>
           </div>
-          <h1 className="mt-1 font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[#226192]">
+          <h1 className="mt-1 font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text)]">
             Invitations Inbox
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-[#226192]/70">
+          <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-muted)]">
             Review and respond to collaboration requests from engineering teams across workspaces.
           </p>
         </div>
 
         <Link
           to="/projects"
-          className="inline-flex items-center gap-2 rounded-xl border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#226192] hover:bg-[#226192]/5 transition-colors self-start sm:self-auto focus:outline-none focus:ring-2 focus:ring-[#ef8557]"
+          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-raised)] transition-colors self-start sm:self-auto focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] shadow-sm"
         >
-          <FolderGit2 className="h-4 w-4 text-[#ef8557]" />
+          <FolderGit2 className="h-4 w-4 text-[var(--color-accent)]" />
           <span>My Projects</span>
         </Link>
       </div>
@@ -138,15 +138,15 @@ export const InvitationsPage: React.FC = () => {
       {actionSuccess && (
         <div
           role="status"
-          className="mt-6 flex items-center justify-between rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-4 text-xs text-[#226192]"
+          className="mt-6 flex items-center justify-between rounded-lg border border-status-success/40 bg-status-success/10 p-4 text-xs text-status-success"
         >
           <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 shrink-0 text-[#ef8557]" />
+            <CheckCircle2 className="h-4 w-4 shrink-0" />
             <span>{actionSuccess}</span>
           </div>
           <button
             onClick={() => setActionSuccess(null)}
-            className="text-[#ef8557] hover:underline transition-colors text-xs font-medium"
+            className="hover:underline transition-colors text-xs font-medium"
             aria-label="Dismiss message"
           >
             Dismiss
@@ -157,15 +157,15 @@ export const InvitationsPage: React.FC = () => {
       {actionError && (
         <div
           role="alert"
-          className="mt-6 flex items-center justify-between rounded-lg border border-[#ef8557]/40 bg-[#ef8557]/10 p-4 text-xs text-[#226192]"
+          className="mt-6 flex items-center justify-between rounded-lg border border-status-danger/40 bg-status-danger/10 p-4 text-xs text-status-danger"
         >
           <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0 text-[#ef8557]" />
+            <AlertCircle className="h-4 w-4 shrink-0" />
             <span>{actionError}</span>
           </div>
           <button
             onClick={() => setActionError(null)}
-            className="text-[#ef8557] hover:underline transition-colors text-xs font-medium"
+            className="hover:underline transition-colors text-xs font-medium"
             aria-label="Dismiss error"
           >
             Dismiss
@@ -176,13 +176,13 @@ export const InvitationsPage: React.FC = () => {
       {/* Filter Tabs */}
       {!isLoading && !isError && invitations.length > 0 && (
         <div className="mt-6 flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-xl border border-[#226192]/20 bg-[#eae6ed] p-1 font-mono text-xs">
+          <div className="flex items-center gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 font-mono text-xs shadow-sm">
             <button
               onClick={() => setFilter('ALL')}
               className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
                 filter === 'ALL'
-                  ? 'bg-[#ef8557] text-[#226192] shadow-sm'
-                  : 'text-[#226192]/70 hover:text-[#226192]'
+                  ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] shadow-sm'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
               }`}
             >
               All ({invitations.length})
@@ -191,8 +191,8 @@ export const InvitationsPage: React.FC = () => {
               onClick={() => setFilter('PENDING')}
               className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
                 filter === 'PENDING'
-                  ? 'bg-[#ef8557] text-[#226192] shadow-sm'
-                  : 'text-[#226192]/70 hover:text-[#226192]'
+                  ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] shadow-sm'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
               }`}
             >
               Pending ({pendingCount})
@@ -201,8 +201,8 @@ export const InvitationsPage: React.FC = () => {
               onClick={() => setFilter('RESOLVED')}
               className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
                 filter === 'RESOLVED'
-                  ? 'bg-[#ef8557] text-[#226192] shadow-sm'
-                  : 'text-[#226192]/70 hover:text-[#226192]'
+                  ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] shadow-sm'
+                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
               }`}
             >
               Resolved ({resolvedCount})
@@ -217,47 +217,47 @@ export const InvitationsPage: React.FC = () => {
           {[1, 2].map((i) => (
             <div
               key={i}
-              className="h-24 rounded-2xl border border-[#226192]/15 bg-[#226192]/5 p-5 animate-pulse"
+              className="h-24 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 animate-pulse shadow-sm"
             />
           ))}
         </div>
       ) : isError ? (
-        <div className="mt-8 rounded-2xl border border-[#ef8557]/40 bg-[#ef8557]/10 p-8 text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-[#ef8557]" />
-          <h3 className="mt-3 font-serif text-lg font-medium text-[#226192]">Failed to load invitations</h3>
-          <p className="mt-1 text-xs text-[#226192]/70">
+        <div className="mt-8 rounded-2xl border border-status-danger/40 bg-status-danger/10 p-8 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-status-danger" />
+          <h3 className="mt-3 font-serif text-lg font-medium text-[var(--color-text)]">Failed to load invitations</h3>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
             Could not connect to the invitations service.
           </p>
           <button
             onClick={() => refetch()}
-            className="mt-4 rounded-lg bg-[#eae6ed] border border-[#226192]/20 px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#ef8557] transition-colors"
+            className="mt-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-accent)] transition-colors shadow-sm"
           >
             Retry Connection
           </button>
         </div>
       ) : invitations.length === 0 ? (
-        <div className="mt-10 rounded-2xl border border-dashed border-[#226192]/20 bg-[#226192]/5 p-12 text-center backdrop-blur-sm">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[#226192]/10 text-[#226192] border border-[#226192]/20">
+        <div className="mt-10 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 p-12 text-center backdrop-blur-sm">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-surface-raised)] text-[var(--color-accent)] border border-[var(--color-border)] shadow-sm">
             <Inbox className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 font-serif text-xl font-medium text-[#226192]">No invitations received</h3>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-[#226192]/70">
+          <h3 className="mt-4 font-serif text-xl font-medium text-[var(--color-text)]">No invitations received</h3>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--color-text-muted)]">
             When another user invites you to join their architecture project, your invitation will appear here.
           </p>
           <Link
             to="/projects"
-            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[#ef8557] hover:bg-[#ef8557]/90 px-4 py-2 text-xs font-semibold text-[#226192] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557]"
+            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-4 py-2 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)]"
           >
             <span>Go to My Projects</span>
             <ArrowRight className="h-3.5 w-3.5" />
           </Link>
         </div>
       ) : filteredInvitations.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-[#226192]/15 bg-[#226192]/5 p-8 text-center">
-          <p className="text-xs text-[#226192]/70">No invitations matching the "{filter.toLowerCase()}" filter.</p>
+        <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-8 text-center">
+          <p className="text-xs text-[var(--color-text-muted)]">No invitations matching the "{filter.toLowerCase()}" filter.</p>
           <button
             onClick={() => setFilter('ALL')}
-            className="mt-3 text-xs text-[#ef8557] hover:underline font-mono font-medium transition-colors"
+            className="mt-3 text-xs text-[var(--color-accent)] hover:underline font-mono font-medium transition-colors"
           >
             View all invitations
           </button>
@@ -276,12 +276,12 @@ export const InvitationsPage: React.FC = () => {
             return (
               <div
                 key={inv.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[#226192]/15 bg-[#eae6ed] p-5 shadow-sm transition-all hover:border-[#226192]"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition-all hover:border-[var(--color-accent)]"
               >
                 {/* Information Column */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="font-serif text-lg font-medium text-[#226192]">
+                    <h3 className="font-serif text-lg font-medium text-[var(--color-text)]">
                       {inv.projectName || 'Architecture Project'}
                     </h3>
 
@@ -289,8 +289,8 @@ export const InvitationsPage: React.FC = () => {
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase border ${
                         inv.role === 'EDITOR'
-                          ? 'border-[#226192]/30 bg-[#226192]/10 text-[#226192]'
-                          : 'border-[#226192]/15 bg-transparent text-[#226192]/70'
+                          ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+                          : 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)]'
                       }`}
                     >
                       {inv.role}
@@ -300,27 +300,27 @@ export const InvitationsPage: React.FC = () => {
                     <span
                       className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase border ${
                         isAccepted
-                          ? 'border-[#226192]/30 bg-[#226192]/10 text-[#226192]'
+                          ? 'border-status-success/30 bg-status-success/10 text-status-success'
                           : isRejected
-                          ? 'border-[#ef8557]/40 bg-[#ef8557]/15 text-[#226192]'
+                          ? 'border-status-danger/40 bg-status-danger/15 text-status-danger'
                           : isExpired
-                          ? 'border-[#226192]/15 bg-transparent text-[#226192]/60'
-                          : 'border-[#ef8557]/40 bg-[#ef8557]/15 text-[#226192]'
+                          ? 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)]'
+                          : 'border-[var(--color-accent)]/40 bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
                       }`}
                     >
                       {isExpired ? 'EXPIRED' : inv.status}
                     </span>
                   </div>
 
-                  <p className="text-xs text-[#226192]/70 flex items-center gap-1.5 flex-wrap">
+                  <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 flex-wrap">
                     <span>Invited by</span>
-                    <strong className="text-[#226192] font-medium">
+                    <strong className="text-[var(--color-text)] font-medium">
                       {inv.inviterName || 'Project Owner'}
                     </strong>
                     <span>to contribute as an {inv.role.toLowerCase()}.</span>
                   </p>
 
-                  <div className="flex items-center gap-3 text-[11px] text-[#226192]/60 font-mono pt-0.5">
+                  <div className="flex items-center gap-3 text-[11px] text-[var(--color-text-muted)] font-mono pt-0.5">
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
                       <span>
@@ -339,16 +339,16 @@ export const InvitationsPage: React.FC = () => {
                       <button
                         onClick={() => handleAccept(inv.id)}
                         disabled={isAnyActionRunning}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[#ef8557] hover:bg-[#ef8557]/90 active:bg-[#ef8557]/80 px-4 py-2 text-xs font-semibold text-[#226192] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] active:scale-[0.98] px-4 py-2 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isOperating && isAccepting ? (
                           <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin text-[#226192]" />
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
                             <span>Accepting...</span>
                           </>
                         ) : (
                           <>
-                            <CheckCircle2 className="h-3.5 w-3.5 text-[#226192]" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                             <span>Accept</span>
                           </>
                         )}
@@ -357,7 +357,7 @@ export const InvitationsPage: React.FC = () => {
                       <button
                         onClick={() => handleReject(inv.id)}
                         disabled={isAnyActionRunning}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-medium text-[#226192]/70 hover:border-[#226192] hover:text-[#226192] transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557] disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-text)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         {isOperating && isRejecting ? (
                           <>
@@ -375,13 +375,13 @@ export const InvitationsPage: React.FC = () => {
                   ) : isAccepted ? (
                     <Link
                       to={`/projects/${inv.projectId}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#226192]/20 bg-[#eae6ed] px-4 py-2 text-xs font-semibold text-[#226192] hover:border-[#226192] hover:bg-[#226192]/5 transition-colors focus:outline-none focus:ring-2 focus:ring-[#ef8557]"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-raised)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] shadow-sm"
                     >
-                      <ShieldCheck className="h-3.5 w-3.5 text-[#ef8557]" />
+                      <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-accent)]" />
                       <span>View Project</span>
                     </Link>
                   ) : (
-                    <span className="text-xs text-[#226192]/50 italic font-mono">No action available</span>
+                    <span className="text-xs text-[var(--color-text-muted)] italic font-mono">No action available</span>
                   )}
                 </div>
               </div>

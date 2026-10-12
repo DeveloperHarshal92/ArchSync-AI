@@ -5,7 +5,7 @@ import { Footer } from './Footer';
 
 export const AppLayout: React.FC = () => {
   return (
-    <div className="flex min-h-screen flex-col bg-[#eae6ed] text-[#226192]">
+    <div className="flex min-h-screen flex-col bg-[var(--color-bg)] text-[var(--color-text)] transition-colors duration-200">
       {/* F14: Skip navigation link (WCAG 2.4.1) */}
       <a href="#main-content" className="skip-link">
         Skip to main content

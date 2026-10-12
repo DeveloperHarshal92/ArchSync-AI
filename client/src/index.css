@@ -5,11 +5,9 @@
 @tailwind utilities;
 
 /* =========================================================
-   F14 — UX & ACCESSIBILITY GLOBAL STYLES
-   Strict 3-Color Brand Palette:
-   - Warm Ivory: #eae6ed
-   - Deep Editorial Blue: #226192
-   - Coral Orange: #ef8557
+   ARCHSYNC AI — SEAMLESS DUAL-THEME SYSTEM (LIGHT & DARK)
+   - Light: Warm Ivory (#F8F7F4), Clean White (#FFFFFF), Coral-Orange (#EB7844)
+   - Dark: Obsidian Basalt (#090907), Deep Slate (#11110F), Metallic Bronze (#B99D73)
    ========================================================= */
 
 :root {
@@ -17,49 +15,73 @@
     Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   color-scheme: light;
 
-  /* Brand core tokens */
-  --color-warm-ivory: #eae6ed;
-  --color-editorial-blue: #226192;
-  --color-coral: #ef8557;
+  /* LIGHT THEME TOKENS (Default root) */
+  --color-bg: #F8F7F4;
+  --color-surface: #FFFFFF;
+  --color-surface-raised: #F3F2EE;
+  --color-surface-card: #FFFFFF;
+  --color-surface-subtle: rgba(235, 120, 68, 0.04);
+  --color-text: #18181B;
+  --color-text-muted: #64748B;
+  --color-border: #E4E4E7;
+  --color-border-subtle: #F1F1F4;
+  --color-accent: #EB7844;
+  --color-accent-hover: #D96634;
+  --color-accent-deep: #C25424;
+  --color-focus: #EB7844;
+  --color-technical: #2563EB;
+  --color-canvas-bg: #F5F4F0;
+  --color-canvas-dot: rgba(0, 0, 0, 0.08);
 
-  /* Semantic surface foundations (strictly opacity layering on Warm Ivory #eae6ed) */
-  --color-canvas-bg: #eae6ed;
-  --color-surface-base: #eae6ed;
-  --color-surface-deep: #eae6ed;
-  --color-surface-elevated: rgba(34, 97, 146, 0.05);
-  --color-surface-subtle: rgba(34, 97, 146, 0.025);
-
-  /* Semantic structural borders */
-  --color-border-structural: rgba(34, 97, 146, 0.20);
-  --color-border-subtle: rgba(34, 97, 146, 0.10);
-  --color-border-hover: rgba(34, 97, 146, 0.35);
-
-  /* Brand focus & action (verified contrast) */
-  --focus-ring-color: #ef8557;       /* Coral Orange */
+  /* Focus rings */
+  --focus-ring-color: #EB7844;
   --focus-ring-offset: 2px;
   --focus-ring-width: 2px;
 
-  --color-brand-action: #226192;     /* Deep Editorial Blue with #eae6ed text: 5.42:1 (WCAG AA >4.5:1) */
-  --color-brand-action-hover: rgba(34, 97, 146, 0.88);
-
-  /* Motion timing & spring curves */
+  /* Spring curves */
   --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 100ms;
   --duration-normal: 200ms;
   --duration-smooth: 300ms;
 }
 
+/* DARK THEME TOKENS */
+.dark {
+  color-scheme: dark;
+
+  --color-bg: #090907;
+  --color-surface: #11110F;
+  --color-surface-raised: #191814;
+  --color-surface-card: #141310;
+  --color-surface-subtle: rgba(185, 157, 115, 0.04);
+  --color-text: #F2EEE7;
+  --color-text-muted: #B9B1A5;
+  --color-border: rgba(185, 157, 115, 0.22);
+  --color-border-subtle: rgba(185, 157, 115, 0.12);
+  --color-accent: #B99D73;
+  --color-accent-hover: #D6B887;
+  --color-accent-deep: #6C5636;
+  --color-focus: #D6B887;
+  --color-technical: #60A5FA;
+  --color-canvas-bg: #090907;
+  --color-canvas-dot: rgba(185, 157, 115, 0.12);
+
+  --focus-ring-color: #D6B887;
+}
+
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background-color: #eae6ed;
-  color: #226192;
+  background-color: var(--color-bg);
+  color: var(--color-text);
   font-family: Montserrat, system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /* ---------------------------------------------------------
-   SKIP NAVIGATION LINK — hidden until focused (WCAG 2.4.1)
+   SKIP NAVIGATION LINK (WCAG 2.4.1)
    --------------------------------------------------------- */
 .skip-link {
   position: absolute;
@@ -69,13 +91,17 @@ body {
   z-index: 9999;
   padding: 0.5rem 1.25rem;
   border-radius: 0 0 0.5rem 0.5rem;
-  background: #ef8557;
-  color: #226192;
+  background: var(--color-accent);
+  color: #FFFFFF;
   font-size: 0.875rem;
   font-weight: 700;
   white-space: nowrap;
   text-decoration: none;
   transition: top 0.15s ease;
+}
+
+.dark .skip-link {
+  color: #090907;
 }
 
 .skip-link:focus {
@@ -85,7 +111,6 @@ body {
 
 /* ---------------------------------------------------------
    GLOBAL :focus-visible RING (WCAG 2.4.7 / 2.4.11)
-   Coral Orange boundary indicator.
    --------------------------------------------------------- */
 *:focus-visible {
   outline: var(--focus-ring-width) solid var(--focus-ring-color) !important;
@@ -93,14 +118,12 @@ body {
   border-radius: 4px;
 }
 
-/* Remove focus ring when using pointer (not keyboard) */
 *:focus:not(:focus-visible) {
   outline: none;
 }
 
 /* ---------------------------------------------------------
    REDUCED MOTION (WCAG 2.3.3)
-   Disable all CSS transitions/animations when user prefers.
    --------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -112,7 +135,6 @@ body {
     scroll-behavior: auto !important;
   }
 
-  /* React Flow canvas animations */
   .react-flow__edge-path {
     animation: none !important;
     stroke-dashoffset: 0 !important;
@@ -120,120 +142,53 @@ body {
 }
 
 /* ---------------------------------------------------------
-   EDITORIAL BUTTON STYLES (WCAG 1.4.3 AA)
-   - .btn-primary: Deep Editorial Blue (#226192) with Warm Ivory (#eae6ed) text & border
-   - .btn-coral / .btn-primary-cyan: Coral Orange (#ef8557) with Deep Editorial Blue (#226192) text
+   BUTTON ARCHITECTURE (Tactile, Button-in-Button)
    --------------------------------------------------------- */
 .btn-primary {
-  background: #226192 !important;
-  color: #eae6ed !important;
-  border: 1px solid rgba(34, 97, 146, 0.40) !important;
-  background-image: none !important;
-  transition: background-color var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)),
-              transform var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)) !important;
+  background: var(--color-accent) !important;
+  color: #FFFFFF !important;
+  font-weight: 600 !important;
+  border: 1px solid var(--color-accent) !important;
+  transition: background-color var(--duration-fast, 100ms) var(--ease-spring),
+              transform var(--duration-fast, 100ms) var(--ease-spring),
+              border-color var(--duration-fast, 100ms) var(--ease-spring) !important;
+}
+
+.dark .btn-primary {
+  color: #090907 !important;
+  border: 1px solid rgba(214, 184, 135, 0.4) !important;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: rgba(34, 97, 146, 0.90) !important;
-  border-color: #226192 !important;
+  background: var(--color-accent-hover) !important;
+  border-color: var(--color-text) !important;
 }
 
 .btn-primary:active:not(:disabled) {
   transform: scale(0.98);
 }
 
-.btn-coral,
-.btn-primary-cyan {
-  background: #ef8557 !important;
-  color: #226192 !important;
-  font-weight: 700 !important;
-  background-image: none !important;
-  transition: background-color var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)),
-              transform var(--duration-fast, 100ms) var(--ease-spring, cubic-bezier(0.16, 1, 0.3, 1)) !important;
+.btn-secondary {
+  background: var(--color-surface) !important;
+  color: var(--color-text) !important;
+  border: 1px solid var(--color-border) !important;
+  transition: background-color var(--duration-fast, 100ms) var(--ease-spring),
+              border-color var(--duration-fast, 100ms) var(--ease-spring) !important;
 }
 
-.btn-coral:hover:not(:disabled),
-.btn-primary-cyan:hover:not(:disabled) {
-  background: rgba(239, 133, 87, 0.90) !important;
-}
-
-.btn-coral:active:not(:disabled),
-.btn-primary-cyan:active:not(:disabled) {
-  transform: scale(0.98);
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface-raised) !important;
+  border-color: var(--color-accent) !important;
 }
 
 /* ---------------------------------------------------------
-   LIVE REGION — visually hidden but announced by AT
-   --------------------------------------------------------- */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
-}
-
-/* Focusable sr-only (skip links, etc.) */
-.sr-only-focusable:focus,
-.sr-only-focusable:active {
-  position: static;
-  width: auto;
-  height: auto;
-  padding: inherit;
-  margin: inherit;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-}
-
-/* ---------------------------------------------------------
-   LIVE ANNOUNCEMENT REGION
-   --------------------------------------------------------- */
-#a11y-announcer {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-  pointer-events: none;
-}
-
-/* ---------------------------------------------------------
-   CANVAS RESPONSIVE OVERRIDES
+   CANVAS STYLING & REACT FLOW
    --------------------------------------------------------- */
 .archsync-canvas {
   min-width: 0;
-  background-color: #eae6ed;
+  background-color: var(--color-canvas-bg);
 }
 
-/* Mobile panel drawer backdrop */
-.panel-drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(34, 97, 146, 0.35);
-  backdrop-filter: blur(4px);
-  z-index: 40;
-}
-
-/* ---------------------------------------------------------
-   DIALOG / MODAL BASE
-   --------------------------------------------------------- */
-[role='dialog'] {
-  max-height: 90dvh;
-  overflow-y: auto;
-}
-
-/* ---------------------------------------------------------
-   REACT FLOW — keyboard focus indicators on nodes
-   --------------------------------------------------------- */
 .react-flow__node:focus-within {
   outline: 2px solid var(--focus-ring-color);
   outline-offset: 3px;
@@ -247,19 +202,42 @@ body {
 }
 
 /* ---------------------------------------------------------
-   SCROLLBAR — styled within approved palette opacities
+   SCROLLBAR (Adaptive Theme Tone)
    --------------------------------------------------------- */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(34, 97, 146, 0.25);
+  background: var(--color-border);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(34, 97, 146, 0.40);
+  background: var(--color-accent);
+}
+
+/* ---------------------------------------------------------
+   LENIS SMOOTH SCROLLING (Applied only when html has lenis)
+   --------------------------------------------------------- */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
 }

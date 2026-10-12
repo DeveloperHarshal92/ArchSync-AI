@@ -1,210 +1,637 @@
-# ArchSync AI — Refined Canonical Design System
+# ArchSync AI — Canonical Design System
 
-**Document:** `docs/ui-ux/DESIGN_SYSTEM.md`  
-**Phase:** Phase 1 — UI/UX Discovery & Design Architecture  
-**Role:** Design Systems Engineer & Senior UI Architect  
-**Authority:** Single Source of Truth for Visual Design, Component Tokens, and Implementation Tokens  
-**Applies To:** `@archsync/client`, `@archsync/shared`, Tailwind Configuration, Global CSS Tokens  
+**Document:** `DESIGN_SYSTEM.md`  
+**Version:** 3.0.0  
+**Status:** Canonical implementation-level design system  
+**Applies to:** React client, shared UI components, Tailwind CSS, global styles, architecture studio, and authenticated application screens
 
----
+## 1. Design philosophy
 
-## 1. System Philosophy: "Precision Engineering Studio"
+ArchSync AI combines premium editorial design with the precision of a professional software architecture tool.
 
-ArchSync AI's design system bridges rigorous architectural precision with modern creative fluidity. Built specifically for cloud architects and distributed systems engineers, it adheres to five visual tenets:
+The visual identity has four principles:
 
-1. **Midnight Observatory Aesthetic:** Deep slate surfaces (`#0a0f1d`, `#0f172a`) eliminate eye strain during multi-hour diagramming sessions while allowing vibrant node semantics to stand out with high contrast.
-2. **Singular High-Contrast Accent:** An uncompromising **Cyan / Sky Blue** identity (`#06b6d4`, `#0891b2`) calibrated to achieve WCAG 1.4.3 (>4.5:1) compliance against dark surfaces. Strictly no generic purple/magenta AI gradients.
-3. **Structured Spatial Hierarchy:** Clear three-layer elevation: Base Canvas (`z-0`) → Floating Workspaces (`z-30`) → Docked Context Drawers (`z-40`) → Overlays & Dialogs (`z-50`).
-4. **Tabular Information Density:** Monospace typography (`JetBrains Mono`) for version tags, coordinates, latencies, and node IDs; crisp geometric sans (`Inter`) for UI controls and labels.
-5. **Restrained Tactile Motion:** Snappy CSS spring physics (`cubic-bezier(0.16, 1, 0.3, 1)`) for micro-interactions without runtime library overhead.
+1. **Editorial clarity:** Strong typography, thoughtful whitespace, and purposeful layouts.
+2. **Technical precision:** Clear node relationships, structured panels, and readable architecture data.
+3. **Functional restraint:** Minimal decoration, purposeful color, and no fake interactions.
+4. **Operational trust:** Accurate save states, clear validation feedback, and consistent interface behavior.
 
----
+The application must not look like a generic dashboard template or a physical architecture portfolio.
 
-## 2. Token Architecture & Foundations
+## 2. Relationship to other documents
 
-### 2.1 Surfaces & Backgrounds
+This file defines implementation-level design tokens and component standards.
 
-| Design Token | CSS Custom Property | Hex Value | Role & Applied Context |
-| :--- | :--- | :--- | :--- |
-| **`canvas-bg`** | `--color-canvas-bg` | `#0a0f1d` | React Flow primary canvas grid backdrop |
-| **`surface-base`** | `--color-surface-base` | `#0f172a` | Global application shell, main dashboard body |
-| **`surface-deep`** | `--color-surface-deep` | `#020617` | Dropdowns, dialog backdrops, command popovers |
-| **`surface-elevated`**| `--color-surface-elevated`| `#1e293b` | Floating toolbars, docked sidebars, node cards |
-| **`surface-subtle`** | `--color-surface-subtle` | `#334155` | Button hover states, canvas dots, inner card wells |
+- `DESIGN.md` is the authority for brand identity and overall visual direction.
+- `docs/ui-ux/UI_UX_PRD.md` defines product requirements.
+- `docs/ui-ux/SCREEN_SPECS.md` defines route-level layouts.
+- `docs/ui-ux/INTERACTION_SPEC.md` defines interaction behavior.
+- `docs/ui-ux/UI_TESTS.md` defines acceptance criteria.
 
-### 2.2 Borders & Structural Dividers
+If a color or typography value conflicts with `DESIGN.md`, update the implementation token to match `DESIGN.md`.
 
-| Design Token | CSS Custom Property | Hex / Alpha Value | Role |
-| :--- | :--- | :--- | :--- |
-| **`border-structural`**| `--color-border-structural` | `rgba(30, 41, 59, 0.8)` (`slate-800/80`)| Standard 1px panel boundaries & card perimeters |
-| **`border-subtle`**    | `--color-border-subtle`     | `rgba(51, 65, 85, 0.6)` (`slate-700/60`)| Internal dividers, table row lines, input frames |
-| **`border-hover`**     | `--color-border-hover`      | `#475569` (`slate-600`)                 | Interactive card hover, button outline hover |
-| **`border-focus`**     | `--focus-ring-color`        | `#06b6d4` (`cyan-500`)                  | Accessible 2px keyboard focus ring |
+Do not maintain two competing brand palettes or create a separate theme merely because an older component uses different colors.
 
-### 2.3 Typographic Scale & Hierarchy
+## 3. Brand foundations
 
-```css
-/* Font Stacks */
---font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
---font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-```
+### 3.1 Canonical brand tokens
 
-| Type Role | Font Family | Size | Weight | Line Height | Tracking | Context |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Display / Hero** | Sans | `32px` (2rem) | `800` (Extrabold)| `1.2` | `-0.025em`| Auth hero heading, splash titles |
-| **Heading 1** | Sans | `22px` (1.375rem)| `700` (Bold) | `1.25`| `-0.02em` | Studio title, Dashboard heading |
-| **Heading 2** | Sans | `16px` (1rem) | `600` (Semibold)| `1.3` | `-0.015em`| Panel drawers, modal dialog titles |
-| **Heading 3** | Sans | `14px` (0.875rem)| `600` (Semibold)| `1.4` | `-0.01em` | Node card title, category group headers |
-| **Body Default** | Sans | `13px` (0.8125rem)| `400` (Regular) | `1.5` | `normal` | Form labels, description text, chat body |
-| **Body Small** | Sans | `12px` (0.75rem) | `400` (Regular) | `1.4` | `normal` | Metadata, helper hints, timestamps |
-| **Tabular Data** | Mono | `11px` (0.6875rem)| `500` (Medium) | `1.2` | `0` | Node IDs, Coordinates `(x, y)`, latency `ms` |
-| **Badge Stamp** | Sans | `9px` (0.5625rem)| `700` (Bold) | `1.0` | `+0.06em`| Node category pills, uppercase role tags |
+| Token | CSS custom property | Value | Usage |
+|---|---|---|---|
+| Warm Ivory | `--color-ivory` | `#eae6ed` | Primary light surfaces |
+| Deep Editorial Blue | `--color-blue` | `#226192` | Brand emphasis and structural accents |
+| Coral Orange | `--color-coral` | `#ef8557` | Primary actions and restrained highlights |
 
-### 2.4 Brand & Interactive Accent Tokens (Verified Contrast Ratios)
+These values are canonical. Do not substitute the previous cyan-only brand identity.
 
-| Token Name | Hex Code | Purpose | Verified Foreground / Background Contrast & Standards |
-| :--- | :--- | :--- | :--- |
-| **`brand-action` (Default)** | `#0e7490` (`cyan-700`) | Primary button fill with white text (`.btn-primary`). | **5.36:1** with `#ffffff` text (Passes WCAG AA normal text threshold ≥ 4.5:1). |
-| **`brand-action-hover`** | `#155e75` (`cyan-800`) | Primary button active/hover state. | **7.12:1** with `#ffffff` text (Passes WCAG AAA). |
-| **`brand-action-cyan`** | `#06b6d4` (`cyan-500`) | High-luminance accent button (`.btn-primary-cyan`) with dark text. | **8.31:1** with `#020617` (Slate-950) text (Passes WCAG AAA ≥ 7:1). |
-| **`brand-focus`** | `#06b6d4` (`cyan-500`) | Global focus ring (`*:focus-visible`) on canvas backdrop (`#0a0f1d`). | **7.87:1** against `#0a0f1d` (Exceeds WCAG 1.4.11 UI boundary ≥ 3:1). |
-| **`brand-boundary`** | `#0891b2` (`cyan-600`) | Active card borders / outlines on `#0a0f1d`. *(Note: 3.68:1 with white text, therefore used for UI boundaries, not white text).* | **4.69:1** against `#0f172a` canvas (Passes UI component boundary ≥ 3:1). |
-| **`brand-highlight`** | `rgba(6, 182, 212, 0.15)` | Active node card halo ring, selected edge halo glow. | Ambient focus halo. |
+### 3.2 Supporting tokens
 
-### 2.5 Semantic Status Colors
-
-| State | Background Tint | Border Tint | Text Color | Purpose |
-| :--- | :--- | :--- | :--- | :--- |
-| **Success** | `rgba(16, 185, 129, 0.12)` | `rgba(16, 185, 129, 0.35)` | `#34d399` (`emerald-400`)| Graph valid, autosaved, connection clean |
-| **Warning** | `rgba(245, 158, 11, 0.12)` | `rgba(245, 158, 11, 0.35)` | `#fbbf24` (`amber-400`)  | Latency alert, isolated nodes, unsaved draft |
-| **Error** | `rgba(239, 68, 68, 0.12)`  | `rgba(239, 68, 68, 0.35)`  | `#f87171` (`rose-400`)   | Cycles detected, sync conflict (409), offline |
-| **Info / AI** | `rgba(14, 165, 233, 0.12)` | `rgba(14, 165, 233, 0.35)` | `#38bdf8` (`sky-400`)    | AI advisory findings, tips, notifications |
-
----
-
-## 3. Architecture Node Type Specification
-
-Every node in `@archsync/shared` (`ArchitectureNodeType`) is mapped to a calibrated icon, accent color, and badge:
-
-```
-┌─────────────────┬──────────────────┬──────────────┬────────────────────────────────────────┐
-│ Node Type       │ Lucide Icon      │ Accent Hex   │ Visual Semantic Role                   │
-├─────────────────┼──────────────────┼──────────────┼────────────────────────────────────────┤
-│ client          │ Monitor          │ #38bdf8      │ End-user browser / workstation         │
-│ web-app         │ Globe            │ #06b6d4      │ Frontend single-page / SSR application │
-│ mobile-app      │ Smartphone       │ #3b82f6      │ iOS / Android native app client        │
-│ api-gateway     │ Network          │ #a855f7      │ Ingress proxy, router, rate limiter    │
-│ server          │ Server           │ #6366f1      │ Core backend service or monolith       │
-│ microservice    │ Boxes            │ #8b5cf6      │ Domain microservice container          │
-│ database        │ Database         │ #10b981      │ Primary relational / NoSQL persistence │
-│ cache           │ Zap              │ #f59e0b      │ In-memory caching layer (Redis)        │
-│ queue           │ Layers           │ #f97316      │ Event stream / message broker (Kafka)  │
-│ external-api    │ CloudUpload      │ #ec4899      │ Third-party SaaS webhook / integration │
-│ cloud-service   │ Cloud            │ #0284c7      │ Managed cloud infrastructure (S3/IAM)  │
-└─────────────────┴──────────────────┴──────────────┴────────────────────────────────────────┘
-```
-
----
-
-## 4. Component Primitives Specifications
-
-### 4.1 Buttons & Interactive Triggers
-
-1. **Primary Action Button (`.btn-primary`):**
-   - Solid fill: `#0891b2` (`cyan-600`), no gradient overlay.
-   - Text: `text-white font-semibold text-xs tracking-wide`.
-   - Padding: `px-3.5 py-2`, radius: `rounded-xl` (`10px`).
-   - Tactile feedback: `active:scale-[0.98] transition-transform duration-100`.
-   - Keyboard: 2px cyan `:focus-visible` ring with 2px offset.
-2. **Secondary / Outline Button:**
-   - Fill: `bg-slate-900/80 hover:bg-slate-800`.
-   - Border: `border border-slate-800 hover:border-slate-700`.
-   - Text: `text-slate-300 hover:text-white`.
-3. **Destructive Button:**
-   - Fill: `bg-rose-500/10 hover:bg-rose-500/20`.
-   - Border: `border border-rose-500/30`.
-   - Text: `text-rose-400 hover:text-rose-300`.
-4. **Icon Action Button (Canvas Toolbar & Kebab Menus):**
-   - Size: `32px x 32px` (`w-8 h-8`), centered icon (`w-4 h-4`).
-   - Border: `border border-slate-800 bg-slate-900/90`.
-   - Touch target: Minimum `44px x 44px` invisible tap target on mobile.
-
-### 4.2 Form Inputs, Textareas & Selects
-
-- **Container:** High-contrast label above input (`text-xs font-semibold uppercase tracking-wider text-slate-300`).
-- **Input Surface:** `bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-100 placeholder-slate-500`.
-- **Focus State:** `focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 focus:outline-none`.
-- **Disabled State:** `disabled:opacity-50 disabled:cursor-not-allowed bg-slate-950/40`.
-- **Error State:** `border-rose-500/60 focus:border-rose-500 focus:ring-rose-500/40`.
-
-### 4.3 Architecture Node Card (`ArchitectureNodeComponent`)
-
-- **Anatomy:**
-  ```text
-  ┌────────────────────────────────────────────────────────┐
-  │ [● top port]                                           │
-  │ [Icon] TYPE BADGE                    Category Tag     │
-  │ ────────────────────────────────────────────────────── │
-  │ Component Title (Bold, break-words)                    │
-  │ Optional description (truncated, 2 lines max)          │
-  │ [Tech Stack Pill]                                      │
-  │ [● left port]                          [● right port]  │
-  │ [● bottom port]                                        │
-  └────────────────────────────────────────────────────────┘
-  ```
-- **Dimensions:** Min width `220px`, max width `260px`.
-- **Surfaces:**
-  - Idle: `bg-slate-900/95 border border-slate-800 shadow-lg shadow-black/40 rounded-2xl`.
-  - Hover: `border-slate-700 bg-slate-900`.
-  - Selected: `border-cyan-400 ring-2 ring-cyan-400/80 shadow-xl shadow-cyan-500/20`.
-- **Ports (4 Cardinal Handles):**
-  - Diameter: `12px` (`w-3 h-3`), border `border-2 border-slate-900`, fill `bg-cyan-400`.
-  - Hover feedback: `group-hover:scale-125 transition-transform duration-100`.
-
-### 4.4 Modals, Dialogs & Panel Drawers
-
-- **Backdrop:** `fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50`.
-- **Modal Box:** `rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl max-w-md w-full`.
-- **Docked Panel Drawer (Inspector, AI Co-Pilot, Validation):**
-  - Dock: Fixed right edge of canvas container, full canvas height (`h-full`).
-  - Width: `320px` (Properties/Validation), `384px` (AI Co-Pilot).
-  - Border: `border-l border-slate-800/80 bg-slate-950/95 backdrop-blur-md`.
-  - Header: 48px sticky header with icon, title, close button, and tab actions.
-
----
-
-## 5. Motion Guidelines & Spring Dynamics
-
-ArchSync AI relies strictly on lightweight, GPU-accelerated CSS transitions:
+Use the following supporting tokens to build readable application surfaces.
 
 ```css
-/* Motion Timing Tokens */
---ease-spring: cubic-bezier(0.16, 1, 0.3, 1);  /* Snappy ease-out with slight momentum */
---duration-fast: 100ms;                        /* Buttons, handles, badges */
---duration-normal: 200ms;                      /* Panel drawers, toolbars */
---duration-smooth: 300ms;                      /* Viewport fit, modal reveals */
+:root {
+  /* Brand */
+  --color-ivory: #eae6ed;
+  --color-blue: #226192;
+  --color-coral: #ef8557;
+
+  /* Light surfaces */
+  --color-page: #eae6ed;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f5f2f5;
+  --color-surface-raised: #ffffff;
+
+  /* Text */
+  --color-text-primary: #202027;
+  --color-text-secondary: #595660;
+  --color-text-muted: #706a75;
+
+  /* Borders */
+  --color-border: #d9d3dc;
+  --color-border-strong: #bcb4c2;
+
+  /* Interactive */
+  --color-action: #226192;
+  --color-action-hover: #194b73;
+  --color-focus: #226192;
+  --color-highlight: #ef8557;
+
+  /* Feedback */
+  --color-success: #216e4e;
+  --color-warning: #8a5200;
+  --color-error: #b42318;
+  --color-info: #226192;
+
+  /* Typography */
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-interface: "Montserrat", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+  /* Layout */
+  --height-topbar: 48px;
+  --width-palette: 240px;
+  --width-inspector: 340px;
+
+  /* Shape */
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 14px;
+
+  /* Motion */
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-smooth: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
 ```
 
-### 5.1 Rules for Motion
-1. **Never animate layout properties (`top`, `left`, `width`, `height`).** Always use `transform` (`translate`, `scale`) and `opacity`.
-2. **Never delay user input.** Form controls and port handles must react in `< 100ms`.
-3. **Respect `prefers-reduced-motion`:**
-   ```css
-   @media (prefers-reduced-motion: reduce) {
-     *, *::before, *::after {
-       animation-duration: 0.01ms !important;
-       transition-duration: 0.01ms !important;
-       scroll-behavior: auto !important;
-     }
-   }
-   ```
+These supporting colors are implementation defaults. Test their contrast in the actual rendered combinations. Adjust individual text or status tokens when necessary to meet accessibility requirements without changing the canonical brand colors.
 
----
+### 3.3 Token ownership
 
-## 6. Strict Banned Anti-Patterns
+Define shared tokens in the existing global stylesheet or established token module.
 
-1. **NO Neon Glow Floods:** Never apply oversaturated outer glows or AI-purple gradients to cards or buttons. Glows are strictly reserved for active canvas selection states.
-2. **NO Viewport-Breaking Footers:** Never render the global marketing footer inside the studio canvas layout.
-3. **NO Internal Developer Jargon in UI:** Never expose internal epic names (`F03`, `F04`, `F12`), validator names (`Zod`), or raw test descriptions in customer-facing interfaces.
-4. **NO Low-Contrast Text:** Never use text lighter than `#94a3b8` on dark backgrounds for readable body text.
-5. **NO Unstyled Browser Scrollbars:** All scrollable drawers must use slim 6px scrollbars (`slate-800` track, `slate-600` thumb).
+- Do not duplicate the palette in every component.
+- Do not hardcode alternate brand colors in page-specific CSS.
+- Use semantic token names instead of repeatedly referencing raw hex values.
+- Keep Tailwind configuration and CSS custom properties aligned.
+- Prefer existing project conventions over creating a parallel token infrastructure.
+
+## 4. Theme and surface policy
+
+### 4.1 Marketing and public pages
+
+Use the light editorial design system.
+
+- Warm Ivory page backgrounds.
+- White or muted light content surfaces.
+- Deep blue structural emphasis.
+- Coral for primary actions and selected highlights.
+- Dark, readable typography.
+- Product screenshots and software architecture illustrations.
+
+Avoid oversized decorative imagery, excessive blur, and generic stock photography.
+
+### 4.2 Authenticated application
+
+Use the same light editorial system for the dashboard, project catalog, invitations, and settings.
+
+- Clear navigation.
+- Compact data presentation.
+- Restrained borders.
+- Readable tables and metadata.
+- Consistent form controls and buttons.
+
+Do not create a separate palette for authenticated routes.
+
+### 4.3 Architecture studio
+
+The studio must use the canonical brand tokens for shared controls and interface chrome.
+
+The canvas may use a dark technical surface when it improves diagram readability. This is a surface treatment, not a second brand identity.
+
+Example canvas tokens:
+
+```css
+:root {
+  --color-canvas-bg: #17191e;
+  --color-canvas-grid: rgba(255, 255, 255, 0.07);
+  --color-canvas-node: #242830;
+  --color-canvas-node-selected: #303641;
+  --color-canvas-border: #454b56;
+  --color-canvas-text: #f5f4f6;
+  --color-canvas-text-muted: #c1c4cc;
+}
+```
+
+Use these tokens only for the graph surface and components that must remain legible on it.
+
+The palette, toolbar, inspector, dialogs, and buttons must retain consistent brand identity. Do not automatically make every application screen dark.
+
+### 4.4 Theme switching
+
+Do not add a theme toggle unless the application already supports it or an explicit product requirement authorizes it.
+
+The presence of dark screenshots does not imply that users need a persistent theme preference.
+
+## 5. Typography system
+
+### 5.1 Font families
+
+- Display: Cormorant Garamond.
+- Interface: Montserrat.
+- Technical metadata: JetBrains Mono.
+
+Use reliable system fallbacks.
+
+```css
+:root {
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-interface: "Montserrat", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+```
+
+### 5.2 Type scale
+
+| Role | Desktop size | Weight | Usage |
+|---|---:|---:|---|
+| Marketing hero | 52–76px | 400–500 | Landing-page headline |
+| Editorial section heading | 36–52px | 400–500 | Major marketing sections |
+| Page heading | 28–36px | 500–600 | Dashboard and project pages |
+| Panel heading | 16–20px | 600 | Inspector, dialogs, tool panels |
+| Component title | 13–15px | 600 | Architecture nodes and list items |
+| Body text | 13–15px | 400 | General interface copy |
+| Supporting text | 12–14px | 400 | Descriptions and helper text |
+| Technical metadata | 11–12px | 400–500 | IDs, version values, timestamps |
+| Small status label | 11–12px | 600 | Badges and status indicators |
+
+These sizes are starting points, not permission to make essential text unreadably small.
+
+### 5.3 Typography rules
+
+- Use serif typography for editorial display headings.
+- Use the interface font for controls, forms, tables, and general application text.
+- Use monospace for technical identifiers where it adds clarity.
+- Keep body text readable against its actual background.
+- Avoid excessive uppercase labels.
+- Avoid long all-caps paragraphs.
+- Use fluid sizing where necessary for responsive layouts.
+
+## 6. Spacing and layout tokens
+
+Use a consistent spacing scale.
+
+```css
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+}
+```
+
+### Layout guidelines
+
+- Marketing container: approximately 1280px maximum width.
+- Desktop content gutters: 32–56px.
+- Tablet content gutters: approximately 24px.
+- Mobile content gutters: 16–20px.
+- Marketing section spacing: approximately 64–112px on desktop.
+- Studio toolbar: approximately 48px high.
+- Component palette: approximately 240px wide on suitable desktop screens.
+- Inspector: approximately 340px wide on suitable desktop screens.
+
+Use flexible sizing and available viewport dimensions rather than treating these values as rigid constraints.
+
+## 7. Elevation, borders, and shape
+
+### 7.1 Border tokens
+
+```css
+:root {
+  --border-subtle: #e6e1e8;
+  --border-default: #d9d3dc;
+  --border-strong: #bcb4c2;
+  --border-interactive: #226192;
+}
+```
+
+Use borders to define structure, not to decorate every container.
+
+### 7.2 Radius scale
+
+| Token | Value | Usage |
+|---|---:|---|
+| Small | 4px | Compact badges and small technical indicators |
+| Control | 8px | Buttons, inputs, selects |
+| Card | 12px | Project cards and feature cards |
+| Panel | 14px | Large workspace panels |
+| Pill | 999px | Compact status badges where appropriate |
+
+Avoid mixing numerous unrelated radii across the same screen.
+
+### 7.3 Shadows
+
+Use restrained shadows on light surfaces.
+
+```css
+:root {
+  --shadow-card:
+    0 2px 8px rgba(32, 32, 39, 0.05),
+    0 8px 24px rgba(32, 32, 39, 0.04);
+
+  --shadow-popover:
+    0 12px 32px rgba(32, 32, 39, 0.12);
+}
+```
+
+Use stronger elevation only for actual overlays, floating menus, and selected objects where it improves hierarchy.
+
+Avoid persistent neon glows and large decorative shadows.
+
+## 8. Button system
+
+### 8.1 Primary button
+
+Use for the most important action in a context.
+
+- Background: canonical deep blue or an approved accessible brand-action token.
+- Text: high-contrast text color.
+- Radius: 8px.
+- Padding: approximately 12–16px horizontally and 8–12px vertically.
+- Clear hover, active, disabled, loading, and focus states.
+
+The coral token may be used for primary actions where the actual contrast combination passes accessibility requirements. Do not assume coral with white text is automatically accessible.
+
+### 8.2 Secondary button
+
+- Light or transparent surface.
+- Clear border.
+- Readable dark text.
+- Visible hover and focus states.
+
+### 8.3 Tertiary button
+
+Use for low-emphasis actions that remain discoverable.
+
+### 8.4 Destructive button
+
+- Distinguishable destructive color.
+- Clear action label.
+- Appropriate confirmation for irreversible or high-impact operations.
+
+### 8.5 Icon buttons
+
+- Accessible name.
+- Visible focus indicator.
+- Tooltip where an icon's meaning is not obvious.
+- Appropriate hit area.
+- No decorative or inert controls styled as buttons.
+
+Target a 44 × 44px touch area on mobile wherever practical.
+
+## 9. Form controls
+
+Use consistent styling for text inputs, textareas, selects, checkboxes, and toggles.
+
+Requirements:
+
+- Persistent labels.
+- Readable input text.
+- Clear placeholder contrast.
+- Visible focus state.
+- Disabled styling.
+- Invalid-state styling.
+- Field-specific error messages.
+- Appropriate autocomplete and input types.
+- Accessible icon controls.
+- No dependence on placeholder text as the only label.
+
+Use the existing form library or component conventions where available.
+
+## 10. Cards, tables, and metadata
+
+### Cards
+
+Use cards for meaningful entities such as projects, templates, findings, and collaboration summaries.
+
+Each card should have:
+- A clear title.
+- Relevant supporting information.
+- An obvious primary interaction, when interactive.
+- Consistent padding.
+- Appropriate focus and hover behavior.
+
+Do not turn every text section into a card.
+
+### Tables
+
+- Keep column labels clear.
+- Align data consistently.
+- Avoid excessive horizontal density.
+- Preserve readable row spacing.
+- Provide responsive behavior for smaller screens.
+- Use actual project and collaboration data.
+
+### Metadata
+
+Show timestamps, status, identifiers, and counts only when the information exists and is relevant.
+
+Never fabricate activity or project metrics to fill visual space.
+
+## 11. Architecture node visual system
+
+### 11.1 Semantic identity
+
+Reuse the existing `NODE_CATALOG`, `nodeIcons`, shared `ArchitectureNodeType`, and current node-rendering architecture.
+
+These are the authoritative mappings for supported node types.
+
+Do not create a competing registry inside the design system or hardcode different node meanings in separate components.
+
+### 11.2 Node anatomy
+
+A typical node may contain:
+
+- Semantic icon.
+- Node type or category.
+- Component title.
+- Optional description.
+- Optional technology metadata.
+- Supported connection handles.
+
+Render only fields supported by the existing model.
+
+### 11.3 Node states
+
+| State | Visual behavior |
+|---|---|
+| Default | Stable border and readable content |
+| Hover | Subtle border or surface emphasis |
+| Selected | Clear outline and additional visual emphasis |
+| Focused | Visible keyboard focus |
+| Connecting | Relevant handles and targets are emphasized |
+| Invalid target | Clear warning treatment |
+| Read-only | No misleading editing affordances |
+
+Selection must remain identifiable without relying solely on a color change.
+
+### 11.4 Node dimensions
+
+Node width and height should follow the actual node component, text length, and graph-layout behavior.
+
+Avoid hardcoding one fixed size for every node type when content and semantics differ.
+
+Text must wrap or truncate predictably. Essential component labels must remain understandable.
+
+## 12. Connection and edge styling
+
+- Connections must remain distinguishable from the canvas grid.
+- Use directional markers when the graph semantics support direction.
+- Provide clear hover and selected states.
+- Display invalid connection feedback using both color and another visual cue.
+- Avoid unnecessary edge animation.
+- Keep labels readable at supported zoom levels.
+
+Connection styling must follow the actual graph model. The design system does not impose new graph rules.
+
+## 13. Component palette
+
+The component palette should prioritize discovery and placement.
+
+Requirements:
+
+- Searchable component catalog.
+- Collapsible categories where supported.
+- Consistent component icons.
+- Clear distinction between draggable, selectable, and disabled items.
+- Keyboard-accessible placement.
+- Useful empty search state.
+
+Reuse existing category and icon mappings.
+
+## 14. Inspector and workspace panels
+
+Use a shared panel structure.
+
+Typical anatomy:
+
+1. Panel header.
+2. Contextual title or tabs.
+3. Scrollable content.
+4. Optional action area.
+
+Properties, validation, and AI must share a consistent panel framework rather than implementing unrelated layouts.
+
+Panel widths are flexible. On mobile, use drawers instead of forcing multiple desktop panels into the viewport.
+
+## 15. Status colors and feedback
+
+Semantic colors represent operational meaning, not decoration.
+
+```css
+:root {
+  --status-success: #216e4e;
+  --status-warning: #8a5200;
+  --status-error: #b42318;
+  --status-info: #226192;
+}
+```
+
+Use them for:
+- Successful saves.
+- Validation findings.
+- Errors and failed requests.
+- Warnings and conflicts.
+- Informational feedback.
+
+Check contrast on every relevant surface.
+
+Use icons, labels, and text in addition to color.
+
+Never communicate a save failure, validation warning, or permission restriction through color alone.
+
+## 16. Motion system
+
+```css
+:root {
+  --duration-fast: 140ms;
+  --duration-normal: 220ms;
+  --duration-smooth: 300ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+}
+```
+
+### Motion rules
+
+- Use brief transitions for hover and focus feedback.
+- Use restrained transitions for drawers and dialogs.
+- Prefer transform and opacity for animation.
+- Do not animate layout properties unnecessarily.
+- Never delay essential user input.
+- Do not animate every node continuously.
+- Avoid scroll hijacking and unnecessary parallax.
+- Respect `prefers-reduced-motion`.
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+```
+
+Preserve essential feedback and state changes when motion is reduced.
+
+## 17. Accessibility
+
+Target WCAG 2.2 AA where practical, with WCAG 2.1 AA as the minimum project baseline.
+
+- Normal text contrast: at least 4.5:1.
+- Qualifying large text contrast: at least 3:1.
+- Meaningful component boundaries and graphical elements: meet applicable non-text contrast requirements.
+- Visible keyboard focus.
+- Semantic headings and landmarks.
+- Accessible names for icon-only controls.
+- Correct dialog and menu semantics.
+- Accessible form errors.
+- Keyboard alternatives to drag-and-drop.
+- Status announcements for meaningful asynchronous events.
+- Reduced-motion support.
+
+Do not claim accessibility compliance based only on the selected hex values. Verify rendered combinations and actual interactions.
+
+## 18. Responsive design
+
+### Desktop: 1280px and above
+
+- Full navigation.
+- Editorial marketing layouts.
+- Multi-panel architecture studio when space allows.
+
+### Tablet: 768–1279px
+
+- Reduced gutters.
+- Compact navigation.
+- Collapsible panels.
+- Fewer simultaneous secondary controls.
+
+### Mobile: below 768px
+
+- Stacked public layouts.
+- Full-width forms.
+- Drawer-based studio panels.
+- Touch-friendly actions.
+- No unnecessary horizontal page scrolling.
+
+The studio must preserve useful canvas space. Do not simply scale down the entire desktop application.
+
+## 19. Imagery and asset policy
+
+Primary imagery must represent software architecture and the actual product.
+
+Approved:
+- Real architecture editor screenshots.
+- Graph and component previews.
+- Validation and AI-analysis interfaces.
+- Collaboration interface previews.
+- Technical illustrations with a clear purpose.
+
+Avoid:
+- Houses and construction photography.
+- Generic landscape backgrounds.
+- Unrelated stock imagery.
+- Decorative AI graphics that communicate no product capability.
+
+Use existing assets when they accurately represent the current application.
+
+Store new assets in the established asset directory and reuse them rather than duplicating similar images.
+
+Do not replace functional React components with screenshots to make a page easier to style.
+
+## 20. Prohibited implementation patterns
+
+1. **No competing brand systems.** Do not reintroduce the previous cyan-only palette as the global identity.
+2. **No fake functionality.** Buttons, forms, menus, and links must work.
+3. **No fake data.** Do not invent project counts, collaborators, AI results, or save confirmations.
+4. **No misleading product imagery.** Static previews must not masquerade as live editors.
+5. **No marketing footer in the studio.** The editor must remain viewport-contained.
+6. **No internal engineering jargon in customer-facing UI.** Hide milestone IDs, internal validator names, and raw test descriptions.
+7. **No inaccessible color-only states.** Pair color with labels, icons, or other meaningful indicators.
+8. **No silent data loss.** Saving and conflict states must accurately reflect the persistence layer.
+9. **No unsupported product claims.** Do not add aspirational AI, collaboration, or export features as if they already exist.
+10. **No unnecessary framework replacement.** Preserve the existing React, Tailwind CSS, Redux Toolkit, RTK Query, and React Flow architecture.
+
+## 21. Implementation checklist
+
+- [ ] Canonical brand tokens are defined once.
+- [ ] Typography follows the approved type system.
+- [ ] Supporting surfaces are consistent across routes.
+- [ ] Studio canvas styling is distinct but brand-aligned.
+- [ ] Existing node catalog and icon mappings are preserved.
+- [ ] Buttons and inputs use shared component styles.
+- [ ] Panels and dialogs have consistent structure.
+- [ ] Status states are readable and accessible.
+- [ ] Responsive layouts are defined.
+- [ ] Reduced-motion support is implemented.
+- [ ] Product imagery depicts software architecture.
+- [ ] Existing application functionality is preserved.
+- [ ] Contrast and keyboard behavior are verified.
+- [ ] The production build succeeds.
+
+**Final authority rule:** `DESIGN.md` defines the brand and visual direction. This file translates that direction into reusable implementation tokens and component standards. Interaction behavior remains governed by `docs/ui-ux/INTERACTION_SPEC.md`.

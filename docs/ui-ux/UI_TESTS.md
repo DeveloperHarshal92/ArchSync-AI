@@ -1,115 +1,380 @@
-# ArchSync AI — UI/UX Testing & Machine-Verifiable Acceptance Criteria
+# ArchSync AI — UI/UX Testing & Acceptance Criteria
 
 **Document:** `docs/ui-ux/UI_TESTS.md`  
-**Phase:** Phase 1 — UI/UX Discovery & Design Architecture  
-**Role:** Senior React UI Engineer & QA / Test Architect  
-**Validation Format:** Behavioral Contract (`GIVEN [context], WHEN [action], THEN [outcome]`)  
-**Scope:** Visual Consistency, Responsive Layouts, Accessibility (WCAG 2.1 AA), Viewport Containment, Motion Integrity, and Non-Regression  
+**Version:** 3.0.0  
+**Purpose:** Verify the visual system, usability, interactions, accessibility, and preservation of existing functionality.
 
----
+## 1. Testing principles
 
-## 1. Visual Consistency & Design System Acceptance Criteria
+- Test actual behavior, not merely component appearance.
+- Use the current repository and actual route structure as the source of truth.
+- Preserve existing automated tests.
+- Prefer semantic queries and observable behavior over brittle CSS selectors.
+- Test successful and failed operations.
+- Do not report tests as passing unless they were executed.
+- Do not use generated mockups as substitutes for functional integration tests.
 
-### 1.1 Color Contrast & Token Compliance (WCAG 1.4.3 / 1.4.11)
+Use the existing Vitest, React Testing Library, and browser-testing setup where available. Add Playwright or another browser-testing dependency only if the repository lacks suitable coverage and the addition is justified.
 
-- **Test VIS-01: Primary Button Contrast**
-  - **GIVEN** any primary action button (e.g. `.btn-primary` on Login, Register, Project Create, or Canvas Save),
-  - **WHEN** computed styles are inspected against the background surface (`#0f172a` or `#0a0f1d`),
-  - **THEN** the button background must use solid Cyan (`#0891b2` / `cyan-600`) with white text, achieving a contrast ratio **≥ 4.5:1** (verifiable via contrast analyzer).
-  - **AND** it must not contain raw linear gradient classes that reduce contrast below 4.5:1.
+## 2. Design-system tests
 
-- **Test VIS-02: Text Label Contrast on Dark Surfaces**
-  - **GIVEN** primary labels, secondary helper text, or metadata descriptions across any page,
-  - **WHEN** text color values are evaluated,
-  - **THEN** primary text must use `#f8fafc` (Slate 50 / White, contrast > 12:1),
-  - **AND** secondary text must not drop below `#94a3b8` (Slate 400, contrast > 5.5:1).
+### VIS-01: Brand token consistency
 
-- **Test VIS-03: Typography & Monospace Disambiguation**
-  - **GIVEN** architecture version tags, node coordinate numbers, latency indicators, or node IDs,
-  - **WHEN** rendered on screen,
-  - **THEN** the font family must be `JetBrains Mono` or `ui-monospace` with `font-variant-numeric: tabular-nums` to eliminate jitter during value updates.
+**Given** a rendered application route,
 
----
+**When** shared components are inspected,
 
-## 2. Responsive Layout & Viewport Lock Acceptance Criteria
+**Then** approved brand colors and typography tokens are used consistently.
 
-### 2.1 Studio Workspace Viewport Containment
+Verify:
+- Warm Ivory: `#eae6ed`.
+- Deep Editorial Blue: `#226192`.
+- Coral Orange: `#ef8557`.
+- Cormorant Garamond for display headings.
+- Montserrat for interface text.
 
-- **Test RESP-01: Studio 100dvh Viewport Lock**
-  - **GIVEN** a user navigates to `/projects/:projectId`,
-  - **WHEN** the workspace renders on any desktop or tablet viewport (from 768px to 3840px wide),
-  - **THEN** the canvas container fills 100% of the viewport height minus the 48px top bar,
-  - **AND** the global document `window.scrollY` remains strictly `0`, with **zero vertical or horizontal page scrollbars** outside the interactive canvas element.
+**Pass condition:** Shared components do not introduce arbitrary competing brand palettes.
 
-- **Test RESP-02: Mobile Panel Drawer Behavior (< 768px)**
-  - **GIVEN** the workspace is viewed on a mobile device (`viewport width: 375px`),
-  - **WHEN** the canvas loads,
-  - **THEN** desktop side panels (Component Palette, Inspector, AI) are hidden from normal flow,
-  - **AND** tapping the top toolbar panel trigger opens the slide-in drawer (`role="dialog"`, `aria-modal="true"`),
-  - **AND** tapping the dimmed backdrop or pressing `Escape` immediately closes the drawer and restores full canvas visibility.
+Semantic status colors and architecture node colors are permitted when they serve a defined functional purpose.
 
-- **Test RESP-03: Ultrawide Canvas Scaling (> 1440px)**
-  - **GIVEN** the workspace is viewed on an ultrawide monitor (1920px to 3440px wide),
-  - **WHEN** the page renders,
-  - **THEN** the canvas expands fluidly to fill all available width,
-  - **AND** side drawers remain pinned to their calibrated maximum widths (`320px` to `384px`) without stretching or distorting node layouts.
+### VIS-02: Contrast
 
----
+**Given** text, controls, focus indicators, and meaningful component boundaries,
 
-## 3. Accessibility & Universal Usability Criteria (WCAG 2.1 AA)
+**When** rendered color combinations are evaluated,
 
-### 3.1 Keyboard Navigation & Focus Indicator Integrity
+**Then** contrast meets WCAG 2.2 AA where applicable, with WCAG 2.1 AA as the minimum baseline.
 
-- **Test A11Y-01: Universal Keyboard Focus Ring (WCAG 2.4.7 / 2.4.11)**
-  - **GIVEN** a keyboard-only user navigates through interactive buttons, inputs, links, and node cards using `Tab`,
-  - **WHEN** any element receives focus,
-  - **THEN** a high-visibility focus ring of `2px solid var(--focus-ring-color)` (`#06b6d4`) with `2px offset` must appear,
-  - **AND** mouse clicks on the same element must not trigger an unnecessary persistent ring (`:focus:not(:focus-visible)`).
+Check actual foreground and background combinations rather than assuming a brand color is universally accessible.
 
-- **Test A11Y-02: Skip Navigation Link (WCAG 2.4.1)**
-  - **GIVEN** any page in ArchSync AI is loaded,
-  - **WHEN** the user presses `Tab` from document top,
-  - **THEN** the `.skip-link` immediately becomes visible at the top of the viewport,
-  - **AND** pressing `Enter` moves programmatic focus directly to `<main id="main-content">`, bypassing navigation headers.
+### VIS-03: Product imagery
 
-- **Test A11Y-03: Modal Dialog Focus Trap & Escape Dismissal**
-  - **GIVEN** any modal is open (e.g., Create Project Modal, Invite Member Modal, Remove Member Modal),
-  - **WHEN** the modal opens,
-  - **THEN** focus is programmatically set to the first input field,
-  - **AND** pressing `Tab` cycles focus strictly within modal bounds,
-  - **AND** pressing `Escape` closes the modal and returns focus to the initiating trigger button.
+**Given** the landing page, dashboard, project catalog, and authentication screens,
 
-- **Test A11Y-04: Screen Reader Announcement Live Region**
-  - **GIVEN** an asynchronous state update occurs (e.g. node dropped onto canvas, autosave saved, sync conflict, validation error found),
-  - **WHEN** the action completes,
-  - **THEN** an appropriate descriptive text string is rendered inside `#a11y-announcer` (`aria-live="polite"`), allowing assistive technology to announce the outcome without interrupting the user.
+**When** their imagery is inspected,
 
----
+**Then** primary imagery depicts software architecture, application interfaces, or meaningful technical diagrams.
 
-## 4. Motion & Performance Acceptance Criteria
+**Pass condition:**
+- No houses or physical-building photography as primary product imagery.
+- No broken image URLs.
+- No repeated generic stock images used to fill empty space.
+- All meaningful images have appropriate alternative text.
+- Decorative images have empty alt text.
+- Static previews are not presented as functioning controls.
 
-- **Test MOT-01: Reduced Motion Preference (WCAG 2.3.3)**
-  - **GIVEN** the user operating system or browser sets `prefers-reduced-motion: reduce`,
-  - **WHEN** any page transition, drawer expansion, modal reveal, or edge flow animation executes,
-  - **THEN** all CSS transition and animation durations must evaluate to `0.01ms`,
-  - **AND** React Flow animated edge paths must deactivate dash offset animation instantly.
+### VIS-04: Typography and layout
 
-- **Test MOT-02: GPU-Accelerated Micro-Interactions**
-  - **GIVEN** palette items, buttons, or canvas nodes during hover and active click states,
-  - **WHEN** transitions execute,
-  - **THEN** only `transform` and `opacity` properties may animate, ensuring 60fps frame rates without browser layout reflows or repaints.
+**Given** all required routes,
 
----
+**When** headings, forms, navigation, and content sections are rendered,
 
-## 5. Non-Regression & State Integrity Verification
+**Then** typography, spacing, and component styles follow `DESIGN.md`.
 
-- **Test REG-01: Redux Toolkit & RTK Query State Isolation**
-  - **GIVEN** switching between projects or logging in/out,
-  - **WHEN** routes change,
-  - **THEN** `editorSlice` (`selectedNodeId`, `selectedEdgeId`, `currentVersion`) resets cleanly,
-  - **AND** RTK Query cache invalidation tags (`Project`, `Architecture`, `Auth`) operate without stale memory retention.
+**Pass condition:** No clipped text, inconsistent shared controls, or unnecessary horizontal overflow at supported viewport sizes.
 
-- **Test REG-02: Preservation of Existing 316 Passing Automated Tests**
-  - **GIVEN** all UI enhancements proposed in Phase 1,
-  - **WHEN** `npm test` is executed across both `client` (164 tests) and `server` (152 tests),
-  - **THEN** all 316 tests must pass with zero failures and zero typecheck errors.
+## 3. Navigation tests
+
+### NAV-01: Public navigation
+
+Verify that:
+- The brand link reaches the intended public landing route.
+- Sign in opens the login route.
+- Get Started opens registration or the established onboarding flow.
+- Product and Features links reach valid sections or routes.
+- Documentation links work only when a valid destination exists.
+
+### NAV-02: Authenticated navigation
+
+Verify that:
+- Dashboard navigation opens the correct route.
+- Project navigation opens the selected project.
+- Invitations navigation opens the invitation list.
+- Settings navigation opens an implemented settings route.
+- Active-route styling matches the current location.
+- Browser back and forward navigation remain functional.
+
+### NAV-03: Protected routes
+
+Verify that:
+- Unauthenticated users are handled according to existing authentication behavior.
+- Protected destination redirects are preserved.
+- Unauthorized users cannot access restricted project data.
+- Refreshing a protected route does not bypass server authorization.
+
+## 4. Authentication tests
+
+### AUTH-01: Login validation
+
+Test empty fields, invalid email formatting, valid input, rejected credentials, and network failure.
+
+Expected:
+- Appropriate validation messages.
+- No duplicate submissions.
+- Clear loading and error states.
+- No sensitive server details exposed.
+
+### AUTH-02: Registration
+
+Verify that:
+- Existing required fields are validated.
+- Existing password requirements are enforced.
+- API errors are presented clearly.
+- Successful registration follows the established redirect behavior.
+- Password values are not exposed through inappropriate UI or logs.
+
+### AUTH-03: Keyboard operation
+
+Verify that:
+- Fields have accessible labels.
+- Password visibility controls are keyboard accessible.
+- Focus is visible.
+- Error messages are associated with the relevant fields.
+- Form submission can be completed without a pointer.
+
+## 5. Dashboard and project tests
+
+### PRJ-01: Project creation
+
+**Given** an authorized user,
+
+**When** they submit a valid project,
+
+**Then** the project is created and appears in the relevant list after the server confirms success.
+
+Verify:
+- Validation errors.
+- Duplicate submission prevention.
+- API failure handling.
+- Dialog focus management.
+- Correct navigation after creation.
+
+### PRJ-02: Project discovery
+
+Verify that search, filters, sorting, and project actions produce the advertised behavior.
+
+If a control is not implemented, it must not be presented as functional.
+
+### PRJ-03: Project deletion
+
+Verify that:
+- The user receives an appropriate confirmation.
+- Unauthorized deletion is prevented.
+- Failed deletion preserves the project in the visible list.
+- Successful deletion updates the interface.
+
+## 6. Architecture studio tests
+
+### STU-01: Viewport containment
+
+**Given** `/projects/:projectId` on a supported desktop viewport,
+
+**When** the studio renders,
+
+**Then** the workspace occupies the available viewport and does not inherit the marketing page layout.
+
+Verify:
+- No unintended document-level horizontal overflow.
+- No unnecessary marketing footer.
+- Toolbar and panels remain within the available viewport.
+- Internal panel scrolling works independently.
+- The canvas remains usable when panels are opened or closed.
+
+Do not prohibit intentional canvas panning or zooming merely to satisfy document-overflow tests.
+
+### STU-02: Component discovery
+
+Verify that:
+- Component search filters the supported node catalog.
+- Categories expand and collapse.
+- Empty results are explained.
+- Components can be reached with keyboard navigation.
+- Placement follows existing application behavior.
+
+### STU-03: Graph manipulation
+
+Verify:
+- Selecting a node updates the contextual inspector.
+- Editing a supported property updates the actual graph state.
+- Connections follow existing validation rules.
+- Invalid operations receive understandable feedback.
+- Canvas navigation controls work.
+- The graph remains stable when the inspector opens or closes.
+
+### STU-04: Panel behavior
+
+Verify that:
+- Properties, Validation, and AI panels can be accessed through implemented controls.
+- Panel changes do not unexpectedly clear the selected node.
+- Closing a panel restores appropriate canvas space.
+- Keyboard focus remains predictable.
+- Mobile drawers can be opened and closed accessibly.
+
+### STU-05: Read-only permissions
+
+Verify that a viewer cannot edit the graph through the UI and that the backend independently enforces the same restriction.
+
+Disabling a button is not an authorization mechanism. The server must remain authoritative.
+
+## 7. Persistence and collaboration tests
+
+### DATA-01: Save-state accuracy
+
+Verify the transition between:
+- Saving.
+- Saved.
+- Save failed.
+- Conflict, where supported.
+
+The UI must not display a successful save before receiving the required confirmation from the backend.
+
+### DATA-02: Reload persistence
+
+**Given** a successfully saved project,
+
+**When** the user reloads the page,
+
+**Then** the saved project and graph state are restored from the actual persistence layer.
+
+### DATA-03: Backend restart and redeployment
+
+Verify that:
+- Accounts persist according to the established database design.
+- Projects and graph changes persist.
+- References between users and projects remain valid.
+- Restarting the backend does not erase committed data.
+- Redeployment does not silently reset persistent storage.
+
+Run this test against an appropriate test or staging environment, not a production database containing real user data.
+
+### DATA-04: Failure recovery
+
+Verify that:
+- Network errors are visible.
+- Unsaved work is not silently represented as saved.
+- Conflicts are communicated.
+- Recovery actions behave as documented.
+- Retrying an operation does not unintentionally duplicate data.
+
+### COL-01: Collaboration
+
+Where real-time collaboration is implemented, verify:
+- Presence reflects actual connected users.
+- Updates propagate correctly.
+- Permissions are enforced.
+- Disconnects and reconnects are handled.
+- The UI does not fabricate collaborator activity.
+
+## 8. AI and validation tests
+
+### AI-01: Analysis lifecycle
+
+Verify loading, success, empty, and failure states.
+
+The UI must not display invented analysis results when a request fails.
+
+### AI-02: Finding navigation
+
+When a finding references a graph element, activating it should navigate to the relevant element when supported.
+
+### AI-03: Approved changes
+
+If AI-proposed graph changes are implemented, verify that users can review and approve them before application.
+
+### VAL-01: Validation feedback
+
+Verify that findings have understandable descriptions and appropriate severity indicators.
+
+Verify that an architecture with no findings receives an accurate success state.
+
+## 9. Responsive tests
+
+Test at representative viewport widths:
+
+| Viewport | Required behavior |
+|---|---|
+| 1440px | Full desktop layout |
+| 1024px | Compact multi-panel layout |
+| 768px | Tablet layout without clipped primary actions |
+| 390px | Mobile forms and drawer-based studio panels |
+| 320px | No unintended horizontal page overflow |
+
+Verify:
+- Navigation remains accessible.
+- Text is readable.
+- Dialogs fit the viewport.
+- Touch controls remain usable.
+- The canvas retains practical editing capability.
+- No essential action disappears without an alternative.
+
+## 10. Accessibility tests
+
+Verify:
+- Keyboard navigation.
+- Visible focus.
+- Accessible names and labels.
+- Dialog semantics and focus restoration.
+- Error announcements.
+- Contrast.
+- Reduced-motion behavior.
+- Screen-reader status announcements.
+- Non-color indicators for meaningful states.
+- No keyboard traps.
+
+Use automated accessibility checks alongside manual keyboard testing. Automated scans alone do not establish full accessibility compliance.
+
+## 11. Motion and performance tests
+
+Verify:
+- Motion respects reduced-motion preferences.
+- Panels do not cause unnecessary layout shifts.
+- Canvas interactions remain responsive.
+- Images have appropriate sizing and loading behavior.
+- Large product previews do not block essential controls.
+- Animations do not interfere with dragging, selecting, or connecting nodes.
+
+Do not invent a performance pass threshold without measuring the actual application and establishing an agreed target.
+
+## 12. Regression and build tests
+
+Run the repository's existing commands for:
+- Unit tests.
+- Component and integration tests.
+- Type checking.
+- Linting.
+- Production build.
+
+Preserve existing passing tests. Add tests for changed behavior rather than deleting failing tests to make the suite green.
+
+Use the actual scripts declared in `package.json`; do not assume command names.
+
+## 13. Completion checklist
+
+- [ ] Design tokens and typography verified.
+- [ ] Software-architecture imagery verified.
+- [ ] Public and authenticated navigation verified.
+- [ ] Login and registration tested.
+- [ ] Project creation and management tested.
+- [ ] Architecture editing tested.
+- [ ] Validation and AI states tested.
+- [ ] Persistence survives reload and backend restart.
+- [ ] Permission restrictions verified.
+- [ ] Responsive behavior inspected.
+- [ ] Accessibility checks executed.
+- [ ] Existing tests retained and passing.
+- [ ] Production build succeeds.
+- [ ] Final UI inspected in a real browser.
+
+## 14. Reporting results
+
+Every completed test run must record:
+
+- Date and environment.
+- Command or procedure used.
+- Tests passed.
+- Tests failed.
+- Tests skipped.
+- Known limitations.
+- Relevant failure output.
+
+Do not report a test as passing because the code appears correct. Run it, inspect the result, and record the evidence.

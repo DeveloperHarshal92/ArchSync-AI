@@ -1,339 +1,320 @@
-# ArchSync AI — Design System & UI/UX Specification
+# ArchSync AI — Design System & Product Experience Specification
 
 **Document:** `DESIGN.md`  
-**Product:** ArchSync AI — Collaborative Architecture Workspace  
 **Version:** 3.0.0  
-**Status:** Canonical visual source of truth  
-**Applies to:** Public landing page, authentication, dashboard, project management, architecture studio, shared components, dialogs, forms, and responsive states.
+**Status:** Canonical design source of truth  
+**Product:** ArchSync AI — Collaborative Software Architecture Workspace
 
-> **Priority and scope:** This document defines the intended visual system and interaction principles. Preserve existing product behavior, data contracts, permissions, security, and architecture. If a reference image conflicts with real product behavior, preserve the behavior and adapt the design. If a skill, generated mockup, or old styling conflicts with this document, follow this document unless the user explicitly requests a different direction.
+## 1. Product identity
 
----
+ArchSync AI is a software architecture modeling platform for designing, documenting, validating, and reviewing complex software systems.
 
-## 1. Product and Brand Direction
+Users build diagrams from semantic components such as clients, services, databases, API gateways, caches, queues, and cloud infrastructure. They connect dependencies, collaborate with teammates, validate architectural structures, and receive AI-assisted recommendations.
 
-ArchSync AI is a collaborative architecture-design workspace. Its visual identity combines cinematic architectural imagery and editorial typography on public pages with a precise, high-density engineering interface inside the product.
+ArchSync AI is not a building architecture, construction, interior design, or real-estate application.
 
-The product should feel considered, technical, confident, and premium. It must not resemble a generic SaaS starter template, a gaming dashboard, or a collection of unrelated AI-generated screens.
+Every design decision must communicate this distinction.
 
-### Core principles
+## 2. Design vision
 
-- **One coherent system:** All routes must look like parts of the same product, not separate templates.
-- **Product first:** The architecture canvas and actual project information take priority over decoration.
-- **Cinematic marketing, practical application:** Use strong imagery and editorial composition on the landing and authentication pages. Keep the dashboard useful and the studio information-dense.
-- **Purposeful asymmetry:** Use varied compositions when they improve hierarchy. Do not default to centered headlines and identical three-card sections.
-- **No redundant controls:** A capability should have one clear primary entry point in its relevant context. Do not repeat AI Assistant, Analysis, Validation, or equivalent buttons in multiple permanent navigation areas.
-- **Honest interface:** Do not invent user data, metrics, save status, API health, timestamps, testimonials, model latency, or security claims.
-- **Preserve working behavior:** A visual redesign must not silently remove features, change API contracts, weaken permissions, alter authentication, or change persistence semantics.
-- **Reference-led, not screenshot-led:** Use the supplied ArchSync AI reference images for art direction and layout principles. Rebuild functional interfaces using real components; do not use flattened screenshots as page backgrounds.
+Create a premium editorial engineering product that combines:
 
-## 2. Reference Images and Intended Use
+- The clarity of a well-designed technical publication.
+- The precision of a professional architecture editor.
+- The usability of a modern collaborative workspace.
+- The restraint of a mature developer tool.
+- The visual intelligence of a product with meaningful AI capabilities.
 
-Use the supplied reference images as visual guidance. If they are stored in the repository, preserve their names and place them in a dedicated reference directory such as `design-references/`.
+The result should feel deliberate, trustworthy, technical, and sophisticated.
 
-- `ArchSync AI_ Architect What Comes Next-1(1).png`: primary landing-page hero, cinematic composition, editorial headline, CTA hierarchy, and product preview.
-- `ArchSync AI_ Intelligent Architecture Design-3(1).png`: landing-page storytelling, section composition, and architectural visualization.
-- `ArchSync AI Architecture Platform-2(1).png`: product presentation and architecture workspace.
-- `Cinematic ArchSync AI Login and Register Split-Screen-1.png`: login and registration composition.
-- `ArchSync AI Architecture Dashboard(2).png`: architecture canvas, component library, and contextual inspector.
-- `ArchSync AI Architecture Blueprint-3.png`: node styling, component library, diagram canvas, and technical detailing.
-- `ArchSync AI Architecture Dashboard-2.png`: dashboard, project list, activity, and project preview composition.
+Avoid generic SaaS templates, excessive gradients, meaningless glass panels, oversized decorative illustrations, and repetitive three-card layouts.
 
-Reference images are not authoritative for fake data, unsupported features, exact text, or controls that do not exist. Keep real application capabilities and data as the source of truth.
+**Primary design principle: the product is the hero.** Architecture diagrams, functional editor previews, meaningful system relationships, and actual workflow states should communicate value better than decorative imagery.
 
-## 3. Design Tokens
+## 3. Reference-image interpretation
 
-### 3.1 Color palette
+Use the supplied ArchSync AI reference images as inspiration for:
 
-Use a cohesive dark architectural palette with warm bronze/amber accents. The earlier ivory/blue/coral palette is deprecated and must not be mixed into the current design.
+- Editorial serif headings and restrained technical typography.
+- Warm, premium surfaces and asymmetric compositions.
+- Detailed architecture-editor interfaces.
+- Component libraries, connected service graphs, and property inspectors.
+- Collaboration indicators, cursors, and user presence.
+- AI analysis panels with actionable findings.
+- Project dashboards with diagram thumbnails and project management controls.
+- Clean, focused authentication forms.
 
-Recommended base tokens:
+The images are visual references, not permission to reproduce every element literally.
 
-| Token | Value | Intended use |
+Some references contain physical buildings, mountains, landscape photography, or a dark visual theme. Do not reproduce those elements as the product's primary imagery or switch themes inconsistently between pages.
+
+Replace physical-architecture visuals with software architecture diagrams and product-interface imagery.
+
+Do not copy incorrect text, fabricated product claims, fake data, or controls that do not exist in the implementation.
+
+## 4. Brand palette
+
+The following are the core brand tokens.
+
+| Token | Value | Purpose |
 |---|---|---|
-| `--color-bg` | `#090907` | Main page and application background |
-| `--color-surface` | `#11110F` | Main panels and raised surfaces |
-| `--color-surface-raised` | `#191814` | Dialogs, menus, raised panels |
-| `--color-text` | `#F2EEE7` | Primary text on dark surfaces |
-| `--color-text-muted` | `#B9B1A5` | Secondary text and descriptions |
-| `--color-border` | `rgba(185, 157, 115, 0.22)` | Quiet structural borders |
-| `--color-accent` | `#B99D73` | Primary bronze/amber accent |
-| `--color-accent-deep` | `#6C5636` | Secondary earth-brown accent |
-| `--color-focus` | `#D6B887` | Keyboard focus and high-visibility active states |
+| Warm Ivory | `#eae6ed` | Primary page and canvas foundation |
+| Deep Editorial Blue | `#226192` | Brand typography, structural elements, and primary interface emphasis |
+| Coral Orange | `#ef8557` | Primary calls to action, active markers, and restrained highlights |
 
-These values are starting tokens, not permission to introduce arbitrary accent colors. Small opacity variations of the palette are allowed for borders, overlays, hover states, and surfaces. Maintain sufficient contrast for all actual foreground/background combinations.
+Define these as CSS custom properties and reuse them throughout the application.
 
-**Semantic colors:** Existing success, warning, error, and information states may retain distinct semantic treatments where required for meaning and accessibility. Define them centrally and use them sparingly. Do not recolor every component with a new hue. Status must never be communicated by color alone; pair it with text or an icon.
+```css
+:root {
+  --color-ivory: #eae6ed;
+  --color-blue: #226192;
+  --color-coral: #ef8557;
 
-### 3.2 Color rules
+  --font-display: "Cormorant Garamond", Georgia, serif;
+  --font-interface: "Montserrat", sans-serif;
 
-1. Prefer near-black backgrounds, warm off-white text, bronze accents, and restrained earth-brown details.
-2. Do not reintroduce the deprecated ivory/blue/coral visual system.
-3. Avoid purple-to-blue gradients, neon cyan, excessive multicolor node palettes, and glowing outlines.
-4. Do not apply gradients to text or use full-page gradients as a substitute for composition.
-5. Use background imagery and lighting as controlled art direction, not as a reason to reduce text contrast.
-6. Reserve the strongest accent for primary actions, selected states, focus, and meaningful diagram emphasis.
-7. Keep the canvas grid subtle enough that nodes and edges remain the focus.
-8. Do not use emoji as interface icons. Use Lucide or the existing project icon library.
-9. Check contrast in the rendered UI rather than assuming the tokens automatically pass accessibility requirements.
+  --radius-control: 8px;
+  --radius-card: 12px;
+  --radius-panel: 14px;
 
-### 3.3 Typography
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
 
-Use this default pairing unless the repository already has a compatible, intentionally established equivalent:
+  --height-topbar: 48px;
+  --width-palette: 240px;
+  --width-inspector: 340px;
 
-- **Editorial/display headings:** `Cormorant Garamond`, Georgia, serif.
-- **Interface/body/navigation/forms:** `Montserrat`, system-ui, sans-serif.
-- **Technical metadata:** existing monospace stack, such as `JetBrains Mono`, `ui-monospace`, monospace.
+  --motion-fast: 140ms;
+  --motion-normal: 220ms;
+}
+```
 
-Use the display face for marketing headlines and selected major page headings, not every panel title. Use the interface face for controls, forms, navigation, and dense workspace content. Use monospace only for IDs, code, coordinates, versions, and technical metadata.
+Supporting neutral surfaces may use opacity variations of approved brand colors. Semantic colors may be introduced where necessary to distinguish success, warnings, errors, and architecture node types. They must be purposeful, consistent, and accessible.
 
-Load fonts through the project's existing approved method, include fallbacks, and avoid blocking initial render. Keep font weights limited and use responsive `clamp()` sizes for large headings.
+Do not force every node type into one color merely to satisfy brand consistency. Architecture nodes must remain distinguishable by icon, label, shape, and semantic meaning even when color is unavailable.
 
-### 3.4 Motion tokens
+## 5. Typography
 
-- Micro-interactions: approximately 100–160 ms.
-- Panel and dialog transitions: approximately 180–240 ms.
-- Larger transitions: approximately 250–350 ms when they improve orientation.
-- Prefer opacity and transforms. Avoid costly layout animation where possible.
-- No perpetual decorative animation, unprompted pulsing, or glow loops.
-- Honor `prefers-reduced-motion` throughout the product.
+Use Cormorant Garamond for editorial display headings and Montserrat for interface text.
 
-## 4. Layout and Information Hierarchy
+### Display typography
 
-### 4.1 Use viewport space intentionally
+- Large marketing headline: approximately 52–76px on wide desktop layouts.
+- Section heading: approximately 36–52px.
+- Compact editorial heading: approximately 26–36px.
+- Use controlled line lengths and natural wrapping.
+- Use italic or coral emphasis sparingly.
 
-- Avoid oversized outer gutters and unnecessary nested containers.
-- Marketing pages may use editorial composition and controlled whitespace. Do not waste the first viewport with empty space.
-- The authenticated application should use available viewport width efficiently; do not constrain the entire dashboard or studio to a narrow marketing max-width.
-- Establish one clear page gutter and avoid repeatedly adding horizontal padding at every nested level.
-- Use `min-height: 100dvh` where appropriate. Keep the architecture canvas viewport-filling and prevent global footers from stealing workspace height.
-- At narrow widths, retain safe gutters and avoid horizontal page overflow.
+### Interface typography
 
-### 4.2 Avoid repetition
+- Primary interface text: 13–15px.
+- Secondary descriptions: 12–14px.
+- Compact labels and metadata: 11–12px, provided readability remains acceptable.
+- Buttons: 12–14px, medium or semibold weight.
+- Technical identifiers, coordinates, and version numbers may use a monospace font when appropriate.
 
-- Do not use the same card grid on every page or for every feature.
-- Prefer lists and tables for data, compact rows for navigation, and cards only when grouping has real meaning.
-- Do not wrap every section in a bordered rounded rectangle.
-- Vary layout according to content purpose. Not every panel needs the same padding, height, border radius, or visual weight.
-- Avoid redundant headings and repeated CTAs that compete for attention.
+Do not use small text merely to imitate a screenshot. Readability takes priority over visual density.
 
-### 4.3 Shared application shell
+Load fonts efficiently, provide fallbacks, and avoid layout shifts while web fonts load.
 
-Use consistent navigation, spacing, typography, iconography, and interaction states across routes. Reuse components where it improves consistency, but do not create excessive abstractions for trivial elements.
+## 6. Layout and spacing
 
-Define clear visual roles for primary, secondary, tertiary, and destructive actions. Buttons must have a single clear purpose and visible hover, pressed, disabled, loading, and focus states.
+Use an editorial grid with asymmetric columns and purposeful alignment.
 
-## 5. Page-Specific Direction
+- Marketing content: a centered maximum-width container, approximately 1280px.
+- Main content gutters: approximately 32–56px on desktop.
+- Tablet gutters: approximately 24px.
+- Mobile gutters: approximately 16–20px.
+- Section spacing: generally 64–112px on desktop, reduced appropriately on smaller screens.
+- Form and inspector controls: compact, consistently aligned, and clearly grouped.
+- Workspace panels: dense enough for real work without sacrificing clarity.
 
-### 5.1 Landing page
+Do not center every section, repeat identical card grids, or fill available space with decorative content.
 
-Use the cinematic architectural references as the primary art direction.
+Use whitespace to separate concepts, not to inflate the page.
 
-- Create an asymmetric hero with an expressive headline, concise supporting copy, a primary CTA, a secondary product-exploration action, and a large architectural/product visual.
-- Use the headline “Design the systems behind what comes next.” or a product-appropriate alternative if content requires it.
-- Show the real product through a functional UI preview or a carefully composed preview built from real components. Do not present fake functionality as live.
-- Build a visual narrative about architecture design, connections, collaboration, AI insights, validation, and documentation.
-- Use varied section compositions, editorial typography, architectural imagery, technical linework, and deliberate transitions.
-- Avoid repetitive three-card feature grids, generic stock-photo teams, fake testimonials, invented metrics, and decorative sections that do not explain the product.
-- The first viewport must communicate what the product does and how to begin using it.
+## 7. Product imagery policy
 
-### 5.2 Authentication
+### Approved visual content
 
-Use the split-screen authentication reference as guidance, adapting the layout to viewport size.
+1. Software architecture diagrams.
+2. Interactive architecture-editor screenshots.
+3. Service dependency graphs.
+4. Component palettes and properties inspectors.
+5. AI architecture analysis interfaces.
+6. Collaboration and version-history interfaces.
+7. Project cards containing genuine diagram previews.
+8. Infrastructure and data-flow illustrations.
 
-- Use atmospheric architectural artwork with enough contrast to keep text legible.
-- Keep forms focused, compact, accessible, and easy to scan.
-- Persistent labels are required; placeholders supplement labels and never replace them.
-- Provide clear validation, loading, recoverable error, and password visibility states.
-- Preserve current authentication, session, cookie, redirect, and backend behavior.
-- Do not add social-login buttons unless the provider is implemented and supported.
+### Prohibited primary imagery
 
-### 5.3 Dashboard and project management
+- Houses and residential buildings.
+- Architectural photography and construction projects.
+- Interior design and real-estate photography.
+- Mountain landscapes used as generic hero backgrounds.
+- Unrelated stock photographs.
+- Generic AI brains, glowing robots, or meaningless circuit-board imagery.
 
-Use the dashboard reference for its clear project hierarchy, architectural previews, and compact data presentation.
+### Asset hierarchy
 
-- Show existing workspace selection, project creation, search, filtering, sorting, project status, collaborators, recent activity, and templates only where supported by the product.
-- Prefer a featured project preview plus a useful list/table over many decorative cards.
-- Use actual application data. Empty states and explicitly identified demo data are acceptable; invented live activity or statistics are not.
-- Preserve project CRUD operations, sharing, ownership, roles, and navigation.
-- Keep imagery selective so project information remains readable.
+Use the following order of preference:
 
-### 5.4 Architecture studio
+1. Genuine screenshots of the current application.
+2. Purpose-built product mockups that accurately represent implemented features.
+3. Generated technical illustrations that clearly communicate software architecture.
+4. Abstract supporting graphics only when they add information or improve comprehension.
 
-The studio is a functional engineering workspace, not a marketing page. Keep the canvas as the largest and most visually important region.
+Never present a static mockup as a functioning application.
 
-**Top toolbar:** Show only relevant workspace-level actions, such as project selection, save status, undo/redo, collaboration, share, and export. Keep it compact.
+Store approved assets locally where practical and document their purpose in an asset manifest.
 
-**Left sidebar:** Provide component search, categories, and drag-and-drop. Keep secondary destinations such as Templates and Settings accessible without duplicating every capability as a permanent button.
+Suggested directory:
 
-**Canvas:** Preserve React Flow behavior, node/edge manipulation, pan, zoom, grid, alignment guides, selection, minimap, keyboard shortcuts, undo/redo, autosave, collaboration, and export. Keep grid lines subtle and labels readable at normal zoom.
+```text
+client/src/assets/images/
+├── architecture-hero.webp
+├── editor-preview.webp
+├── dashboard-preview.webp
+├── ai-analysis-preview.webp
+├── collaboration-preview.webp
+└── validation-preview.webp
+```
 
-**Right inspector:** Use one contextual inspector with distinct tabs:
+Adapt this directory to the actual repository structure. Do not create duplicate assets if suitable equivalents already exist.
 
-1. **Properties:** node or edge configuration, labels, colors, border width, opacity, arrowheads, alignment, and advanced settings.
-2. **Analysis:** AI-generated recommendations and architecture insights.
-3. **Validation:** structural issues, warnings, and validation results.
+## 8. Component design
 
-Adapt Properties to the current selection. Preserve the selection when switching tabs. Analysis and Validation are different capabilities, but must not have duplicate permanent entry points across the sidebar, toolbar, and inspector. Use one primary trigger in the most relevant context.
+### Buttons
 
-AI suggestions are advisory. Never modify the graph without an explicit user action and a clear preview/confirmation where changes are applied.
+Support primary, secondary, tertiary, and destructive variants.
 
-## 6. Lenis and GSAP Scroll Animation Policy
+Every button must have:
 
-**Lenis is for smooth scrolling on the public landing page. GSAP and ScrollTrigger are for scroll-linked animation. They have different responsibilities and must be integrated as one coherent system.**
+- A clear action label.
+- Hover, focus, active, disabled, and loading states where applicable.
+- A visible focus indicator.
+- Appropriate hit-area dimensions.
+- An explicit type when placed inside a form.
 
-### 6.1 Lenis scope
+Do not use decorative buttons that do nothing.
 
-- Inspect the current dependencies and scrolling code first.
-- Reuse Lenis if already installed. Install it only if it is missing and the landing-page implementation requires it.
-- Use one Lenis instance for the landing-page scrolling context, not one instance per section or component.
-- Follow the current installed Lenis API and official integration guidance for the project's GSAP/ScrollTrigger versions.
-- Synchronize Lenis and ScrollTrigger correctly so trigger positions and progress remain accurate.
-- Clean up listeners, animation frames, and instances on unmount.
-- Avoid duplicate instances, competing smooth-scroll libraries, and unnecessary React renders on every scroll frame.
-- Preserve anchor navigation, browser history, keyboard navigation, and expected focus behavior.
-- Respect `prefers-reduced-motion`. Use native or reduced-motion scrolling when requested.
-- Do not force smooth scrolling on touch devices when it harms native touch behavior.
+### Cards
 
-### 6.2 GSAP and ScrollTrigger
+Cards should represent meaningful entities or tasks, such as a project, template, validation finding, or AI recommendation.
 
-Use GSAP/ScrollTrigger selectively for:
-- Staggered heading and text reveals
-- Image-mask reveals
-- Subtle architectural-artwork parallax
-- Section entrance transitions
-- Fine-line animations that trace diagram connections
-- Sequential content reveals when they improve comprehension
+Use consistent internal spacing, restrained borders, and clear hierarchy. Do not wrap every paragraph in a card.
 
-Avoid perpetual animation, unnecessary pinning, excessive blur, animated layout dimensions, or motion that delays access to content. Elements must remain visible if animation initialization fails.
+### Inputs and forms
 
-Use scoped GSAP contexts or an equivalent cleanup strategy. Refresh trigger measurements when image loading or layout changes materially. Prevent duplicate triggers during React development/remounts. Ensure all motion has a reduced-motion alternative.
+- Use persistent labels.
+- Provide concise validation messages.
+- Preserve user input after recoverable errors.
+- Distinguish invalid, disabled, loading, and successful states.
+- Ensure password visibility controls and other icon-only actions have accessible names.
 
-### 6.3 Where Lenis must not be applied
+### Navigation
 
-- Do not globally wrap every route in Lenis.
-- Do not apply Lenis to the architecture canvas, React Flow interactions, component library, inspector, dialogs, or nested scrollable panels.
-- Authentication and dashboard routes should retain native scrolling unless a separately justified, tested requirement exists.
-- GSAP may animate modest UI transitions elsewhere, but it must not interfere with editor state, pointer events, keyboard shortcuts, or scrollable panels.
+Use distinct navigation shells for public pages and authenticated application pages.
 
-## 7. Component and Interaction Rules
+The architecture studio must have its own compact workspace toolbar. Do not add the marketing footer or oversized marketing navigation to the editor.
 
-### 7.1 Buttons and actions
+## 9. Architecture canvas design
 
-- Use one primary action per context where possible.
-- Avoid duplicate Analyze, AI Assistant, Validate, Export, or other actions in multiple permanent locations.
-- Secondary actions should be visually quieter than primary actions.
-- Destructive actions require explicit wording and confirmation when appropriate.
-- Never show an action as successful until the actual operation succeeds.
+The architecture canvas is the primary functional surface of the product.
 
-### 7.2 Forms and inputs
+It must support the existing React Flow implementation and current domain model.
 
-- Always show persistent labels.
-- Use consistent control heights within a form and readable contrast.
-- Provide visible focus states and useful error text.
-- Password visibility controls need accessible names and must not accidentally submit forms.
-- Prevent duplicate submissions while a request is in flight and preserve input values when showing recoverable errors.
+Required visual characteristics:
 
-### 7.3 Navigation and status
+- Subtle dot-grid or equivalent spatial reference.
+- Clearly differentiated semantic nodes.
+- Readable labels and secondary technology metadata.
+- Directional connections where supported by the domain model.
+- Visible selection and focus states.
+- Predictable connection handles.
+- Zoom, pan, fit-to-view, and minimap controls where supported.
+- A component palette with searchable, collapsible categories.
+- A contextual inspector.
+- Clear empty, loading, saving, error, and read-only states.
 
-- Use compact navigation with clear active states and readable labels where space allows.
-- Use one icon library with consistent size and stroke weight.
-- Show save/sync status only when backed by actual state. Distinguish authentication state, API health, and project synchronization.
-- Do not expose developer-only test jargon, internal milestones, or placeholder account information in the product UI.
+Do not add new architecture semantics or connection rules solely for visual reasons.
 
-### 7.4 Architecture nodes and edges
+## 10. Interaction and motion
 
-- Preserve existing node types, edge semantics, and shared contracts.
-- Centralize node icon and visual configuration rather than scattering conditionals across components.
-- Use the established brand palette with restrained semantic differentiation. Do not introduce arbitrary colors solely to make node categories look colorful.
-- Distinguish categories using icons, labels, border treatments, and subtle accents.
-- Keep node labels readable and connection handles usable.
-- Invalid connections must have a visible treatment and accessible textual feedback.
-- Edge animation is optional and must not make dense graphs noisy.
+Use motion to explain state changes, not to decorate everything.
 
-### 7.5 AI and validation
+- Hover feedback: approximately 140ms.
+- Panel transitions: approximately 180–240ms.
+- Dialog entrance: subtle opacity and positional transition.
+- Canvas manipulation: immediate and responsive.
+- Save indicators: explicit state changes rather than perpetual animation.
 
-- Render AI responses as structured, readable content, not raw nested JSON.
-- Separate findings, severity, explanation, and recommendations.
-- Do not fabricate model status, token counts, latency, or capabilities.
-- Validation must only display results from an actual validation run or clearly identify a pending state.
-- AI suggestions require explicit user action before modifying the architecture.
+Respect `prefers-reduced-motion`.
 
-## 8. Accessibility and Quality Bar
+Avoid scroll hijacking, forced parallax, autoplaying decorative video, and motion that interferes with drag-and-drop.
 
-- Target WCAG 2.2 AA where practical.
-- Aim for contrast of at least 4.5:1 for normal text and 3:1 for large text and essential UI boundaries.
-- Measure actual color combinations. Do not assume the palette automatically passes.
-- Provide visible `:focus-visible` states, semantic landmarks, correct heading order, accessible dialogs, labels, live status announcements, and keyboard access.
-- Aim for touch targets of at least 44×44 CSS pixels where layout permits.
-- Do not communicate status by color alone.
-- Respect `prefers-reduced-motion` for CSS, GSAP, and Lenis.
-- Do not make essential content dependent on animation.
+## 11. Accessibility
 
-## 9. Responsive Rules
+Target WCAG 2.2 AA where practical, with WCAG 2.1 AA as the minimum project baseline.
 
-Verify actual rendering at 1440×900, 1280×800, 768×1024, and 375×812.
+Requirements:
 
-- **Mobile (<768px):** Single-column marketing content, compact navigation, side panels as drawers/sheets, safe gutters, and no horizontal page overflow. Keep the canvas navigable with touch and accessible controls.
-- **Tablet (768–1023px):** Collapse secondary panels when needed; preserve a useful canvas width and accessible navigation.
-- **Desktop (1024–1439px):** Use viewport width efficiently with compact shell elements and contextual panels.
-- **Wide desktop (1440px+):** Expand useful working area rather than adding empty margins.
-- Verify that images crop intentionally, headings do not overflow, CTAs remain visible, and animation remains stable across breakpoints.
+- Text contrast of at least 4.5:1 for normal text.
+- At least 3:1 for qualifying large text and meaningful UI boundaries.
+- Visible keyboard focus.
+- Keyboard-accessible controls and menus.
+- Semantic headings and landmarks.
+- Accessible names for icon-only buttons.
+- Error messages connected to their respective fields.
+- Status announcements for important save and validation changes.
+- Reduced-motion support.
+- Adequate touch targets on mobile.
 
-## 10. Explicit Anti-Patterns
+Do not assume that the brand coral or blue automatically passes contrast against every surface. Test actual combinations.
 
-1. No reverting to the deprecated ivory/blue/coral palette.
-2. No generic purple-to-blue AI gradients, neon glows, or excessive glassmorphism.
-3. No centered hero plus three equal cards as the default layout for every page.
-4. No unnecessary max-width containers or nested gutters that waste viewport space.
-5. No repetitive cards for content better presented as rows, tables, or editorial layouts.
-6. No redundant permanent navigation or duplicate primary actions for the same capability.
-7. No emoji as interface icons.
-8. No perpetual decorative animation or forced smooth scrolling across the whole application.
-9. No Lenis on the architecture editor, nested panels, dialogs, or React Flow canvas.
-10. No unverified success indicators, invented metrics, placeholder user data, or false security claims.
-11. No silent removal of features, weakened permissions, unnecessary API contract changes, or altered persistence behavior.
-12. No AI-generated architecture mutation without explicit review and user confirmation.
-13. No claiming visual/browser validation based only on unit tests, snapshots, or static source inspection.
+## 12. Responsive behavior
 
-## 11. Required Workflow for AI Coding Agents
+### Desktop: 1280px and above
 
-Before UI changes:
+Use the full editorial grid and the complete studio layout when screen space permits.
 
-1. Read `PRD.md`, `SYSTEM.md`, `RULES.md`, `FEATURES.md`, `TESTS.md`, `memory.md`, this file, and relevant UI documentation where available.
-2. Inspect the actual routes, components, styles, current dependencies, and Git changes.
-3. Read relevant installed skills. Do not activate every available skill indiscriminately. Skills provide methods; this document defines the intended visual direction.
-4. Map the reference images to the pages they are meant to influence.
-5. Make a concise implementation plan before editing.
-6. Implement in small, reviewable stages. Do not run overlapping tasks that edit the same files.
-7. Reuse existing components, tokens, and libraries where sensible. Do not replace working architecture with a generated demo.
-8. Check responsive behavior, accessibility, existing flows, permissions, loading/error/empty states, and real API-backed data.
-9. Run relevant tests, typecheck, and production build. Report exactly what ran and what did not.
-10. If browser automation is available, inspect actual rendered pages at the viewport sizes above. Separate browser evidence from unit-test evidence.
-11. Do not claim a skill, MCP tool, browser check, generated asset, or integration was used unless it was actually used successfully.
+### Tablet: 768–1279px
 
-### Skill selection
+Reduce gutters, collapse secondary navigation, and convert appropriate side panels into drawers.
 
-Use explicit skill invocation only when the exact skill is installed and the invocation format is supported. For a visual redesign, select a small complementary set such as:
+### Mobile: below 768px
 
-- `ui-ux-pro-max` for UX audit and heuristics
-- `design-taste-frontend` or `stitch-design-taste` for visual direction
-- `redesign-existing-projects` for improving existing screens safely
-- `ui-styling` for implementation details
-- Relevant React, accessibility, animation, or testing skills for their specific work
+Prioritize the active task, stack marketing content, use full-width forms, and expose editor panels through accessible drawers.
 
-If a skill is unavailable, do not invent it. Read the installed skill file when direct invocation is unsupported. Use Google Stitch or 21st.dev only if the integration is available and useful; respect any tool-use limits and do not let generated output override this document.
+The architecture canvas must remain usable. Do not simply shrink the entire desktop interface until it becomes microscopic.
 
-## 12. Implementation References
+## 13. Performance and implementation constraints
 
-Keep existing technical sources of truth aligned with the design tokens when these files exist:
+- Reuse the existing React, Tailwind CSS, Lucide React, and React Flow stack.
+- Reuse existing components and tokens when possible.
+- Avoid adding heavy UI frameworks without a demonstrated need.
+- Lazy-load non-critical imagery.
+- Prevent layout shifts from images and fonts.
+- Avoid unnecessary rerenders during canvas manipulation.
+- Preserve route behavior, authentication, persistence, project CRUD, permissions, collaboration, validation, and export.
+- Do not claim a feature is implemented until the corresponding behavior exists and has been tested.
 
-- `client/src/index.css` — CSS custom properties, base styles, focus and reduced-motion rules
-- `client/tailwind.config.js` — Tailwind theme extension and semantic colors
-- `client/src/lib/architecture/nodeIcons.tsx` — centralized node icon/visual configuration
-- `client/src/components/architecture/*` — canvas, nodes, palette, and panels
-- `shared/types/architecture.ts` — authoritative node and edge contracts
+## 14. Definition of design completion
 
-Paths may differ in the current repository. Inspect the actual structure before editing; do not create duplicate files just because a documented path is absent.
+The design is complete only when:
 
-This document defines intended design, not proof that the current application implements it. After implementation, update actual tokens and components, inspect the rendered UI, and report any remaining gaps honestly.
+1. All required routes share a coherent design language.
+2. The actual application matches the approved visual references in composition and product emphasis.
+3. Images depict software architecture rather than physical buildings.
+4. Navigation and interactive controls work.
+5. Responsive layouts have been inspected.
+6. Accessibility and contrast checks pass.
+7. Existing product functionality and automated tests remain intact.
+8. The production build succeeds.
+
+**Authority rule:** When another design document conflicts with this file, follow this file for visual design. Preserve functional requirements from the PRD and interaction specifications. If a conflict affects functionality or security, resolve it explicitly rather than silently removing the behavior.

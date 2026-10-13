@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Activity, ShieldCheck, LogOut, FolderGit2, Mail, Layers } from 'lucide-react';
+import { Activity, ShieldCheck, LogOut, FolderGit2, Mail } from 'lucide-react';
 import { useGetHealthQuery } from '../../store/api/healthApi';
 import { useGetInvitationsQuery } from '../../store/api/projectApi';
 import { useAuth } from '../../hooks/useAuth';
@@ -42,9 +42,6 @@ export const Header: React.FC = () => {
           className="flex items-center gap-3 transition-opacity hover:opacity-90"
         >
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-accent)] shadow-sm">
-              <Layers className="h-4 w-4" />
-            </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-[var(--color-text)]">

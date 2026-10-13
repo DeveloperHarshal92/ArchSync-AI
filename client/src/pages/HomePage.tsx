@@ -282,7 +282,7 @@ export const HomePage: React.FC = () => {
           <div className="lg:col-span-7 relative">
             <div className="relative overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl">
               <img
-                src={resolvedTheme === 'light' ? '/assets/arch_monument_lake_light.jpg' : '/assets/arch_monument_lake.jpg'}
+                src={resolvedTheme === 'light' ? '/assets/images/arch_monument_lake_light.jpg' : '/assets/images/arch_monument_lake.jpg'}
                 alt="Architectural pavilion by water representing structured architecture"
                 className="w-full h-[400px] sm:h-[480px] object-cover filter contrast-[1.03] transition-all duration-300"
                 loading="lazy"
@@ -508,7 +508,7 @@ export const HomePage: React.FC = () => {
           <div className="lg:col-span-6 relative flex items-center justify-center">
             <div className="relative rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-2xl max-w-md w-full">
               <img
-                src="/assets/arch_ai_core.jpg"
+                src="/assets/images/arch_ai_core.jpg"
                 alt="AI architecture processor core with radiating circuitry"
                 className="w-full h-auto rounded-xl object-cover shadow-xl filter contrast-[1.03]"
                 loading="lazy"

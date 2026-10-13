@@ -1,5 +1,5 @@
 import { AIProvider } from './providers/ai.provider';
-import { geminiProvider } from './providers/gemini.provider';
+import { failoverProvider } from './providers/failover.provider';
 import { AIAnalysisResponse } from './types';
 import { architectureService } from '../services/architecture.service';
 import { permissionService } from '../services/permission.service';
@@ -18,7 +18,7 @@ import { AppError } from '../utils/errors';
 export class AIService {
   private provider: AIProvider;
 
-  constructor(provider: AIProvider = geminiProvider) {
+  constructor(provider: AIProvider = failoverProvider) {
     this.provider = provider;
   }
 

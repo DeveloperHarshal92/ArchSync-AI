@@ -149,7 +149,7 @@ describe('F14 dialogKeyboard', () => {
 
     it('dialog is labelled by remove-modal-title', () => {
       const labelledby = 'remove-modal-title';
-      expect(labelledby).toBe('remove-modal-title');
+      expect(labelledby).toBe('remove-modal-title');  
     });
 
     it('cancel button receives initial focus when dialog opens', () => {

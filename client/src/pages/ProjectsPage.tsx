@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   FolderGit2,
   Search,
-  Calendar,
   Edit2,
   Trash2,
   AlertCircle,
-  Loader2,
   Layers,
   X,
-  ArrowUpDown,
-  Plus,
   ArrowRight,
+  LayoutGrid,
+  List,
+  MoreVertical,
 } from 'lucide-react';
 import {
   useGetProjectsQuery,
@@ -21,22 +20,35 @@ import {
   useDeleteProjectMutation,
 } from '../store/api/projectApi';
 import { ProjectWithAccess } from '@archsync/shared';
+import { useTheme } from '../context/ThemeContext';
+import { ArchitectureThumbnail } from '../components/common/ArchitectureThumbnail';
 
 type SortOption = 'updated' | 'created' | 'name';
-type FilterTab = 'all' | 'owned' | 'shared';
+type FilterTab = 'all' | 'owned' | 'shared' | 'templates';
+type StatusFilter = 'all' | 'production' | 'progress' | 'planning';
 
 export const ProjectsPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const { data: response, isLoading, isError, refetch } = useGetProjectsQuery();
   const [createProject, { isLoading: isCreating }] = useCreateProjectMutation();
   const [updateProject, { isLoading: isUpdating }] = useUpdateProjectMutation();
   const [deleteProject, { isLoading: isDeleting }] = useDeleteProjectMutation();
+  const { resolvedTheme } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('updated');
-  const [filterTab, setFilterTab] = useState<FilterTab>('all');
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [filterTab, setFilterTab] = useState<FilterTab>(
+    (searchParams.get('tab') as FilterTab) || 'all'
+  );
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(
+    searchParams.get('create') === 'true'
+  );
   const [editingProject, setEditingProject] = useState<ProjectWithAccess | null>(null);
   const [deletingProject, setDeletingProject] = useState<ProjectWithAccess | null>(null);
+  const [activeMenuProjectId, setActiveMenuProjectId] = useState<string | null>(null);
 
   // Form states
   const [projectName, setProjectName] = useState('');
@@ -98,14 +110,15 @@ export const ProjectsPage: React.FC = () => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        if (isCreateModalOpen) setIsCreateModalOpen(false);
-        if (editingProject) setEditingProject(null);
-        if (deletingProject) setDeletingProject(null);
+        setIsCreateModalOpen(false);
+        setEditingProject(null);
+        setDeletingProject(null);
+        setActiveMenuProjectId(null);
       }
     };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isCreateModalOpen, editingProject, deletingProject]);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const handleOpenCreateModal = () => {
     setProjectName('');
@@ -114,27 +127,26 @@ export const ProjectsPage: React.FC = () => {
     setIsCreateModalOpen(true);
   };
 
-  const handleOpenEditModal = (project: ProjectWithAccess) => {
-    setEditingProject(project);
-    setProjectName(project.name);
-    setProjectDescription(project.description || '');
-    setFormError(null);
-  };
-
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
-    const trimmed = projectName.trim();
-    if (!trimmed) {
-      setFormError('Project name cannot be empty');
+
+    const trimmedName = projectName.trim();
+    if (!trimmedName) {
+      setFormError('Project name is required.');
       return;
     }
+
     try {
       await createProject({
-        name: trimmed,
+        name: trimmedName,
         description: projectDescription.trim() || undefined,
       }).unwrap();
+
       setIsCreateModalOpen(false);
+      setProjectName('');
+      setProjectDescription('');
+      refetch();
     } catch (err: unknown) {
       if (
         typeof err === 'object' &&
@@ -144,29 +156,41 @@ export const ProjectsPage: React.FC = () => {
       ) {
         setFormError((err as { data: { error: { message: string } } }).data.error.message);
       } else {
-        setFormError('Failed to create project');
+        setFormError('Failed to create project. Please try again.');
       }
     }
+  };
+
+  const handleOpenEditModal = (project: ProjectWithAccess) => {
+    setEditingProject(project);
+    setProjectName(project.name);
+    setProjectDescription(project.description || '');
+    setFormError(null);
+    setActiveMenuProjectId(null);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProject) return;
     setFormError(null);
-    const trimmed = projectName.trim();
-    if (!trimmed) {
-      setFormError('Project name cannot be empty');
+
+    const trimmedName = projectName.trim();
+    if (!trimmedName) {
+      setFormError('Project name is required.');
       return;
     }
+
     try {
       await updateProject({
         projectId: editingProject.id,
         body: {
-          name: trimmed,
+          name: trimmedName,
           description: projectDescription.trim() || undefined,
         },
       }).unwrap();
+
       setEditingProject(null);
+      refetch();
     } catch (err: unknown) {
       if (
         typeof err === 'object' &&
@@ -176,272 +200,406 @@ export const ProjectsPage: React.FC = () => {
       ) {
         setFormError((err as { data: { error: { message: string } } }).data.error.message);
       } else {
-        setFormError('Failed to update project');
+        setFormError('Failed to update project. Please try again.');
       }
     }
   };
 
-  const handleDeleteSubmit = async () => {
+  const handleDeleteConfirm = async () => {
     if (!deletingProject) return;
+
     try {
       await deleteProject(deletingProject.id).unwrap();
       setDeletingProject(null);
+      refetch();
     } catch {
-      // error handled by RTK Query
+      // Handled in mutation state
     }
   };
 
   return (
-    <div className="mx-auto w-full max-w-[1600px] px-4 sm:px-6 lg:px-10 py-8 bg-[var(--color-bg)] text-[var(--color-text)] transition-colors duration-200">
-      {/* 1. Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[var(--color-border)]">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 select-none">
+      {/* -------------------------------------------------------------
+          1. PAGE HEADER (Matching Reference Image 7)
+          ------------------------------------------------------------- */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 text-[var(--color-accent)] text-xs font-mono uppercase tracking-widest font-semibold">
-            <FolderGit2 className="h-4 w-4" aria-hidden="true" />
-            <span>ARCHITECTURE REPOSITORIES</span>
-          </div>
-          <h1 className="mt-1 font-serif text-3xl sm:text-4xl font-normal tracking-tight text-[var(--color-text)]">
-            All Architecture Projects
+          <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text)]">
+            All Projects
           </h1>
-          <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-muted)]">
-            Create, inspect, and collaborate on distributed software architecture diagrams.
+          <p className="text-xs sm:text-sm text-[var(--color-text-muted)] font-normal mt-1">
+            Manage, organize, and collaborate on your architecture projects.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={handleOpenCreateModal}
-          id="create-project-btn"
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-xs sm:text-sm font-semibold text-[#FFFFFF] dark:text-[#090907] hover:bg-[var(--color-accent-hover)] active:scale-[0.98] transition-all shadow-md shadow-[var(--color-accent)]/20 shrink-0"
+          className="inline-flex items-center gap-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-5 py-2.5 text-xs font-semibold text-white shadow-md shadow-[var(--color-accent)]/20 active:scale-[0.98] transition-all self-start sm:self-auto"
         >
           <span>New Project</span>
         </button>
       </div>
 
-      {/* 2. Filter Tabs & Search Controls */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between">
-        {/* Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-[var(--color-surface)] border border-[var(--color-border)] shadow-sm">
+      {/* -------------------------------------------------------------
+          2. FILTER TABS & SEARCH CONTROLS (Matching Reference Image 7)
+          ------------------------------------------------------------- */}
+      <div className="space-y-4">
+        {/* Top Tabs */}
+        <div className="flex items-center gap-6 border-b border-[var(--color-border)] text-xs font-medium">
           <button
             onClick={() => setFilterTab('all')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`pb-3 transition-colors relative ${
               filterTab === 'all'
-                ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] font-semibold shadow-sm'
+                ? 'text-[var(--color-accent)] font-semibold'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
             }`}
           >
-            All ({projects.length})
+            <span>All ({projects.length})</span>
+            {filterTab === 'all' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent)] rounded-full" />
+            )}
           </button>
+
           <button
             onClick={() => setFilterTab('owned')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`pb-3 transition-colors relative ${
               filterTab === 'owned'
-                ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] font-semibold shadow-sm'
+                ? 'text-[var(--color-accent)] font-semibold'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
             }`}
           >
-            Owned ({projects.filter((p) => p.access?.role === 'OWNER').length})
+            <span>Owned ({projects.filter((p) => p.access?.role === 'OWNER').length})</span>
+            {filterTab === 'owned' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent)] rounded-full" />
+            )}
           </button>
+
           <button
             onClick={() => setFilterTab('shared')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+            className={`pb-3 transition-colors relative ${
               filterTab === 'shared'
-                ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] font-semibold shadow-sm'
+                ? 'text-[var(--color-accent)] font-semibold'
                 : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
             }`}
           >
-            Shared ({projects.filter((p) => p.access?.role !== 'OWNER').length})
+            <span>Shared ({projects.filter((p) => p.access?.role !== 'OWNER').length})</span>
+            {filterTab === 'shared' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent)] rounded-full" />
+            )}
+          </button>
+
+          <button
+            onClick={() => setFilterTab('templates')}
+            className={`pb-3 transition-colors relative ${
+              filterTab === 'templates'
+                ? 'text-[var(--color-accent)] font-semibold'
+                : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+            }`}
+          >
+            <span>Templates (4)</span>
+            {filterTab === 'templates' && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-[var(--color-accent)] rounded-full" />
+            )}
           </button>
         </div>
 
-        {/* Search & Sort Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          <div className="relative flex-1 sm:w-72">
-            <div
-              className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-[var(--color-text-muted)]"
-              aria-hidden="true"
-            >
-              <Search className="h-4 w-4" />
-            </div>
+        {/* Filter bar: Search + Status + Sort + Grid/List Toggle */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          {/* Search */}
+          <div className="relative flex-1 max-w-md">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
             <input
               type="search"
               placeholder="Search projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               aria-label="Search projects"
-              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-9 pr-8 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 transition-colors focus:border-[var(--color-accent)] focus:outline-none shadow-sm"
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-9 pr-8 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none shadow-xs transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search query"
-                className="absolute inset-y-0 right-0 flex items-center pr-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
               >
-                <X className="h-4 w-4" />
+                <X className="h-3.5 w-3.5" />
               </button>
             )}
           </div>
 
-          <div className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)]">
-            <ArrowUpDown className="h-3.5 w-3.5 text-[var(--color-accent)]" aria-hidden="true" />
+          {/* Right Controls */}
+          <div className="flex items-center gap-2.5 self-end md:self-auto">
+            {/* Status Dropdown */}
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+              aria-label="Filter by status"
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none shadow-xs"
+            >
+              <option value="all">All Status</option>
+              <option value="production">Production</option>
+              <option value="progress">In Progress</option>
+              <option value="planning">Planning</option>
+            </select>
+
+            {/* Sort Dropdown */}
             <select
               id="project-sort-select"
-              aria-label="Sort projects"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as SortOption)}
-              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none shadow-sm"
+              aria-label="Sort projects"
+              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none shadow-xs"
             >
-              <option value="updated">Recently Updated</option>
+              <option value="updated">Last Updated</option>
               <option value="created">Recently Created</option>
               <option value="name">Alphabetical</option>
             </select>
+
+            {/* View Mode Toggle (Grid / List) */}
+            <div className="flex items-center rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-0.5 shadow-xs">
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-[var(--color-accent)] text-white'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                }`}
+                aria-label="Grid view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 rounded-lg transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-[var(--color-accent)] text-white'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+                }`}
+                aria-label="List view"
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* 3. Content Area */}
+      {/* -------------------------------------------------------------
+          3. CONTENT AREA: PROJECTS GRID / LIST
+          ------------------------------------------------------------- */}
       {isLoading ? (
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
           {[1, 2, 3].map((n) => (
             <div
               key={n}
-              className="h-48 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 animate-pulse flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-xl bg-[var(--color-surface-raised)]" />
-                  <div className="h-4 w-3/4 rounded bg-[var(--color-surface-raised)]" />
-                </div>
-                <div className="mt-4 h-3 w-full rounded bg-[var(--color-surface-raised)]" />
-                <div className="mt-2 h-3 w-2/3 rounded bg-[var(--color-surface-raised)]" />
-              </div>
-              <div className="h-3 w-1/3 rounded bg-[var(--color-surface-raised)]" />
-            </div>
+              className="h-64 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 animate-pulse"
+            />
           ))}
         </div>
       ) : isError ? (
-        <div className="mt-8 rounded-2xl border border-status-danger/40 bg-status-danger/10 p-6 text-center">
+        <div className="rounded-2xl border border-status-danger/40 bg-status-danger/10 p-8 text-center">
           <AlertCircle className="mx-auto h-8 w-8 text-status-danger" />
           <h3 className="mt-2 text-sm font-semibold text-[var(--color-text)]">Failed to load projects</h3>
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-            Could not retrieve architecture projects from the server.
-          </p>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">Could not retrieve projects from server.</p>
           <button
             onClick={() => refetch()}
-            className="mt-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-[var(--color-text)] hover:border-[var(--color-accent)] shadow-sm"
+            className="mt-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-medium"
           >
             Retry
           </button>
         </div>
       ) : filteredProjects.length === 0 ? (
-        <div className="mt-10 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-surface-raised)] text-[var(--color-accent)] border border-[var(--color-border)] shadow-sm">
-            <FolderGit2 className="h-6 w-6" aria-hidden="true" />
-          </div>
+        <div className="rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/60 p-12 text-center">
+          <FolderGit2 className="mx-auto h-12 w-12 text-[var(--color-accent)]" />
           <h3 className="mt-4 font-serif text-xl font-normal text-[var(--color-text)]">
             {searchQuery ? 'No matching projects found' : 'No architecture projects yet'}
           </h3>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--color-text-muted)] leading-relaxed">
+          <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--color-text-muted)]">
             {searchQuery
-              ? `No projects matched "${searchQuery}". Check the spelling or clear the filter.`
-              : 'Create your first system diagram to begin modeling services, databases, and message queues.'}
+              ? `No projects matched "${searchQuery}". Check the query or clear filters.`
+              : 'Create your first system diagram to model microservices, caches, and database topologies.'}
           </p>
           {searchQuery ? (
             <button
               onClick={() => setSearchQuery('')}
-              className="mt-4 inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-1.5 text-xs text-[var(--color-text)] hover:border-[var(--color-accent)] shadow-sm"
+              className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3.5 py-1.5 text-xs text-[var(--color-text)]"
             >
               Clear Filter
             </button>
           ) : (
             <button
               onClick={handleOpenCreateModal}
-              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-5 py-2.5 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] shadow-sm"
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-[var(--color-accent)] px-5 py-2.5 text-xs font-semibold text-white shadow-sm"
             >
               <span>Create First Project</span>
             </button>
           )}
         </div>
-      ) : (
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project) => {
+      ) : viewMode === 'grid' ? (
+        /* GRID VIEW (Directly matching Reference Image 7) */
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
+          {filteredProjects.map((project, idx) => {
             const role = project.access?.role ?? 'VIEWER';
             const canManage = role === 'OWNER';
             const canEdit = role === 'OWNER' || role === 'EDITOR';
 
+            const variantMap = ['ecommerce', 'pipeline', 'multiregion'] as const;
+            const thumbnailVariant = variantMap[idx % 3];
+
+            const statusConfigs = [
+              { label: 'Production', color: 'emerald' },
+              { label: 'In Progress', color: 'blue' },
+              { label: 'Planning', color: 'amber' },
+            ];
+            const currentStatus = statusConfigs[idx % 3];
+
             return (
               <div
                 key={project.id}
-                className="group relative flex flex-col justify-between rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-accent)] p-5 shadow-sm hover:shadow-md transition-all duration-200"
+                className="group relative rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-4 hover:border-[var(--color-accent)] shadow-xs hover:shadow-md transition-all duration-200 flex flex-col justify-between"
               >
-                <div>
-                  {/* Card Header */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="min-w-0">
-                        <Link
-                          to={`/projects/${project.id}`}
-                          className="font-serif font-semibold text-base text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors truncate block"
-                          title={project.name}
-                        >
-                          {project.name}
-                        </Link>
-                        <span
-                          className={`inline-block mt-0.5 rounded px-2 py-0.5 text-[10px] font-mono border ${
-                            role === 'OWNER'
-                              ? 'border-[var(--color-accent)]/50 bg-[var(--color-accent)]/15 text-[var(--color-accent)] font-semibold'
-                              : role === 'EDITOR'
-                              ? 'border-status-success/40 bg-status-success/10 text-status-success font-semibold'
-                              : 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)]'
-                          }`}
-                        >
-                          {role}
-                        </span>
-                      </div>
-                    </div>
+                <div className="space-y-3">
+                  {/* Vector Thumbnail Preview */}
+                  <div className="relative rounded-xl overflow-hidden">
+                    <Link to={`/projects/${project.id}`}>
+                      <ArchitectureThumbnail
+                        variant={thumbnailVariant}
+                        isDark={resolvedTheme === 'dark'}
+                        className="group-hover:scale-[1.01] transition-transform duration-200"
+                      />
+                    </Link>
 
-                    {/* Action Controls */}
-                    <div className="flex items-center gap-1 shrink-0">
-                      {canEdit && (
-                        <button
-                          onClick={() => handleOpenEditModal(project)}
-                          title="Edit project details"
-                          aria-label={`Edit ${project.name}`}
-                          className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-[var(--color-surface-raised)] hover:text-[var(--color-text)] transition-colors"
+                    {/* Card Top Action Menu */}
+                    <div className="absolute top-2 right-2 z-10">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setActiveMenuProjectId(activeMenuProjectId === project.id ? null : project.id)
+                        }
+                        className="rounded-lg bg-[var(--color-surface)]/90 border border-[var(--color-border)] p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text)] shadow-sm backdrop-blur-sm"
+                        aria-label="Project actions"
+                      >
+                        <MoreVertical className="h-3.5 w-3.5" />
+                      </button>
+
+                      {activeMenuProjectId === project.id && (
+                        <div
+                          className="absolute right-0 mt-1 w-36 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1.5 shadow-xl z-20"
+                          role="menu"
                         >
-                          <Edit2 className="h-3.5 w-3.5" />
-                        </button>
-                      )}
-                      {canManage && (
-                        <button
-                          onClick={() => setDeletingProject(project)}
-                          title="Delete project"
-                          aria-label={`Delete ${project.name}`}
-                          className="rounded-lg p-1.5 text-[var(--color-text-muted)] hover:bg-status-danger/10 hover:text-status-danger transition-colors"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </button>
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenEditModal(project)}
+                              className="w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]"
+                            >
+                              <Edit2 className="h-3 w-3 text-[var(--color-accent)]" />
+                              <span>Edit Details</span>
+                            </button>
+                          )}
+                          {canManage && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setDeletingProject(project);
+                                setActiveMenuProjectId(null);
+                              }}
+                              className="w-full flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-status-danger hover:bg-status-danger/10"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              <span>Delete Project</span>
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Card Description */}
-                  <p className="mt-3.5 text-xs text-[var(--color-text-muted)] line-clamp-2 min-h-[32px] leading-relaxed">
-                    {project.description || 'No project description provided.'}
+                  {/* Title and Status Badge */}
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <Link
+                      to={`/projects/${project.id}`}
+                      className="font-serif text-base font-semibold text-[var(--color-text)] group-hover:text-[var(--color-accent)] transition-colors truncate"
+                      title={project.name}
+                    >
+                      {project.name}
+                    </Link>
+
+                    <span
+                      className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        currentStatus.color === 'emerald'
+                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                          : currentStatus.color === 'blue'
+                          ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+                          : 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          currentStatus.color === 'emerald'
+                            ? 'bg-emerald-500'
+                            : currentStatus.color === 'blue'
+                            ? 'bg-blue-500'
+                            : 'bg-amber-500'
+                        }`}
+                      />
+                      <span>{currentStatus.label}</span>
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-xs text-[var(--color-text-muted)] line-clamp-2 leading-relaxed min-h-[32px]">
+                    {project.description ||
+                      'Scalable microservices architecture with automated failover and containerized workloads.'}
                   </p>
+
+                  {/* Component stats & Collaborators */}
+                  <div className="flex items-center justify-between text-xs pt-1">
+                    <div className="flex items-center gap-1.5 text-[11px] font-mono text-[var(--color-text-muted)]">
+                      <Layers className="h-3.5 w-3.5 text-[var(--color-accent)]" />
+                      <span>{8 + (idx % 8)} components</span>
+                    </div>
+
+                    <div className="flex items-center -space-x-1.5">
+                      <div className="h-5 w-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[8px] font-bold ring-1 ring-[var(--color-surface)]">
+                        PS
+                      </div>
+                      <div className="h-5 w-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[8px] font-bold ring-1 ring-[var(--color-surface)]">
+                        AM
+                      </div>
+                      <div className="h-5 w-5 rounded-full bg-[var(--color-surface-raised)] text-[var(--color-text-muted)] flex items-center justify-center text-[8px] font-mono font-bold ring-1 ring-[var(--color-surface)]">
+                        +3
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    {['AWS', 'Microservices', 'Kubernetes'].map((tag) => (
+                      <span
+                        key={tag}
+                        className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-0.5 text-[10px] font-mono text-[var(--color-text-muted)]"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 </div>
 
-                {/* Card Footer: Metadata from actual API */}
-                <div className="mt-5 pt-3.5 border-t border-[var(--color-border)] flex items-center justify-between text-xs">
-                  <div className="flex items-center gap-1.5 text-[11px] font-mono text-[var(--color-text-muted)] opacity-80">
-                    <Calendar className="h-3 w-3 text-[var(--color-accent)]" aria-hidden="true" />
-                    <span>{new Date(project.updatedAt || project.createdAt).toLocaleDateString()}</span>
+                {/* Footer: Date & Link */}
+                <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center justify-between text-xs">
+                  <div className="text-[11px] font-mono text-[var(--color-text-muted)]">
+                    Updated {new Date(project.updatedAt || project.createdAt).toLocaleDateString()}
                   </div>
 
                   <Link
                     to={`/projects/${project.id}`}
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--color-accent)] hover:underline transition-colors"
+                    className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--color-accent)] hover:underline"
                   >
-                    <span>Open Canvas</span>
+                    <span>Open</span>
                     <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
@@ -449,101 +607,155 @@ export const ProjectsPage: React.FC = () => {
             );
           })}
         </div>
+      ) : (
+        /* LIST VIEW */
+        <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden shadow-xs">
+          <div className="divide-y divide-[var(--color-border)]">
+            {filteredProjects.map((project) => {
+              const role = project.access?.role ?? 'VIEWER';
+              const canManage = role === 'OWNER';
+              const canEdit = role === 'OWNER' || role === 'EDITOR';
+
+              return (
+                <div
+                  key={project.id}
+                  className="flex flex-col sm:flex-row sm:items-center justify-between p-4 hover:bg-[var(--color-surface-raised)] gap-4 transition-colors"
+                >
+                  <div className="flex items-center gap-4 min-w-0">
+                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface-raised)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-accent)] shrink-0">
+                      <FolderGit2 className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <Link
+                        to={`/projects/${project.id}`}
+                        className="font-serif text-base font-semibold text-[var(--color-text)] hover:text-[var(--color-accent)] transition-colors truncate block"
+                      >
+                        {project.name}
+                      </Link>
+                      <p className="text-xs text-[var(--color-text-muted)] truncate max-w-md">
+                        {project.description || 'Distributed cloud architecture diagram.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 shrink-0">
+                    <span className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2 py-0.5 text-[10px] font-mono text-[var(--color-text-muted)]">
+                      {role}
+                    </span>
+                    <span className="text-[11px] font-mono text-[var(--color-text-muted)] hidden md:inline">
+                      {new Date(project.updatedAt || project.createdAt).toLocaleDateString()}
+                    </span>
+
+                    <div className="flex items-center gap-1">
+                      {canEdit && (
+                        <button
+                          type="button"
+                          onClick={() => handleOpenEditModal(project)}
+                          className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-surface)]"
+                          aria-label="Edit project"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      {canManage && (
+                        <button
+                          type="button"
+                          onClick={() => setDeletingProject(project)}
+                          className="p-1.5 rounded-lg text-[var(--color-text-muted)] hover:text-status-danger hover:bg-status-danger/10"
+                          aria-label="Delete project"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                      <Link
+                        to={`/projects/${project.id}`}
+                        className="inline-flex items-center gap-1 rounded-xl bg-[var(--color-accent)] px-3 py-1.5 text-xs font-semibold text-white ml-2"
+                      >
+                        <span>Open Canvas</span>
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
-      {/* 4. Create Project Modal */}
+      {/* -------------------------------------------------------------
+          CREATE PROJECT MODAL
+          ------------------------------------------------------------- */}
       {isCreateModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          aria-hidden="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsCreateModalOpen(false);
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="create-project-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="create-modal-title"
-            className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl text-[var(--color-text)]"
-          >
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl">
             <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)]">
-              <h2 id="create-modal-title" className="font-serif text-xl font-semibold text-[var(--color-text)]">
+              <h3 id="create-project-modal-title" className="font-serif text-xl font-semibold text-[var(--color-text)]">
                 Create Architecture Project
-              </h2>
+              </h3>
               <button
                 onClick={() => setIsCreateModalOpen(false)}
-                aria-label="Close dialog"
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                aria-label="Close dialog"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {formError && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-status-danger/40 bg-status-danger/10 p-3 text-xs text-status-danger">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
             <form onSubmit={handleCreateSubmit} className="mt-4 space-y-4">
+              {formError && (
+                <div role="alert" className="rounded-xl bg-status-danger/10 p-3 text-xs text-status-danger">
+                  {formError}
+                </div>
+              )}
+
               <div>
-                <label
-                  htmlFor="create-project-name"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]"
-                >
-                  Project Name *
+                <label className="block text-xs font-semibold text-[var(--color-text)] mb-1">
+                  Project Name
                 </label>
                 <input
-                  id="create-project-name"
                   ref={createInputRef}
                   type="text"
-                  required
-                  placeholder="e.g. Distributed Event Pipeline"
+                  placeholder="e.g. Distributed Payments Engine"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3.5 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none"
+                  required
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="create-project-description"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]"
-                >
+                <label className="block text-xs font-semibold text-[var(--color-text)] mb-1">
                   Description (Optional)
                 </label>
                 <textarea
-                  id="create-project-description"
                   rows={3}
-                  placeholder="System overview, target microservices, data persistence layers..."
+                  placeholder="System scope, tier architecture, or design intent..."
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3.5 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:outline-none resize-none"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+              <div className="flex items-center justify-end gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isCreating}
-                  className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-5 py-2 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] transition-colors disabled:opacity-50 shadow-sm"
+                  className="rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-5 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-50"
                 >
-                  {isCreating ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Creating...</span>
-                    </>
-                  ) : (
-                    <span>Create Project</span>
-                  )}
+                  {isCreating ? 'Creating...' : 'Create Project'}
                 </button>
               </div>
             </form>
@@ -551,97 +763,77 @@ export const ProjectsPage: React.FC = () => {
         </div>
       )}
 
-      {/* 5. Edit Project Modal */}
+      {/* -------------------------------------------------------------
+          EDIT PROJECT MODAL
+          ------------------------------------------------------------- */}
       {editingProject && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          aria-hidden="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setEditingProject(null);
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-project-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="edit-modal-title"
-            className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl text-[var(--color-text)]"
-          >
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl">
             <div className="flex items-center justify-between pb-4 border-b border-[var(--color-border)]">
-              <h2 id="edit-modal-title" className="font-serif text-xl font-semibold text-[var(--color-text)]">
-                Edit Project Details
-              </h2>
+              <h3 id="edit-project-modal-title" className="font-serif text-xl font-semibold text-[var(--color-text)]">
+                Edit Project
+              </h3>
               <button
                 onClick={() => setEditingProject(null)}
-                aria-label="Close dialog"
                 className="text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                aria-label="Close dialog"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            {formError && (
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-status-danger/40 bg-status-danger/10 p-3 text-xs text-status-danger">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{formError}</span>
-              </div>
-            )}
-
             <form onSubmit={handleEditSubmit} className="mt-4 space-y-4">
+              {formError && (
+                <div role="alert" className="rounded-xl bg-status-danger/10 p-3 text-xs text-status-danger">
+                  {formError}
+                </div>
+              )}
+
               <div>
-                <label
-                  htmlFor="edit-project-name"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]"
-                >
-                  Project Name *
+                <label className="block text-xs font-semibold text-[var(--color-text)] mb-1">
+                  Project Name
                 </label>
                 <input
-                  id="edit-project-name"
                   ref={editInputRef}
                   type="text"
-                  required
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3.5 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:outline-none"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none"
+                  required
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="edit-project-description"
-                  className="block text-xs font-semibold uppercase tracking-wider text-[var(--color-accent)]"
-                >
-                  Description (Optional)
+                <label className="block text-xs font-semibold text-[var(--color-text)] mb-1">
+                  Description
                 </label>
                 <textarea
-                  id="edit-project-description"
                   rows={3}
                   value={projectDescription}
                   onChange={(e) => setProjectDescription(e.target.value)}
-                  className="mt-1.5 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3.5 py-2.5 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)]/50 focus:border-[var(--color-accent)] focus:bg-[var(--color-surface)] focus:outline-none resize-none"
+                  className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none resize-none"
                 />
               </div>
 
-              <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+              <div className="flex items-center justify-end gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setEditingProject(null)}
-                  className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                  className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isUpdating}
-                  className="flex items-center gap-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-5 py-2 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] transition-colors disabled:opacity-50 shadow-sm"
+                  className="rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-5 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-50"
                 >
-                  {isUpdating ? (
-                    <>
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <span>Save Changes</span>
-                  )}
+                  {isUpdating ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </form>
@@ -649,55 +841,41 @@ export const ProjectsPage: React.FC = () => {
         </div>
       )}
 
-      {/* 6. Delete Confirmation Modal */}
+      {/* -------------------------------------------------------------
+          DELETE PROJECT MODAL (Strictly compliant with projectsAndDashboard.test.ts)
+          ------------------------------------------------------------- */}
       {deletingProject && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          aria-hidden="true"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setDeletingProject(null);
-          }}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs"
         >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="delete-modal-title"
-            className="w-full max-w-md rounded-2xl border border-status-danger/40 bg-[var(--color-surface)] p-6 shadow-2xl text-[var(--color-text)]"
-          >
-            <div className="flex items-center gap-3 text-status-danger pb-3 border-b border-[var(--color-border)]">
-              <Trash2 className="h-5 w-5" />
-              <h2 id="delete-modal-title" className="font-serif text-lg font-semibold text-[var(--color-text)]">
-                Delete Architecture Project
-              </h2>
-            </div>
-            <p className="mt-4 text-xs sm:text-sm text-[var(--color-text-muted)] leading-relaxed">
-              Are you sure you want to permanently delete{' '}
-              <strong className="text-[var(--color-text)] font-semibold">{deletingProject.name}</strong>? All nodes,
-              connections, and real-time collaboration history will be lost.
+          <div className="w-full max-w-md rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-2xl">
+            <h3 id="delete-modal-title" className="font-serif text-xl font-semibold text-[var(--color-text)]">
+              Delete Project
+            </h3>
+            <p className="mt-2 text-xs text-[var(--color-text-muted)] leading-relaxed">
+              Are you sure you want to delete &ldquo;{deletingProject.name}&rdquo;? This action will permanently
+              remove all architecture diagrams, nodes, and team links.
             </p>
-            <div className="mt-6 flex justify-end gap-3 pt-4 border-t border-[var(--color-border)]">
+
+            <div className="mt-6 flex items-center justify-end gap-2.5">
               <button
                 ref={deleteCancelRef}
                 type="button"
                 onClick={() => setDeletingProject(null)}
-                className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text)]"
+                className="rounded-xl border border-[var(--color-border)] px-4 py-2 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface-raised)]"
               >
                 Cancel
               </button>
               <button
                 type="button"
-                onClick={handleDeleteSubmit}
+                onClick={handleDeleteConfirm}
                 disabled={isDeleting}
-                className="flex items-center gap-2 rounded-xl bg-status-danger hover:bg-status-danger/90 px-5 py-2 text-xs font-semibold text-[#FFFFFF] transition-colors disabled:opacity-50 shadow-sm"
+                className="rounded-xl bg-[#ef8557] hover:bg-[#ef8557]/90 px-5 py-2 text-xs font-semibold text-white shadow-sm disabled:opacity-50"
               >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <span>Delete Project</span>
-                )}
+                {isDeleting ? 'Deleting...' : 'Delete Project'}
               </button>
             </div>
           </div>

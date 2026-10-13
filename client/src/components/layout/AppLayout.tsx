@@ -1,9 +1,38 @@
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from './Header';
 import { Footer } from './Footer';
+import { WorkspaceShell } from './WorkspaceShell';
 
 export const AppLayout: React.FC = () => {
+  const location = useLocation();
+  const isWorkspaceRoute = ['/dashboard', '/projects', '/invitations'].some(
+    (p) => location.pathname === p || location.pathname.startsWith(`${p}/`)
+  );
+
+  if (isWorkspaceRoute) {
+    return (
+      <div className="flex min-h-screen flex-col bg-[var(--color-bg)] text-[var(--color-text)] transition-colors duration-200">
+        {/* F14: Skip navigation link (WCAG 2.4.1) */}
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+
+        {/* F14: ARIA live region for screen-reader announcements */}
+        <div
+          id="a11y-announcer"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        />
+
+        <WorkspaceShell>
+          <Outlet />
+        </WorkspaceShell>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-[var(--color-bg)] text-[var(--color-text)] transition-colors duration-200">
       {/* F14: Skip navigation link (WCAG 2.4.1) */}

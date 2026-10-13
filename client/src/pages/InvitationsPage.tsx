@@ -1,29 +1,32 @@
 import React, { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import {
   Mail,
-  Clock,
+  Search,
   CheckCircle2,
-  XCircle,
   AlertCircle,
   Loader2,
   FolderGit2,
-  Inbox,
-  ArrowRight,
-  ShieldCheck,
+  ChevronLeft,
+  ChevronRight,
+  Check,
 } from 'lucide-react';
 import {
   useGetInvitationsQuery,
   useAcceptInvitationMutation,
   useRejectInvitationMutation,
 } from '../store/api/projectApi';
+import { useTheme } from '../context/ThemeContext';
 
 export const InvitationsPage: React.FC = () => {
-  const { data: response, isLoading, isError, refetch } = useGetInvitationsQuery();
+  const { data: response, isLoading, isError } = useGetInvitationsQuery();
   const [acceptInvitation, { isLoading: isAccepting }] = useAcceptInvitationMutation();
   const [rejectInvitation, { isLoading: isRejecting }] = useRejectInvitationMutation();
+  const { resolvedTheme } = useTheme();
 
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'RESOLVED'>('ALL');
+  const [activeTab, setActiveTab] = useState<'received' | 'sent'>('received');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -37,24 +40,26 @@ export const InvitationsPage: React.FC = () => {
     ).length;
   }, [invitations]);
 
-  const resolvedCount = useMemo(() => {
-    return invitations.length - pendingCount;
-  }, [invitations, pendingCount]);
-
   const filteredInvitations = useMemo(() => {
     const now = Date.now();
-    if (filter === 'PENDING') {
-      return invitations.filter(
-        (inv) => inv.status === 'PENDING' && new Date(inv.expiresAt).getTime() >= now
-      );
-    }
-    if (filter === 'RESOLVED') {
-      return invitations.filter(
-        (inv) => inv.status !== 'PENDING' || new Date(inv.expiresAt).getTime() < now
-      );
-    }
-    return invitations;
-  }, [invitations, filter]);
+    return invitations.filter((inv) => {
+      // Search
+      const matchProject = (inv.projectName || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchInviter = (inv.inviterName || '').toLowerCase().includes(searchQuery.toLowerCase());
+      const matchEmail = (inv.invitedEmail || '').toLowerCase().includes(searchQuery.toLowerCase());
+      if (searchQuery && !matchProject && !matchInviter && !matchEmail) return false;
+
+      // Role
+      if (roleFilter !== 'all' && inv.role !== roleFilter) return false;
+
+      // Status
+      if (statusFilter === 'pending' && (inv.status !== 'PENDING' || new Date(inv.expiresAt).getTime() < now))
+        return false;
+      if (statusFilter === 'accepted' && inv.status !== 'ACCEPTED') return false;
+
+      return true;
+    });
+  }, [invitations, searchQuery, roleFilter, statusFilter]);
 
   const isAnyActionRunning = isAccepting || isRejecting || activeActionId !== null;
 
@@ -109,286 +114,322 @@ export const InvitationsPage: React.FC = () => {
   };
 
   return (
-    <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8 text-[var(--color-text)] bg-[var(--color-bg)] transition-colors duration-200">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-6 border-b border-[var(--color-border)]">
-        <div>
-          <div className="flex items-center gap-2 text-[var(--color-accent)] font-mono text-xs uppercase tracking-widest font-semibold">
-            <Mail className="h-4 w-4" />
-            <span>Collaboration & Access Management</span>
-          </div>
-          <h1 className="mt-1 font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text)]">
-            Invitations Inbox
-          </h1>
-          <p className="mt-1 text-xs sm:text-sm text-[var(--color-text-muted)]">
-            Review and respond to collaboration requests from engineering teams across workspaces.
-          </p>
-        </div>
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 select-none">
+      {/* -------------------------------------------------------------
+          1. BREADCRUMBS & HEADER WITH ARCHITECTURAL ARTWORK (Reference 8)
+          ------------------------------------------------------------- */}
+      <div className="relative overflow-hidden rounded-3xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xs">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-center min-h-[160px]">
+          {/* Left Text */}
+          <div className="lg:col-span-8 p-6 sm:p-8 space-y-2 z-10">
+            <div className="text-[11px] font-mono uppercase tracking-wider text-[var(--color-text-muted)] flex items-center gap-1.5">
+              <span>Collaboration</span>
+              <span>&gt;</span>
+              <span className="text-[var(--color-accent)] font-semibold">Team Invitations</span>
+            </div>
 
-        <Link
-          to="/projects"
-          className="inline-flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-raised)] transition-colors self-start sm:self-auto focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] shadow-sm"
-        >
-          <FolderGit2 className="h-4 w-4 text-[var(--color-accent)]" />
-          <span>My Projects</span>
-        </Link>
+            <h1 className="font-serif text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text)]">
+              Team Invitations
+            </h1>
+            <p className="text-xs sm:text-sm text-[var(--color-text-muted)] max-w-lg leading-relaxed">
+              Review and respond to collaboration requests from project owners and teammates.
+            </p>
+          </div>
+
+          {/* Right Banner Artwork */}
+          <div className="hidden lg:block lg:col-span-4 relative h-full min-h-[160px] overflow-hidden">
+            <img
+              src={
+                resolvedTheme === 'light'
+                  ? '/assets/images/arch_monument_lake_light.jpg'
+                  : '/assets/images/arch_monument_lake.jpg'
+              }
+              alt="Architectural pavilion representing collaborative systems"
+              className="absolute inset-0 h-full w-full object-cover filter contrast-[1.02] opacity-80"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-[var(--color-surface)] via-[var(--color-surface)]/60 to-transparent" />
+          </div>
+        </div>
       </div>
 
-      {/* Action Alerts */}
+      {/* Notifications */}
       {actionSuccess && (
-        <div
-          role="status"
-          className="mt-6 flex items-center justify-between rounded-lg border border-status-success/40 bg-status-success/10 p-4 text-xs text-status-success"
-        >
-          <div className="flex items-center gap-2.5">
-            <CheckCircle2 className="h-4 w-4 shrink-0" />
-            <span>{actionSuccess}</span>
-          </div>
-          <button
-            onClick={() => setActionSuccess(null)}
-            className="hover:underline transition-colors text-xs font-medium"
-            aria-label="Dismiss message"
-          >
-            Dismiss
-          </button>
+        <div role="status" className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 text-xs text-emerald-700 dark:text-emerald-300 flex items-center gap-2">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+          <span>{actionSuccess}</span>
         </div>
       )}
 
       {actionError && (
-        <div
-          role="alert"
-          className="mt-6 flex items-center justify-between rounded-lg border border-status-danger/40 bg-status-danger/10 p-4 text-xs text-status-danger"
-        >
-          <div className="flex items-center gap-2.5">
-            <AlertCircle className="h-4 w-4 shrink-0" />
-            <span>{actionError}</span>
-          </div>
+        <div role="alert" className="rounded-xl border border-status-danger/30 bg-status-danger/10 p-3.5 text-xs text-status-danger flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0" />
+          <span>{actionError}</span>
+        </div>
+      )}
+
+      {/* -------------------------------------------------------------
+          2. TABS & SEARCH / FILTER ROW (Matching Reference Image 8)
+          ------------------------------------------------------------- */}
+      <div className="space-y-4">
+        {/* Tabs: Received / Sent */}
+        <div className="flex items-center gap-3">
           <button
-            onClick={() => setActionError(null)}
-            className="hover:underline transition-colors text-xs font-medium"
-            aria-label="Dismiss error"
+            type="button"
+            onClick={() => setActiveTab('received')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'received'
+                ? 'border border-[var(--color-accent)] bg-[var(--color-accent)]/12 text-[var(--color-accent)] shadow-xs'
+                : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+            }`}
           >
-            Dismiss
+            <Mail className="h-3.5 w-3.5" />
+            <span>Received ({invitations.length}{pendingCount > 0 ? ` • ${pendingCount} Pending` : ''})</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('sent')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+              activeTab === 'sent'
+                ? 'border border-[var(--color-accent)] bg-[var(--color-accent)]/12 text-[var(--color-accent)] shadow-xs'
+                : 'border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
+            }`}
+          >
+            <span>Sent (0)</span>
           </button>
         </div>
-      )}
 
-      {/* Filter Tabs */}
-      {!isLoading && !isError && invitations.length > 0 && (
-        <div className="mt-6 flex items-center gap-2">
-          <div className="flex items-center gap-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-1 font-mono text-xs shadow-sm">
-            <button
-              onClick={() => setFilter('ALL')}
-              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
-                filter === 'ALL'
-                  ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] shadow-sm'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-              }`}
-            >
-              All ({invitations.length})
-            </button>
-            <button
-              onClick={() => setFilter('PENDING')}
-              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
-                filter === 'PENDING'
-                  ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] shadow-sm'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-              }`}
-            >
-              Pending ({pendingCount})
-            </button>
-            <button
-              onClick={() => setFilter('RESOLVED')}
-              className={`rounded-lg px-3 py-1 text-xs font-semibold transition-colors ${
-                filter === 'RESOLVED'
-                  ? 'bg-[var(--color-accent)] text-[#FFFFFF] dark:text-[#090907] shadow-sm'
-                  : 'text-[var(--color-text-muted)] hover:text-[var(--color-text)]'
-              }`}
-            >
-              Resolved ({resolvedCount})
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Invitations List / States */}
-      {isLoading ? (
-        <div className="mt-6 space-y-3">
-          {[1, 2].map((i) => (
-            <div
-              key={i}
-              className="h-24 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 animate-pulse shadow-sm"
+        {/* Filter controls row */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div className="md:col-span-6 relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--color-text-muted)]" />
+            <input
+              type="search"
+              placeholder="Search invitations..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] py-2 pl-9 pr-3 text-xs text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-accent)] focus:outline-none shadow-xs"
             />
-          ))}
-        </div>
-      ) : isError ? (
-        <div className="mt-8 rounded-2xl border border-status-danger/40 bg-status-danger/10 p-8 text-center">
-          <AlertCircle className="mx-auto h-8 w-8 text-status-danger" />
-          <h3 className="mt-3 font-serif text-lg font-medium text-[var(--color-text)]">Failed to load invitations</h3>
-          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
-            Could not connect to the invitations service.
-          </p>
-          <button
-            onClick={() => refetch()}
-            className="mt-4 rounded-lg bg-[var(--color-surface)] border border-[var(--color-border)] px-4 py-2 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-accent)] transition-colors shadow-sm"
-          >
-            Retry Connection
-          </button>
-        </div>
-      ) : invitations.length === 0 ? (
-        <div className="mt-10 rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface)]/50 p-12 text-center backdrop-blur-sm">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--color-surface-raised)] text-[var(--color-accent)] border border-[var(--color-border)] shadow-sm">
-            <Inbox className="h-6 w-6" />
           </div>
-          <h3 className="mt-4 font-serif text-xl font-medium text-[var(--color-text)]">No invitations received</h3>
-          <p className="mx-auto mt-1 max-w-sm text-xs text-[var(--color-text-muted)]">
-            When another user invites you to join their architecture project, your invitation will appear here.
-          </p>
-          <Link
-            to="/projects"
-            className="mt-5 inline-flex items-center gap-1.5 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-4 py-2 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)]"
-          >
-            <span>Go to My Projects</span>
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+
+          <div className="md:col-span-2">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none shadow-xs"
+            >
+              <option value="all">All Roles</option>
+              <option value="EDITOR">Editor</option>
+              <option value="VIEWER">Viewer</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-3 py-2 text-xs text-[var(--color-text)] focus:border-[var(--color-accent)] focus:outline-none shadow-xs"
+            >
+              <option value="all">All Status</option>
+              <option value="pending">Pending</option>
+              <option value="accepted">Accepted</option>
+            </select>
+          </div>
+
+          <div className="md:col-span-2">
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setRoleFilter('all');
+                setStatusFilter('all');
+              }}
+              className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-raised)] py-2 text-xs font-medium text-[var(--color-text)] hover:bg-[var(--color-surface)] transition-colors"
+            >
+              Reset Filters
+            </button>
+          </div>
         </div>
-      ) : filteredInvitations.length === 0 ? (
-        <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)]/50 p-8 text-center">
-          <p className="text-xs text-[var(--color-text-muted)]">No invitations matching the "{filter.toLowerCase()}" filter.</p>
-          <button
-            onClick={() => setFilter('ALL')}
-            className="mt-3 text-xs text-[var(--color-accent)] hover:underline font-mono font-medium transition-colors"
-          >
-            View all invitations
-          </button>
-        </div>
-      ) : (
-        <div className="mt-6 space-y-3">
-          {filteredInvitations.map((inv) => {
-            const isPending = inv.status === 'PENDING';
-            const isExpired =
-              inv.status === 'EXPIRED' ||
-              (isPending && new Date(inv.expiresAt).getTime() < Date.now());
-            const isAccepted = inv.status === 'ACCEPTED';
-            const isRejected = inv.status === 'REJECTED';
-            const isOperating = activeActionId === inv.id;
+      </div>
 
-            return (
-              <div
-                key={inv.id}
-                className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm transition-all hover:border-[var(--color-accent)]"
-              >
-                {/* Information Column */}
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2.5 flex-wrap">
-                    <h3 className="font-serif text-lg font-medium text-[var(--color-text)]">
-                      {inv.projectName || 'Architecture Project'}
-                    </h3>
+      {/* -------------------------------------------------------------
+          3. INVITATIONS TABLE (Directly matching Reference Image 8)
+          ------------------------------------------------------------- */}
+      <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] overflow-hidden shadow-xs">
+        {isLoading ? (
+          <div className="p-12 text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-[var(--color-accent)]" />
+            <p className="mt-2 text-xs font-mono text-[var(--color-text-muted)]">Loading invitations...</p>
+          </div>
+        ) : isError ? (
+          <div className="p-8 text-center text-status-danger">
+            <AlertCircle className="mx-auto h-8 w-8" />
+            <p className="mt-2 text-xs">Failed to load team invitations.</p>
+          </div>
+        ) : filteredInvitations.length === 0 ? (
+          <div className="p-12 text-center">
+            <Mail className="mx-auto h-10 w-10 text-[var(--color-accent)]" />
+            <h3 className="mt-3 font-serif text-lg font-medium text-[var(--color-text)]">No invitations found</h3>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+              {searchQuery
+                ? 'No invitations match your current filter criteria.'
+                : 'You have no pending invitations to join external workspaces.'}
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="border-b border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[10px] font-mono tracking-wider text-[var(--color-text-muted)] uppercase">
+                  <th className="py-3 px-5 font-semibold">INVITER</th>
+                  <th className="py-3 px-5 font-semibold">PROJECT</th>
+                  <th className="py-3 px-5 font-semibold">INVITED DATE</th>
+                  <th className="py-3 px-5 font-semibold">ROLE</th>
+                  <th className="py-3 px-5 font-semibold">STATUS</th>
+                  <th className="py-3 px-5 font-semibold text-right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--color-border)]">
+                {filteredInvitations.map((inv) => {
+                  const isPending = inv.status === 'PENDING' && new Date(inv.expiresAt).getTime() >= Date.now();
+                  const isAccepted = inv.status === 'ACCEPTED';
+                  const isProcessing = activeActionId === inv.id;
 
-                    {/* Role Pill */}
-                    <span
-                      className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase border ${
-                        inv.role === 'EDITOR'
-                          ? 'border-[var(--color-accent)]/40 bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-                          : 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)]'
-                      }`}
-                    >
-                      {inv.role}
-                    </span>
+                  const inviterName = inv.inviterName || 'Architect';
+                  const inviterEmail = inv.invitedEmail;
+                  const projectName = inv.projectName || 'Architecture Workspace';
+                  const projectDesc = 'Collaborative software system design';
 
-                    {/* Status Badge */}
-                    <span
-                      className={`rounded px-2 py-0.5 text-[10px] font-mono font-semibold tracking-wider uppercase border ${
-                        isAccepted
-                          ? 'border-status-success/30 bg-status-success/10 text-status-success'
-                          : isRejected
-                          ? 'border-status-danger/40 bg-status-danger/15 text-status-danger'
-                          : isExpired
-                          ? 'border-[var(--color-border)] bg-[var(--color-surface-raised)] text-[var(--color-text-muted)]'
-                          : 'border-[var(--color-accent)]/40 bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-                      }`}
-                    >
-                      {isExpired ? 'EXPIRED' : inv.status}
-                    </span>
-                  </div>
+                  return (
+                    <tr key={inv.id} className="hover:bg-[var(--color-surface-raised)]/60 transition-colors">
+                      {/* Inviter */}
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-9 w-9 rounded-full bg-[var(--color-blue)] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                            {inviterName[0].toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-semibold text-[var(--color-text)]">{inviterName}</div>
+                            <div className="text-[11px] text-[var(--color-text-muted)] font-mono">{inviterEmail}</div>
+                          </div>
+                        </div>
+                      </td>
 
-                  <p className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 flex-wrap">
-                    <span>Invited by</span>
-                    <strong className="text-[var(--color-text)] font-medium">
-                      {inv.inviterName || 'Project Owner'}
-                    </strong>
-                    <span>to contribute as an {inv.role.toLowerCase()}.</span>
-                  </p>
+                      {/* Project */}
+                      <td className="py-4 px-5">
+                        <div className="flex items-center gap-3">
+                          <div className="h-8 w-8 rounded-lg bg-[var(--color-surface-raised)] border border-[var(--color-border)] flex items-center justify-center text-[var(--color-accent)] shrink-0">
+                            <FolderGit2 className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <div className="font-semibold text-[var(--color-text)]">{projectName}</div>
+                            <div className="text-[11px] text-[var(--color-text-muted)] max-w-xs truncate">
+                              {projectDesc}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
 
-                  <div className="flex items-center gap-3 text-[11px] text-[var(--color-text-muted)] font-mono pt-0.5">
-                    <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      <span>
-                        {isExpired
-                          ? `Expired on ${new Date(inv.expiresAt).toLocaleDateString()}`
-                          : `Expires on ${new Date(inv.expiresAt).toLocaleDateString()}`}
-                      </span>
-                    </span>
-                  </div>
-                </div>
+                      {/* Invited Date */}
+                      <td className="py-4 px-5">
+                        <div className="text-[11px] text-[var(--color-text)] font-medium">
+                          {new Date(inv.createdAt).toLocaleDateString()}
+                        </div>
+                        <div className="text-[10px] text-[var(--color-text-muted)] font-mono">
+                          {new Date(inv.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </div>
+                      </td>
 
-                {/* Actions Column */}
-                <div className="flex items-center gap-2 sm:self-center shrink-0">
-                  {isPending && !isExpired ? (
-                    <>
-                      <button
-                        onClick={() => handleAccept(inv.id)}
-                        disabled={isAnyActionRunning}
-                        className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] active:scale-[0.98] px-4 py-2 text-xs font-semibold text-[#FFFFFF] dark:text-[#090907] shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isOperating && isAccepting ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            <span>Accepting...</span>
-                          </>
+                      {/* Role */}
+                      <td className="py-4 px-5">
+                        <span className="inline-block rounded-lg border border-[var(--color-border)] bg-[var(--color-surface-raised)] px-2.5 py-1 text-[11px] font-mono font-medium text-[var(--color-text)]">
+                          {inv.role}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="py-4 px-5">
+                        {isAccepted ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                            <span>Accepted</span>
+                          </span>
+                        ) : isPending ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                            <span>Pending</span>
+                          </span>
                         ) : (
-                          <>
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            <span>Accept</span>
-                          </>
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-500/10 px-2.5 py-0.5 text-[10px] font-semibold text-slate-500">
+                            <span>Expired</span>
+                          </span>
                         )}
-                      </button>
+                      </td>
 
-                      <button
-                        onClick={() => handleReject(inv.id)}
-                        disabled={isAnyActionRunning}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-medium text-[var(--color-text-muted)] hover:border-[var(--color-accent)] hover:text-[var(--color-text)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isOperating && isRejecting ? (
-                          <>
-                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            <span>Declining...</span>
-                          </>
+                      {/* Actions */}
+                      <td className="py-4 px-5 text-right">
+                        {isAccepted ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                            <Check className="h-3.5 w-3.5" />
+                            <span>Accepted</span>
+                          </span>
+                        ) : isPending ? (
+                          <div className="inline-flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleAccept(inv.id)}
+                              disabled={isProcessing}
+                              className="rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-4 py-1.5 text-xs font-semibold text-white shadow-xs disabled:opacity-50 transition-colors"
+                            >
+                              {isProcessing ? 'Processing...' : 'Accept'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleReject(inv.id)}
+                              disabled={isProcessing}
+                              className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] hover:bg-[var(--color-surface-raised)] px-4 py-1.5 text-xs font-semibold text-[var(--color-text)] shadow-xs disabled:opacity-50 transition-colors"
+                            >
+                              Decline
+                            </button>
+                          </div>
                         ) : (
-                          <>
-                            <XCircle className="h-3.5 w-3.5" />
-                            <span>Decline</span>
-                          </>
+                          <span className="text-xs text-[var(--color-text-muted)] italic">No action</span>
                         )}
-                      </button>
-                    </>
-                  ) : isAccepted ? (
-                    <Link
-                      to={`/projects/${inv.projectId}`}
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-xs font-semibold text-[var(--color-text)] hover:border-[var(--color-accent)] hover:bg-[var(--color-surface-raised)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-focus)] shadow-sm"
-                    >
-                      <ShieldCheck className="h-3.5 w-3.5 text-[var(--color-accent)]" />
-                      <span>View Project</span>
-                    </Link>
-                  ) : (
-                    <span className="text-xs text-[var(--color-text-muted)] italic font-mono">No action available</span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Table Footer / Pagination */}
+        <div className="flex items-center justify-between border-t border-[var(--color-border)] px-5 py-3 text-xs text-[var(--color-text-muted)] bg-[var(--color-surface-raised)]/30">
+          <div>Showing {filteredInvitations.length} invitations</div>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] disabled:opacity-40"
+              disabled
+              aria-label="Previous page"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[var(--color-accent)] text-white text-xs font-bold">
+              1
+            </span>
+            <button
+              type="button"
+              className="p-1.5 rounded-lg border border-[var(--color-border)] text-[var(--color-text-muted)] disabled:opacity-40"
+              disabled
+              aria-label="Next page"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

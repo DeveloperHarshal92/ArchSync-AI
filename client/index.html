@@ -15,7 +15,7 @@
       (function() {
         try {
           var stored = localStorage.getItem('archsync-theme');
-          var theme = stored || 'dark';
+          var theme = stored || 'light';
           var resolved = theme;
           if (theme === 'system') {
             resolved = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';

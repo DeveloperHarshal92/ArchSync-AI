@@ -24,6 +24,8 @@ export const envSchema = z
     TRUST_PROXY: z.coerce.boolean().default(false),
     GEMINI_API_KEY: z.string().optional(),
     GEMINI_MODEL: z.string().default('gemini-2.5-flash'),
+    MISTRAL_API_KEY: z.string().optional(),
+    MISTRAL_MODEL: z.string().default('mistral-small-latest'),
     AI_API_KEY: z.string().optional(),
     AI_MODEL: z.string().default('gemini-2.5-flash'),
   })

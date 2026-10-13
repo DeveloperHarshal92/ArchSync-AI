@@ -31,7 +31,7 @@ function getStoredPreference(): ThemePreference {
   } catch {
     // Ignore localStorage access failures
   }
-  return 'dark';
+  return 'light';
 }
 
 function applyThemeToDocument(resolved: ResolvedTheme) {

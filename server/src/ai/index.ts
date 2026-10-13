@@ -2,6 +2,8 @@ export * from './types';
 export * from './ai.service';
 export * from './providers/ai.provider';
 export * from './providers/gemini.provider';
+export * from './providers/mistral.provider';
+export * from './providers/failover.provider';
 export * from './context/architectureContext';
 export * from './prompts/systemPrompt';
 export * from './prompts/analysisPrompt';
